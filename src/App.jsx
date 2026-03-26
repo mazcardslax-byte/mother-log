@@ -357,6 +357,7 @@ export default function MotherPlantTracker() {
   const [tab, setTab] = useState("Summary");
   const [mothers, setMothers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [roomSpots, setRoomSpots] = useState(() => new Set(load("room_v1") || []));
 
   const [detailMother, setDetailMother] = useState(null);
   const [detailTab, setDetailTab] = useState("Overview");
@@ -386,6 +387,8 @@ export default function MotherPlantTracker() {
   useEffect(() => {
     if (!loading) save("mothers_v1", mothers);
   }, [mothers, loading]);
+
+  useEffect(() => { save("room_v1", [...roomSpots]); }, [roomSpots]);
 
   useEffect(() => {
     if (detailMother) {
@@ -591,7 +594,7 @@ export default function MotherPlantTracker() {
 
       <div className="px-4 pt-3 mb-3">
         <div className="flex gap-1 bg-zinc-900/80 border border-zinc-800 rounded-xl p-1">
-          {["Summary", "Mothers", "Add"].map(t => (
+          {["Summary", "Mothers", "Room", "Add"].map(t => (
             <button
               key={t}
               onClick={() => { if (t === "Add") { openAddForm(); } else { setTab(t); } }}
@@ -623,6 +626,15 @@ export default function MotherPlantTracker() {
             currentContainer={currentContainer}
             currentTransplantDate={currentTransplantDate}
             onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
+          />
+        )}
+        {tab === "Room" && (
+          <RoomTab
+            mothers={mothers}
+            roomSpots={roomSpots}
+            setRoomSpots={setRoomSpots}
+            onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
+            onUpdateMother={(id, patch) => updateMother(id, patch)}
           />
         )}
         {tab === "Add" && addForm && (
@@ -991,6 +1003,263 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
             );
           })}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ── Room Tab ───────────────────────────────────────────────────────────────
+const BENCHES = [
+  { id: 1, label: "Bench 1", desc: "Mothers only", accent: "emerald", lower: true },
+  { id: 2, label: "Bench 2", desc: "Mostly mothers", accent: "sky" },
+  { id: 3, label: "Bench 3", desc: "Mostly upcoming", accent: "violet" },
+  { id: 4, label: "Bench 4", desc: "Upcoming rounds", accent: "indigo" },
+];
+const SPOTS_PER_BENCH = 7;
+
+function parseLocation(loc) {
+  if (!loc) return null;
+  const m = loc.match(/B(\d+)-S(\d+)/);
+  return m ? { bench: parseInt(m[1]), spot: parseInt(m[2]) } : null;
+}
+function locationKey(bench, spot) { return `B${bench}-S${spot}`; }
+
+function worstHealth(spotMothers) {
+  if (!spotMothers.length) return null;
+  return Math.min(...spotMothers.map(m => m.healthLevel));
+}
+
+function SpotCell({ bench, spot, spotMothers, isUpcoming, onClick }) {
+  const key = locationKey(bench, spot);
+  const type = spotMothers.length > 0 ? "mother" : isUpcoming ? "upcoming" : "empty";
+
+  if (type === "mother") {
+    const worst = worstHealth(spotMothers);
+    const borderCls = worst <= 2 ? "border-red-700/60" : worst === 3 ? "border-yellow-700/60" : "border-emerald-700/60";
+    const multi = spotMothers.length > 1;
+    return (
+      <button
+        onClick={onClick}
+        className={`aspect-square rounded-lg border bg-emerald-900/20 ${borderCls} flex flex-col items-center justify-center gap-0.5 p-0.5 w-full`}
+      >
+        {multi ? (
+          <>
+            <span className="text-[8px] font-bold text-emerald-300 leading-none">{spotMothers.length}x</span>
+            <div className="flex flex-wrap gap-[2px] justify-center">
+              {spotMothers.map(m => (
+                <div
+                  key={m.id}
+                  className={`w-1.5 h-1.5 rounded-full ${m.healthLevel <= 2 ? "bg-red-400" : m.healthLevel === 3 ? "bg-yellow-400" : "bg-emerald-400"}`}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="text-[8px] font-bold text-emerald-300 leading-none truncate max-w-full px-0.5">{getStrain(spotMothers[0].strainCode).code}</span>
+            <div className="flex gap-[2px] justify-center">
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className={`w-1 h-1 rounded-full ${i <= spotMothers[0].healthLevel ? spotMothers[0].healthLevel <= 2 ? "bg-red-400" : spotMothers[0].healthLevel === 3 ? "bg-yellow-400" : "bg-emerald-400" : "bg-zinc-700"}`} />
+              ))}
+            </div>
+          </>
+        )}
+      </button>
+    );
+  }
+
+  if (type === "upcoming") {
+    return (
+      <button
+        onClick={onClick}
+        className="aspect-square rounded-lg border border-indigo-700/50 bg-indigo-900/20 flex flex-col items-center justify-center gap-0.5 w-full"
+      >
+        <span className="text-[8px] font-bold text-indigo-300 leading-none">RND</span>
+        <span className="text-[7px] text-indigo-500 leading-none">upcoming</span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="aspect-square rounded-lg border border-dashed border-zinc-800 flex items-center justify-center w-full hover:border-zinc-600 transition-colors"
+    >
+      <span className="text-zinc-700 text-sm leading-none">+</span>
+    </button>
+  );
+}
+
+function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onSelectMother, onUpdateMother, onMarkUpcoming, onClearUpcoming }) {
+  const key = locationKey(bench, spot);
+  const [selectedMotherId, setSelectedMotherId] = useState("");
+  const unassigned = mothers.filter(m => !parseLocation(m.location));
+  const allMothers = mothers;
+
+  function assignMother() {
+    if (!selectedMotherId) return;
+    onUpdateMother(selectedMotherId, { location: key });
+    onClose();
+  }
+
+  return (
+    <Modal title={`Bench ${bench} · Spot ${spot}`} onClose={onClose}>
+      <div className="space-y-4">
+        {spotMothers.length > 0 && (
+          <div>
+            <SectionLabel>Plants in this spot</SectionLabel>
+            <div className="space-y-2">
+              {spotMothers.map(m => {
+                const s = getStrain(m.strainCode);
+                return (
+                  <div key={m.id} className="flex items-center justify-between bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-3 py-2.5">
+                    <button onClick={() => { onSelectMother(m); onClose(); }} className="flex-1 text-left">
+                      <div className="text-sm font-bold text-emerald-300">{s.code}</div>
+                      <div className="text-[10px] text-zinc-400 mt-0.5">{s.name}</div>
+                      <HealthDots level={m.healthLevel} />
+                    </button>
+                    <button
+                      onClick={() => { onUpdateMother(m.id, { location: "" }); }}
+                      className="text-zinc-600 hover:text-red-400 text-xs ml-3 border border-zinc-700 hover:border-red-700/50 rounded-lg px-2 py-1 transition-colors flex-shrink-0"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {isUpcoming && spotMothers.length === 0 && (
+          <div className="bg-indigo-900/20 border border-indigo-700/40 rounded-xl px-4 py-3 text-center">
+            <div className="text-sm font-bold text-indigo-300 mb-1">Upcoming Round</div>
+            <div className="text-xs text-zinc-400">This spot is reserved for the next round.</div>
+          </div>
+        )}
+
+        {isUpcoming && (
+          <button onClick={() => { onClearUpcoming(key); onClose(); }} className="w-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors">
+            Clear Upcoming Slot
+          </button>
+        )}
+
+        {!isUpcoming && (
+          <button onClick={() => { onMarkUpcoming(key); onClose(); }} className="w-full bg-indigo-900/30 border border-indigo-700/50 text-indigo-300 hover:bg-indigo-900/50 text-xs font-semibold rounded-xl py-2.5 transition-colors">
+            Mark as Upcoming Round
+          </button>
+        )}
+
+        <div>
+          <SectionLabel>Assign a mother to this spot</SectionLabel>
+          <div className="flex gap-2">
+            <select
+              className={selectCls + " flex-1"}
+              value={selectedMotherId}
+              onChange={e => setSelectedMotherId(e.target.value)}
+            >
+              <option value="">Select mother...</option>
+              {allMothers.map(m => {
+                const s = getStrain(m.strainCode);
+                return <option key={m.id} value={m.id}>{s.code} – {s.name}{m.location ? ` (${m.location})` : ""}</option>;
+              })}
+            </select>
+            <button
+              onClick={assignMother}
+              disabled={!selectedMotherId}
+              className="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white text-xs font-semibold px-3 rounded-xl transition-colors flex-shrink-0"
+            >
+              Assign
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMother }) {
+  const [activeSpot, setActiveSpot] = useState(null); // { bench, spot }
+
+  function markUpcoming(key) {
+    setRoomSpots(prev => new Set([...prev, key]));
+  }
+  function clearUpcoming(key) {
+    setRoomSpots(prev => { const n = new Set(prev); n.delete(key); return n; });
+  }
+
+  return (
+    <div className="space-y-5 pb-4">
+      <div className="flex items-center gap-2">
+        <span className="text-base">🚪</span>
+        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Entrance</span>
+      </div>
+
+      {BENCHES.map(bench => {
+        const accentMap = {
+          emerald: "text-emerald-400 border-emerald-800/40",
+          sky: "text-sky-400 border-sky-800/40",
+          violet: "text-violet-400 border-violet-800/40",
+          indigo: "text-indigo-400 border-indigo-800/40",
+        };
+        const accentCls = accentMap[bench.accent] || "text-zinc-400 border-zinc-800";
+
+        return (
+          <div key={bench.id} className={bench.lower ? "mt-2 ml-2" : ""}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`text-xs font-bold ${accentCls.split(" ")[0]}`}>{bench.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${accentCls} bg-zinc-900`}>{bench.desc}</span>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: SPOTS_PER_BENCH }, (_, i) => {
+                const spot = i + 1;
+                const key = locationKey(bench.id, spot);
+                const spotMothers = mothers.filter(m => m.location === key);
+                const isUpcoming = roomSpots.has(key);
+                return (
+                  <SpotCell
+                    key={key}
+                    bench={bench.id}
+                    spot={spot}
+                    spotMothers={spotMothers}
+                    isUpcoming={isUpcoming}
+                    onClick={() => setActiveSpot({ bench: bench.id, spot })}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+
+      <div className="flex items-center gap-4 pt-2 border-t border-zinc-800/60">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-emerald-700/60 bg-emerald-900/20" />
+          <span className="text-[10px] text-zinc-500">Mother</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-indigo-700/50 bg-indigo-900/20" />
+          <span className="text-[10px] text-zinc-500">Upcoming</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border-dashed border border-zinc-800" />
+          <span className="text-[10px] text-zinc-500">Empty</span>
+        </div>
+      </div>
+
+      {activeSpot && (
+        <SpotSheet
+          bench={activeSpot.bench}
+          spot={activeSpot.spot}
+          spotMothers={mothers.filter(m => m.location === locationKey(activeSpot.bench, activeSpot.spot))}
+          isUpcoming={roomSpots.has(locationKey(activeSpot.bench, activeSpot.spot))}
+          mothers={mothers}
+          onClose={() => setActiveSpot(null)}
+          onSelectMother={onSelectMother}
+          onUpdateMother={onUpdateMother}
+          onMarkUpcoming={markUpcoming}
+          onClearUpcoming={clearUpcoming}
+        />
       )}
     </div>
   );
