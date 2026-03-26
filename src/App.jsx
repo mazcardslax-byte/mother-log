@@ -234,6 +234,7 @@ function defaultMother() {
     amendmentLog: [],
     cloneLog: [],
     feedingLog: [],
+    reductionLog: [],
     photos: [],
     createdAt: today(),
   };
@@ -343,12 +344,14 @@ export default function MotherPlantTracker() {
   const [cloneForm, setCloneForm] = useState({ date: today(), count: "", notes: "" });
   const [showFeedingModal, setShowFeedingModal] = useState(false);
   const [feedingForm, setFeedingForm] = useState({ date: today(), type: "Water Only", notes: "" });
+  const [showReductionModal, setShowReductionModal] = useState(false);
+  const [reductionForm, setReductionForm] = useState({ date: today(), reason: "Space", notes: "" });
 
   useEffect(() => {
     const stored = load("mothers_v1");
     if (stored) {
       // Migrate: add feedingLog and photos if missing on existing mothers
-      setMothers(stored.map(m => ({ feedingLog: [], photos: [], ...m })));
+      setMothers(stored.map(m => ({ feedingLog: [], reductionLog: [], photos: [], ...m })));
     }
     setLoading(false);
   }, []);
@@ -427,6 +430,20 @@ export default function MotherPlantTracker() {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, feedingLog: (m.feedingLog || []).filter(f => f.id !== entryId) }
+        : m
+    ));
+  }
+  function addReductionEntry(motherId, entry) {
+    setMothers(prev => prev.map(m =>
+      m.id === motherId
+        ? { ...m, reductionLog: [{ ...entry, id: uid() }, ...(m.reductionLog || [])] }
+        : m
+    ));
+  }
+  function removeReductionEntry(motherId, entryId) {
+    setMothers(prev => prev.map(m =>
+      m.id === motherId
+        ? { ...m, reductionLog: (m.reductionLog || []).filter(r => r.id !== entryId) }
         : m
     ));
   }
@@ -609,6 +626,12 @@ export default function MotherPlantTracker() {
           setFeedingForm={setFeedingForm}
           onAddFeedingEntry={(entry) => { addFeedingEntry(detailMother.id, entry); setShowFeedingModal(false); }}
           onRemoveFeedingEntry={(eid) => removeFeedingEntry(detailMother.id, eid)}
+          showReductionModal={showReductionModal}
+          setShowReductionModal={setShowReductionModal}
+          reductionForm={reductionForm}
+          setReductionForm={setReductionForm}
+          onAddReductionEntry={(entry) => { addReductionEntry(detailMother.id, entry); setShowReductionModal(false); }}
+          onRemoveReductionEntry={(eid) => removeReductionEntry(detailMother.id, eid)}
           onAddPhoto={(photo) => addPhoto(detailMother.id, photo)}
           onRemovePhoto={(photoId) => removePhoto(detailMother.id, photoId)}
         />
@@ -1016,6 +1039,8 @@ function MotherDetailModal({
   onAddCloneEntry, onRemoveCloneEntry,
   showFeedingModal, setShowFeedingModal, feedingForm, setFeedingForm,
   onAddFeedingEntry, onRemoveFeedingEntry,
+  showReductionModal, setShowReductionModal, reductionForm, setReductionForm,
+  onAddReductionEntry, onRemoveReductionEntry,
   onAddPhoto, onRemovePhoto,
 }) {
   const s = getStrain(mother.strainCode);
@@ -1030,7 +1055,7 @@ function MotherDetailModal({
   const [editingLocation, setEditingLocation] = useState(false);
   const [locationVal, setLocationVal] = useState(mother.location || "");
   const [sendToCloneEntry, setSendToCloneEntry] = useState(null);
-  const DETAIL_TABS = ["Overview", "Transplants", "Amendments", "Clones", "Feeding", "Photos"];
+  const DETAIL_TABS = ["Overview", "Transplants", "Amendments", "Clones", "Feeding", "Reductions", "Photos"];
 
   const feedingLog = mother.feedingLog || [];
   const lastFed = lastFeedingDate(feedingLog);
@@ -1234,6 +1259,31 @@ function MotherDetailModal({
           </div>
         )}
 
+        {detailTab === "Reductions" && (
+          <div className="space-y-3">
+            <StatBox label="Total Reductions" value={(mother.reductionLog || []).length} colorClass="text-amber-400" />
+            <button onClick={() => { setReductionForm({ date: today(), reason: "Space", notes: "" }); setShowReductionModal(true); }} className={btnPrimary}>
+              + Log Reduction
+            </button>
+            {(mother.reductionLog || []).length === 0 ? (
+              <div className="text-center py-8 text-zinc-600 text-sm">No reductions recorded.</div>
+            ) : (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                {(mother.reductionLog || []).map(r => (
+                  <div key={r.id} className="flex items-start justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-amber-300 font-medium">{r.reason}</div>
+                      {r.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{r.notes}</div>}
+                      <div className="text-xs text-zinc-600 mt-0.5">{fmtDate(r.date)}</div>
+                    </div>
+                    <button onClick={() => onRemoveReductionEntry(r.id)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {detailTab === "Photos" && (
           <PhotosTab
             mother={mother}
@@ -1382,6 +1432,32 @@ function MotherDetailModal({
             </FormField>
             <button onClick={() => onAddFeedingEntry(feedingForm)} className={btnPrimary}>
               Save Feeding
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showReductionModal && (
+        <Modal title="Log Reduction" onClose={() => setShowReductionModal(false)}>
+          <div className="space-y-4">
+            <FormField label="Reason">
+              <div className="flex gap-2 flex-wrap">
+                {["Space", "Sidelined", "Launchpad Prep", "Other"].map(r => (
+                  <button key={r} onClick={() => setReductionForm(p => ({ ...p, reason: r }))}
+                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${reductionForm.reason === r ? "bg-amber-900/50 text-amber-300 border-amber-700/40" : "bg-zinc-800 border-zinc-700 text-zinc-500"}`}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </FormField>
+            <FormField label="Date">
+              <input type="date" className={inputCls} value={reductionForm.date} onChange={e => setReductionForm(p => ({ ...p, date: e.target.value }))} />
+            </FormField>
+            <FormField label="Notes (optional)">
+              <input type="text" placeholder="What was cut, how much, etc." className={inputCls} value={reductionForm.notes} onChange={e => setReductionForm(p => ({ ...p, notes: e.target.value }))} />
+            </FormField>
+            <button onClick={() => onAddReductionEntry(reductionForm)} className={btnPrimary}>
+              Save Reduction
             </button>
           </div>
         </Modal>
