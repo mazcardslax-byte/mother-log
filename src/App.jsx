@@ -546,8 +546,7 @@ export default function MotherPlantTracker() {
           <SummaryTab
             mothers={mothers}
             active={active}
-            retired={retired}
-            quarantine={quarantine}
+            sidelined={sidelined}
             totalClones={totalClones}
             onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
           />
@@ -619,7 +618,7 @@ export default function MotherPlantTracker() {
 }
 
 // ── Summary Tab ────────────────────────────────────────────────────────────
-function SummaryTab({ mothers, active, retired, quarantine, totalClones, onSelectMother }) {
+function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother }) {
   // Needs water: Active mothers not fed in 3+ days (or never fed)
   const needsWater = active.filter(m => {
     const last = lastFeedingDate(m.feedingLog);
