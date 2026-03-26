@@ -95,7 +95,10 @@ function fmtDate(d) {
 }
 function daysSince(dateStr) {
   if (!dateStr) return null;
-  const diff = Date.now() - new Date(dateStr).getTime();
+  // Parse as local time by replacing dashes to avoid UTC midnight interpretation
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const local = new Date(y, m - 1, d);
+  const diff = Date.now() - local.getTime();
   return Math.max(0, Math.floor(diff / 86400000));
 }
 function getStrain(code) {
@@ -300,7 +303,7 @@ function exportMotherCSV(mothers) {
     const daysInContainer = lastTx ? daysSince(lastTx.date) : "";
     const totalClones = m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
     const lastAmend = m.amendmentLog.length ? m.amendmentLog[0].date : "";
-    const lastFeed = lastAmend; // amendment log doubles as feeding log
+    const lastFeed = lastFeedingDate(m.feedingLog || []);
     return [
       esc(s.code), esc(s.name), esc(m.status),
       esc(m.healthLevel), esc(healthLabel(m.healthLevel)),
@@ -699,6 +702,32 @@ function SummaryTab({ mothers, active, retired, quarantine, totalClones, onSelec
                 <span className="text-xs text-zinc-500">{cnt}x</span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {needsWater.length > 0 && (
+        <div>
+          <SectionLabel>Needs Water / Feeding</SectionLabel>
+          <div className="space-y-2">
+            {needsWater.map(m => {
+              const s = getStrain(m.strainCode);
+              const last = lastFeedingDate(m.feedingLog);
+              const days = daysSince(last);
+              return (
+                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-sky-950/30 border border-sky-800/40 rounded-xl px-4 py-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-sky-300 font-medium">{s.code} – {s.name}</div>
+                      {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
+                    </div>
+                    <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
+                      {days === null ? "Never fed" : `${days}d ago`}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1420,7 +1449,6 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             className="hidden"
             onChange={handleFileChange}
           />
