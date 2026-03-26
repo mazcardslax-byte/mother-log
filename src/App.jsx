@@ -336,7 +336,7 @@ export default function MotherPlantTracker() {
   const [addForm, setAddForm] = useState(null);
 
   const [showTransplantModal, setShowTransplantModal] = useState(false);
-  const [transplantForm, setTransplantForm] = useState({ container: "Black Pot", date: today() });
+  const [transplantForm, setTransplantForm] = useState({ container: "Black Pot", date: today(), dateUnknown: false });
   const [showAmendModal, setShowAmendModal] = useState(false);
   const [amendForm, setAmendForm] = useState({ date: today(), amendment: "", notes: "" });
   const [amendSearch, setAmendSearch] = useState("");
@@ -469,6 +469,7 @@ export default function MotherPlantTracker() {
       notes: "",
       initialContainer: "Black Pot",
       initialDate: today(),
+      initialDateUnknown: false,
     });
     setTab("Add");
   }
@@ -476,7 +477,7 @@ export default function MotherPlantTracker() {
   function submitAddForm() {
     if (!addForm.strainCode) return;
     const transplantHistory = addForm.initialContainer
-      ? [{ id: uid(), container: addForm.initialContainer, date: addForm.initialDate }]
+      ? [{ id: uid(), container: addForm.initialContainer, date: addForm.initialDateUnknown ? null : addForm.initialDate }]
       : [];
     addMother({
       strainCode: addForm.strainCode,
@@ -849,7 +850,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
                   </div>
                 </div>
                 <div className="flex items-center gap-3 mt-2.5">
-                  {days !== null && <span className="text-[10px] text-zinc-600">{days}d in container</span>}
+                  {container && <span className="text-[10px] text-zinc-600">{txDate ? `${days}d in container` : "Date unknown"}</span>}
                   {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones taken</span>}
                   {m.amendmentLog.length > 0 && <span className="text-[10px] text-zinc-600">{m.amendmentLog.length} amendments</span>}
                 </div>
@@ -903,7 +904,25 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
         </select>
       </FormField>
       <FormField label="Date Placed in Container">
-        <input type="date" className={inputCls} value={form.initialDate} onChange={e => f("initialDate", e.target.value)} />
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => f("initialDateUnknown", !form.initialDateUnknown)}
+            className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl border transition-colors w-full ${
+              form.initialDateUnknown
+                ? "bg-zinc-700 border-zinc-600 text-zinc-200"
+                : "bg-zinc-800 border-zinc-700 text-zinc-500"
+            }`}
+          >
+            <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${form.initialDateUnknown ? "bg-emerald-600 border-emerald-500" : "border-zinc-600"}`}>
+              {form.initialDateUnknown && <span className="text-white text-[10px]">✓</span>}
+            </span>
+            Date unknown — existing plant with no record
+          </button>
+          {!form.initialDateUnknown && (
+            <input type="date" className={inputCls} value={form.initialDate} onChange={e => f("initialDate", e.target.value)} />
+          )}
+        </div>
       </FormField>
       <FormField label="Notes (optional)">
         <textarea className={inputCls + " resize-none"} rows={2} placeholder="Any observations..." value={form.notes} onChange={e => f("notes", e.target.value)} />
@@ -1041,14 +1060,14 @@ function MotherDetailModal({
         {detailTab === "Overview" && (
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2">
-              <StatBox label="Days in Container" value={daysInContainer ?? "—"} colorClass="text-sky-400" />
+              <StatBox label="Days in Container" value={txDate ? (daysInContainer ?? "—") : "Unknown"} colorClass={txDate ? "text-sky-400" : "text-zinc-600"} />
               <StatBox label="Total Clones" value={totalClones} colorClass="text-emerald-400" />
               <StatBox label="Amendments" value={mother.amendmentLog.length} colorClass="text-violet-400" />
             </div>
             <div className="bg-zinc-800/50 rounded-xl p-3">
               <SectionLabel>Current Container</SectionLabel>
               {container ? <ContainerBadge container={container} /> : <span className="text-xs text-zinc-600">No transplant recorded</span>}
-              {txDate && <div className="text-[10px] text-zinc-600 mt-1">Since {fmtDate(txDate)}</div>}
+              {container && <div className="text-[10px] text-zinc-600 mt-1">{txDate ? `Since ${fmtDate(txDate)}` : "Date unknown"}</div>}
             </div>
             <div className="bg-zinc-800/50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
@@ -1126,7 +1145,7 @@ function MotherDetailModal({
 
         {detailTab === "Transplants" && (
           <div className="space-y-3">
-            <button onClick={() => { setTransplantForm({ container: container || "Black Pot", date: today() }); setShowTransplantModal(true); }} className={btnPrimary}>
+            <button onClick={() => { setTransplantForm({ container: container || "Black Pot", date: today(), dateUnknown: false }); setShowTransplantModal(true); }} className={btnPrimary}>
               + Log Transplant
             </button>
             {mother.transplantHistory.length === 0 ? (
@@ -1143,7 +1162,7 @@ function MotherDetailModal({
                           <span className="text-sm text-zinc-200 font-medium">{t.container}</span>
                           {isLatest && <Badge label="Current" colorClass="bg-sky-900/50 text-sky-300 border-sky-700/40" />}
                         </div>
-                        <div className="text-xs text-zinc-500 mt-0.5">{fmtDate(t.date)}{days !== null ? ` · ${days}d ago` : ""}</div>
+                        <div className="text-xs text-zinc-500 mt-0.5">{t.date ? `${fmtDate(t.date)}${days !== null ? ` · ${days}d ago` : ""}` : "Date unknown"}</div>
                       </div>
                       <button onClick={() => onRemoveTransplant(t.id)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors">✕</button>
                     </div>
@@ -1273,9 +1292,27 @@ function MotherDetailModal({
               </select>
             </FormField>
             <FormField label="Date Transplanted">
-              <input type="date" className={inputCls} value={transplantForm.date} onChange={e => setTransplantForm(p => ({ ...p, date: e.target.value }))} />
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setTransplantForm(p => ({ ...p, dateUnknown: !p.dateUnknown }))}
+                  className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl border transition-colors w-full ${
+                    transplantForm.dateUnknown
+                      ? "bg-zinc-700 border-zinc-600 text-zinc-200"
+                      : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${transplantForm.dateUnknown ? "bg-emerald-600 border-emerald-500" : "border-zinc-600"}`}>
+                    {transplantForm.dateUnknown && <span className="text-white text-[10px]">✓</span>}
+                  </span>
+                  Date unknown
+                </button>
+                {!transplantForm.dateUnknown && (
+                  <input type="date" className={inputCls} value={transplantForm.date} onChange={e => setTransplantForm(p => ({ ...p, date: e.target.value }))} />
+                )}
+              </div>
             </FormField>
-            <button onClick={() => onAddTransplant(transplantForm)} className={btnPrimary}>Save Transplant</button>
+            <button onClick={() => onAddTransplant({ ...transplantForm, date: transplantForm.dateUnknown ? null : transplantForm.date })} className={btnPrimary}>Save Transplant</button>
           </div>
         </Modal>
       )}
