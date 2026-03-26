@@ -135,6 +135,22 @@ function feedingDaysColor(days) {
   return "text-red-400";
 }
 
+function daysInVeg(mother) {
+  const dates = [
+    ...(mother.cloneLog || []).map(c => c.date),
+    ...(mother.reductionLog || []).map(r => r.date),
+  ].filter(Boolean);
+  const latest = dates.length ? dates.sort().at(-1) : null;
+  return daysSince(latest ?? mother.createdAt);
+}
+
+function vegDaysColor(days) {
+  if (days === null) return "text-zinc-500";
+  if (days < 25) return "text-zinc-500";
+  if (days < 30) return "text-yellow-400";
+  return "text-red-400";
+}
+
 function statusBadgeColor(status) {
   if (status === "Active") return "bg-emerald-900/50 text-emerald-300 border-emerald-700/40";
   if (status === "Sidelined") return "bg-zinc-800 text-zinc-500 border-zinc-700";
@@ -687,6 +703,8 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
   });
 
   // Sidelined plants need daily water except Saturday
+  const vegOverdue = mothers.filter(m => m.status === "Active" && daysInVeg(m) >= 30);
+
   const sidlinedNeedsWater = isSaturday ? [] : sidelined.filter(m => {
     const last = lastFeedingDate(m.feedingLog);
     const days = daysSince(last);
@@ -788,6 +806,28 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
                     <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
                       {days === null ? "Never fed" : `${days}d ago`}
                     </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {vegOverdue.length > 0 && (
+        <div>
+          <SectionLabel>Veg Overdue — Cut or Clone</SectionLabel>
+          <div className="space-y-2">
+            {vegOverdue.map(m => {
+              const s = getStrain(m.strainCode);
+              return (
+                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-red-900/50 rounded-xl px-4 py-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-red-400 font-medium">{s.code} – {s.name}</div>
+                      {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
+                    </div>
+                    <span className="text-red-400 text-sm font-bold">{daysInVeg(m)}d</span>
                   </div>
                 </button>
               );
@@ -924,6 +964,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
             const totalClones = m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
             const lastFed = lastFeedingDate(m.feedingLog || []);
             const fedDays = daysSince(lastFed);
+            const vegDays = daysInVeg(m);
             return (
               <button key={m.id} onClick={() => onSelectMother(m)} className={`w-full bg-zinc-900/80 border border-zinc-800 border-l-2 ${cardAccentColor(m)} rounded-xl px-4 py-3 text-left hover:border-zinc-700 hover:bg-zinc-900 transition-colors`}>
                 <div className="flex items-start justify-between gap-2">
@@ -944,6 +985,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
                   {container && <span className="text-[10px] text-zinc-600">{txDate ? `${days}d in container` : "Date unknown"}</span>}
                   {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones</span>}
                   {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
+                  <span className={`text-[10px] font-medium ${vegDaysColor(vegDays)}`}>{vegDays}d veg{vegDays >= 25 ? " ⚠" : ""}</span>
                 </div>
               </button>
             );
@@ -1131,6 +1173,7 @@ function MotherDetailModal({
   const txDate = currentTransplantDate(mother);
   const daysInContainer = daysSince(txDate);
   const totalClones = mother.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+  const vegDays = daysInVeg(mother);
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesVal, setNotesVal] = useState(mother.notes || "");
   const [editingStatus, setEditingStatus] = useState(false);
@@ -1164,8 +1207,11 @@ function MotherDetailModal({
 
         {detailTab === "Overview" && (
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <StatBox label="Days in Container" value={txDate ? (daysInContainer ?? "—") : "Unknown"} colorClass={txDate ? "text-sky-400" : "text-zinc-600"} />
+              <StatBox label="Days in Veg" value={vegDays ?? "—"} colorClass={vegDaysColor(vegDays)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <StatBox label="Total Clones" value={totalClones} colorClass="text-emerald-400" />
               <StatBox label="Amendments" value={mother.amendmentLog.length} colorClass="text-violet-400" />
             </div>
