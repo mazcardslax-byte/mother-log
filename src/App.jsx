@@ -68,7 +68,7 @@ const CONTAINERS = [
   "12 Gallon",
 ];
 
-const MOTHER_STATUSES = ["Active", "Retired", "Quarantine"];
+const MOTHER_STATUSES = ["Active", "Sidelined"];
 
 const COMMON_AMENDMENTS = [
   "Fish emulsion", "Recharge", "Top dress compost", "Cal-mag",
@@ -137,8 +137,7 @@ function feedingDaysColor(days) {
 
 function statusBadgeColor(status) {
   if (status === "Active") return "bg-emerald-900/50 text-emerald-300 border-emerald-700/40";
-  if (status === "Retired") return "bg-zinc-800 text-zinc-500 border-zinc-700";
-  if (status === "Quarantine") return "bg-orange-900/50 text-orange-300 border-orange-700/40";
+  if (status === "Sidelined") return "bg-zinc-800 text-zinc-500 border-zinc-700";
   return "bg-zinc-800 text-zinc-500 border-zinc-700";
 }
 
@@ -447,8 +446,7 @@ export default function MotherPlantTracker() {
   }
 
   const active = mothers.filter(m => m.status === "Active");
-  const retired = mothers.filter(m => m.status === "Retired");
-  const quarantine = mothers.filter(m => m.status === "Quarantine");
+  const sidelined = mothers.filter(m => m.status === "Sidelined");
   const totalClones = mothers.reduce((s, m) => s + m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0), 0);
 
   function currentContainer(mother) {
@@ -659,9 +657,8 @@ function SummaryTab({ mothers, active, retired, quarantine, totalClones, onSelec
         <StatBox label="Active" value={active.length} colorClass="text-emerald-400" />
         <StatBox label="Total Clones" value={totalClones} colorClass="text-sky-400" />
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        <StatBox label="Quarantine" value={quarantine.length} colorClass="text-orange-400" />
-        <StatBox label="Retired" value={retired.length} colorClass="text-zinc-500" />
+      <div className="grid grid-cols-2 gap-2">
+        <StatBox label="Sidelined" value={sidelined.length} colorClass="text-zinc-500" />
         <StatBox label="Strains" value={new Set(mothers.map(m => m.strainCode)).size} colorClass="text-violet-400" />
       </div>
 
@@ -733,15 +730,15 @@ function SummaryTab({ mothers, active, retired, quarantine, totalClones, onSelec
         </div>
       )}
 
-      {quarantine.length > 0 && (
+      {sidelined.length > 0 && (
         <div>
-          <SectionLabel>Quarantine Alert</SectionLabel>
+          <SectionLabel>Sidelined</SectionLabel>
           <div className="space-y-2">
-            {quarantine.map(m => {
+            {sidelined.map(m => {
               const s = getStrain(m.strainCode);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-orange-950/30 border border-orange-800/40 rounded-xl px-4 py-3 text-left">
-                  <div className="text-sm text-orange-300 font-medium">{s.code} – {s.name}</div>
+                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-left">
+                  <div className="text-sm text-zinc-400 font-medium">{s.code} – {s.name}</div>
                   {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
                 </button>
               );
@@ -802,7 +799,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
     <div className="space-y-3">
       <input type="text" placeholder="Search strain, code, location..." value={search} onChange={e => setSearch(e.target.value)} className={inputCls} />
       <div className="flex gap-1.5 flex-wrap">
-        {["All", "Active", "Quarantine", "Retired"].map(f => (
+        {["All", "Active", "Sidelined"].map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${filter === f ? "bg-zinc-700 text-white" : "bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300"}`}>
             {f}
           </button>
