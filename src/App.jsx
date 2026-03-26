@@ -379,7 +379,7 @@ export default function MotherPlantTracker() {
     const stored = load("mothers_v1");
     if (stored) {
       // Migrate: ensure all array fields exist on existing mothers
-      setMothers(stored.map(m => ({ transplantHistory: [], amendmentLog: [], cloneLog: [], feedingLog: [], reductionLog: [], photos: [], ...m })));
+      setMothers(stored.map(m => ({ transplantHistory: [], amendmentLog: [], cloneLog: [], feedingLog: [], reductionLog: [], photos: [], createdAt: today(), ...m })));
     }
     setLoading(false);
   }, []);
@@ -717,7 +717,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
   // Sidelined plants need daily water except Saturday
   const vegOverdue = mothers.filter(m => m.status === "Active" && daysInVeg(m) >= 30);
 
-  const sidlinedNeedsWater = isSaturday ? [] : sidelined.filter(m => {
+  const sidelinedNeedsWater = isSaturday ? [] : sidelined.filter(m => {
     const last = lastFeedingDate(m.feedingLog);
     const days = daysSince(last);
     return days === null || days >= 1;
@@ -848,11 +848,11 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
         </div>
       )}
 
-      {sidlinedNeedsWater.length > 0 && (
+      {sidelinedNeedsWater.length > 0 && (
         <div>
           <SectionLabel>Sidelined — Needs Water</SectionLabel>
           <div className="space-y-2">
-            {sidlinedNeedsWater.map(m => {
+            {sidelinedNeedsWater.map(m => {
               const s = getStrain(m.strainCode);
               const last = lastFeedingDate(m.feedingLog);
               const days = daysSince(last);
@@ -874,11 +874,11 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
         </div>
       )}
 
-      {sidelined.length > 0 && (
+      {sidelined.filter(m => !sidelinedNeedsWater.includes(m)).length > 0 && (
         <div>
           <SectionLabel>Sidelined</SectionLabel>
           <div className="space-y-2">
-            {sidelined.map(m => {
+            {sidelined.filter(m => !sidelinedNeedsWater.includes(m)).map(m => {
               const s = getStrain(m.strainCode);
               return (
                 <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-left">
@@ -1030,7 +1030,6 @@ function worstHealth(spotMothers) {
 }
 
 function SpotCell({ bench, spot, spotMothers, isUpcoming, onClick }) {
-  const key = locationKey(bench, spot);
   const type = spotMothers.length > 0 ? "mother" : isUpcoming ? "upcoming" : "empty";
 
   if (type === "mother") {
