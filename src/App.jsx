@@ -997,7 +997,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
                   {container && <span className="text-[10px] text-zinc-600">{txDate ? `${days}d in container` : "Date unknown"}</span>}
                   {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones</span>}
                   {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
-                  <span className={`text-[10px] font-medium ${vegDaysColor(vegDays)}`}>{vegDays}d veg{vegDays >= 25 ? " ⚠" : ""}</span>
+                  <span className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-zinc-600"}`}>{vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}</span>
                 </div>
               </button>
             );
@@ -1093,8 +1093,7 @@ function SpotCell({ bench, spot, spotMothers, isUpcoming, onClick }) {
 function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onSelectMother, onUpdateMother, onMarkUpcoming, onClearUpcoming }) {
   const key = locationKey(bench, spot);
   const [selectedMotherId, setSelectedMotherId] = useState("");
-  const unassigned = mothers.filter(m => !parseLocation(m.location));
-  const allMothers = mothers;
+  const unassigned = mothers.filter(m => !parseLocation(m.location) || m.location === key);
 
   function assignMother() {
     if (!selectedMotherId) return;
@@ -1119,7 +1118,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
                       <HealthDots level={m.healthLevel} />
                     </button>
                     <button
-                      onClick={() => { onUpdateMother(m.id, { location: "" }); }}
+                      onClick={() => { onUpdateMother(m.id, { location: "" }); onClose(); }}
                       className="text-zinc-600 hover:text-red-400 text-xs ml-3 border border-zinc-700 hover:border-red-700/50 rounded-lg px-2 py-1 transition-colors flex-shrink-0"
                     >
                       Remove
@@ -1144,7 +1143,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
           </button>
         )}
 
-        {!isUpcoming && (
+        {!isUpcoming && spotMothers.length === 0 && (
           <button onClick={() => { onMarkUpcoming(key); onClose(); }} className="w-full bg-indigo-900/30 border border-indigo-700/50 text-indigo-300 hover:bg-indigo-900/50 text-xs font-semibold rounded-xl py-2.5 transition-colors">
             Mark as Upcoming Round
           </button>
@@ -1159,7 +1158,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
               onChange={e => setSelectedMotherId(e.target.value)}
             >
               <option value="">Select mother...</option>
-              {allMothers.map(m => {
+              {unassigned.map(m => {
                 const s = getStrain(m.strainCode);
                 return <option key={m.id} value={m.id}>{s.code} – {s.name}{m.location ? ` (${m.location})` : ""}</option>;
               })}
