@@ -249,6 +249,9 @@ function defaultMother() {
 
 // ── QR Label ───────────────────────────────────────────────────────────────
 async function printMotherLabel(mother, container, healthLvl) {
+  // Open window synchronously (before any await) to avoid mobile popup blockers
+  const win = window.open("", "_blank");
+  if (!win) return;
   const s = getStrain(mother.strainCode);
   const payload = JSON.stringify({
     id: mother.id,
@@ -286,8 +289,6 @@ async function printMotherLabel(mother, container, healthLvl) {
   ${mother.location ? `<div class="row"><span class="label">Location</span><span class="value">${mother.location}</span></div>` : ""}
   <div class="printed">Printed ${printed}</div>
 </body></html>`;
-  const win = window.open("", "_blank");
-  if (!win) return;
   win.document.write(html);
   win.document.close();
   win.focus();
@@ -305,11 +306,14 @@ function exportMotherCSV(mothers) {
   ];
   const rows = mothers.map(m => {
     const s = getStrain(m.strainCode);
-    const lastTx = m.transplantHistory.length ? m.transplantHistory[m.transplantHistory.length - 1] : null;
+    const transplantHistory = m.transplantHistory || [];
+    const amendmentLog = m.amendmentLog || [];
+    const cloneLog = m.cloneLog || [];
+    const lastTx = transplantHistory.length ? transplantHistory[transplantHistory.length - 1] : null;
     const container = lastTx ? lastTx.container : "";
     const daysInContainer = lastTx ? daysSince(lastTx.date) : "";
-    const totalClones = m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
-    const lastAmend = m.amendmentLog.length ? m.amendmentLog[0].date : "";
+    const totalClones = cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+    const lastAmend = amendmentLog.length ? [...amendmentLog].sort((a, b) => (b.date || "").localeCompare(a.date || ""))[0].date : "";
     const lastFeed = lastFeedingDate(m.feedingLog || []);
     return [
       esc(s.code), esc(s.name), esc(m.status),
@@ -374,6 +378,21 @@ export default function MotherPlantTracker() {
       else setDetailMother(null);
     }
   }, [mothers]);
+
+  useEffect(() => {
+    // Reset all modal forms when switching to a different mother
+    setShowTransplantModal(false);
+    setShowAmendModal(false);
+    setShowCloneModal(false);
+    setShowFeedingModal(false);
+    setShowReductionModal(false);
+    setTransplantForm({ container: "Black Pot", date: today(), dateUnknown: false });
+    setAmendForm({ date: today(), amendment: "", notes: "" });
+    setAmendSearch("");
+    setCloneForm({ date: today(), count: "", notes: "" });
+    setFeedingForm({ date: today(), type: "Water Only", notes: "" });
+    setReductionForm({ date: today(), reason: "Space", notes: "" });
+  }, [detailMother?.id]);
 
   function addMother(data) {
     setMothers(prev => [{ ...defaultMother(), ...data, id: uid(), createdAt: today() }, ...prev]);
@@ -988,10 +1007,15 @@ function SendToCloneLogModal({ cloneEntry, strainName, strainCode, motherLocatio
   const jsonString = JSON.stringify(exportData, null, 2);
 
   function handleCopy() {
-    navigator.clipboard.writeText(jsonString).then(() => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(jsonString).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      });
+    } else {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    });
+    }
   }
 
   return (
@@ -1072,6 +1096,7 @@ function MotherDetailModal({
   const [editingLocation, setEditingLocation] = useState(false);
   const [locationVal, setLocationVal] = useState(mother.location || "");
   const [sendToCloneEntry, setSendToCloneEntry] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const DETAIL_TABS = ["Overview", "Transplants", "Amendments", "Clones", "Feeding", "Reductions", "Photos"];
 
   const feedingLog = mother.feedingLog || [];
@@ -1175,9 +1200,19 @@ function MotherDetailModal({
             <button onClick={onPrintLabel} className="w-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1.5">
               Print Label
             </button>
-            <button onClick={() => { if (window.confirm("Delete this mother plant? This cannot be undone.")) onDelete(); }} className="w-full border border-red-900/50 text-red-500 hover:text-red-400 hover:border-red-800 text-xs rounded-xl py-2.5 transition-colors">
-              Delete Mother Plant
-            </button>
+            {confirmDelete ? (
+              <div className="border border-red-800/60 rounded-xl p-3 space-y-2">
+                <div className="text-xs text-red-400 text-center font-medium">Delete this mother plant? This cannot be undone.</div>
+                <div className="flex gap-2">
+                  <button onClick={() => setConfirmDelete(false)} className={btnSecondary}>Cancel</button>
+                  <button onClick={onDelete} className="flex-1 bg-red-800 hover:bg-red-700 text-white font-semibold text-sm rounded-xl py-2.5 transition-colors">Delete</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmDelete(true)} className="w-full border border-red-900/50 text-red-500 hover:text-red-400 hover:border-red-800 text-xs rounded-xl py-2.5 transition-colors">
+                Delete Mother Plant
+              </button>
+            )}
           </div>
         )}
 
@@ -1388,8 +1423,9 @@ function MotherDetailModal({
                 type="text"
                 placeholder="Search or type amendment..."
                 className={inputCls}
-                value={amendSearch || amendForm.amendment}
+                value={amendSearch !== "" ? amendSearch : amendForm.amendment}
                 onChange={e => { setAmendSearch(e.target.value); setAmendForm(p => ({ ...p, amendment: e.target.value })); }}
+                onFocus={() => { if (!amendSearch) setAmendSearch(amendForm.amendment || ""); }}
               />
               {amendSearch && (
                 <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden max-h-36 overflow-y-auto">
