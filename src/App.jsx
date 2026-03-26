@@ -357,8 +357,8 @@ export default function MotherPlantTracker() {
   useEffect(() => {
     const stored = load("mothers_v1");
     if (stored) {
-      // Migrate: add feedingLog and photos if missing on existing mothers
-      setMothers(stored.map(m => ({ feedingLog: [], reductionLog: [], photos: [], ...m })));
+      // Migrate: ensure all array fields exist on existing mothers
+      setMothers(stored.map(m => ({ transplantHistory: [], amendmentLog: [], cloneLog: [], feedingLog: [], reductionLog: [], photos: [], ...m })));
     }
     setLoading(false);
   }, []);
@@ -371,6 +371,7 @@ export default function MotherPlantTracker() {
     if (detailMother) {
       const updated = mothers.find(m => m.id === detailMother.id);
       if (updated) setDetailMother(updated);
+      else setDetailMother(null);
     }
   }, [mothers]);
 
@@ -387,7 +388,7 @@ export default function MotherPlantTracker() {
   function addTransplant(motherId, entry) {
     setMothers(prev => prev.map(m =>
       m.id === motherId
-        ? { ...m, transplantHistory: [...m.transplantHistory, { ...entry, id: uid() }].sort((a, b) => a.date.localeCompare(b.date)) }
+        ? { ...m, transplantHistory: [...m.transplantHistory, { ...entry, id: uid() }].sort((a, b) => (a.date || "").localeCompare(b.date || "")) }
         : m
     ));
   }
@@ -471,7 +472,7 @@ export default function MotherPlantTracker() {
 
   const active = mothers.filter(m => m.status === "Active");
   const sidelined = mothers.filter(m => m.status === "Sidelined");
-  const totalClones = mothers.reduce((s, m) => s + m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0), 0);
+  const totalClones = mothers.reduce((s, m) => s + (m.cloneLog || []).reduce((a, c) => a + (parseInt(c.count) || 0), 0), 0);
 
   function currentContainer(mother) {
     if (!mother.transplantHistory.length) return null;
@@ -511,6 +512,7 @@ export default function MotherPlantTracker() {
       amendmentLog: [],
       cloneLog: [],
       feedingLog: [],
+      reductionLog: [],
       photos: [],
     });
     setAddForm(null);
@@ -600,6 +602,7 @@ export default function MotherPlantTracker() {
 
       {detailMother && (
         <MotherDetailModal
+          key={detailMother.id}
           mother={detailMother}
           detailTab={detailTab}
           setDetailTab={setDetailTab}
