@@ -676,11 +676,21 @@ export default function MotherPlantTracker() {
 
 // ── Summary Tab ────────────────────────────────────────────────────────────
 function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother }) {
+  const todayDay = new Date().getDay(); // 0=Sun, 6=Sat
+  const isSaturday = todayDay === 6;
+
   // Needs water: Active mothers not fed in 3+ days (or never fed)
   const needsWater = active.filter(m => {
     const last = lastFeedingDate(m.feedingLog);
     const days = daysSince(last);
     return days === null || days >= 3;
+  });
+
+  // Sidelined plants need daily water except Saturday
+  const sidlinedNeedsWater = isSaturday ? [] : sidelined.filter(m => {
+    const last = lastFeedingDate(m.feedingLog);
+    const days = daysSince(last);
+    return days === null || days >= 1;
   });
 
   const strainCounts = mothers.reduce((acc, m) => {
@@ -773,6 +783,32 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-sky-300 font-medium">{s.code} – {s.name}</div>
+                      {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
+                    </div>
+                    <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
+                      {days === null ? "Never fed" : `${days}d ago`}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {sidlinedNeedsWater.length > 0 && (
+        <div>
+          <SectionLabel>Sidelined — Needs Water</SectionLabel>
+          <div className="space-y-2">
+            {sidlinedNeedsWater.map(m => {
+              const s = getStrain(m.strainCode);
+              const last = lastFeedingDate(m.feedingLog);
+              const days = daysSince(last);
+              return (
+                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm text-zinc-300 font-medium">{s.code} – {s.name}</div>
                       {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
                     </div>
                     <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
@@ -935,7 +971,13 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
       <FormField label="Status">
         <div className="flex gap-2">
           {MOTHER_STATUSES.map(s => (
-            <button key={s} onClick={() => f("status", s)} className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${form.status === s ? statusBadgeColor(s) + " border-current" : "bg-zinc-800 border-zinc-700 text-zinc-500"}`}>
+            <button key={s} onClick={() => f("status", s)} className={`flex-1 text-xs py-2 rounded-xl font-bold border transition-colors ${
+              form.status === s
+                ? s === "Active"
+                  ? "bg-emerald-800/60 text-emerald-200 border-emerald-600"
+                  : "bg-zinc-600 text-white border-zinc-400"
+                : "bg-zinc-800 border-zinc-700 text-zinc-500"
+            }`}>
               {s}
             </button>
           ))}
