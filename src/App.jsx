@@ -141,6 +141,13 @@ function statusBadgeColor(status) {
   return "bg-zinc-800 text-zinc-500 border-zinc-700";
 }
 
+function cardAccentColor(m) {
+  if (m.status === "Sidelined") return "border-l-zinc-700";
+  if (m.healthLevel <= 2) return "border-l-red-500";
+  if (m.healthLevel === 3) return "border-l-yellow-500";
+  return "border-l-emerald-500";
+}
+
 // ── Shared UI ──────────────────────────────────────────────────────────────
 function Badge({ label, colorClass }) {
   return (
@@ -153,7 +160,7 @@ function Badge({ label, colorClass }) {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-zinc-900 border border-zinc-700 rounded-t-2xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
+      <div className="bg-[#0d1410] border border-zinc-700/60 rounded-t-2xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 flex-shrink-0">
           <span className="text-white font-semibold text-sm">{title}</span>
           <button onClick={onClose} className="text-zinc-500 hover:text-white text-xl w-8 h-8 flex items-center justify-center rounded-lg">✕</button>
@@ -166,16 +173,16 @@ function Modal({ title, onClose, children }) {
 
 function StatBox({ label, value, colorClass, sub }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+    <div className="bg-gradient-to-b from-zinc-800/60 to-zinc-900 border border-zinc-700/60 rounded-xl p-3 text-center shadow-sm">
       <div className={`text-2xl font-bold ${colorClass}`}>{value}</div>
-      <div className="text-[10px] text-zinc-500 mt-0.5 leading-tight">{label}</div>
+      <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">{label}</div>
       {sub && <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
 function SectionLabel({ children }) {
-  return <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-2">{children}</div>;
+  return <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-2">{children}</div>;
 }
 
 function FormField({ label, children }) {
@@ -512,44 +519,49 @@ export default function MotherPlantTracker() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#09090b] flex items-center justify-center">
+      <div className="min-h-screen bg-[#080c09] flex items-center justify-center">
         <div className="text-zinc-600 text-sm">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-zinc-300 max-w-md mx-auto flex flex-col pb-8">
-      <div className="px-4 pt-6 pb-3">
+    <div className="min-h-screen bg-[#080c09] text-zinc-300 max-w-md mx-auto flex flex-col pb-8">
+      <div className="px-4 pt-6 pb-4 border-b border-zinc-800/60">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-white font-bold text-lg leading-tight">Mother Log</h1>
-            <p className="text-zinc-600 text-xs mt-0.5">Stacks Family Farms</p>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🌿</span>
+              <h1 className="text-white font-bold text-lg leading-tight tracking-tight">Mother Log</h1>
+            </div>
+            <p className="text-emerald-700 text-xs mt-0.5 font-medium tracking-wide">STACKS FAMILY FARMS</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => exportMotherCSV(mothers)}
               title="Export CSV"
-              className="text-zinc-500 hover:text-white text-base w-8 h-8 flex items-center justify-center border border-zinc-700 rounded-xl transition-colors"
+              className="text-zinc-500 hover:text-zinc-300 text-base w-8 h-8 flex items-center justify-center border border-zinc-800 rounded-xl transition-colors"
             >↓</button>
             <button
               onClick={openAddForm}
-              className="bg-emerald-800/50 hover:bg-emerald-700/60 border border-emerald-700/50 text-emerald-300 text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors"
+              className="bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors shadow-sm shadow-emerald-900/50"
             >
-              + Add Mother
+              + Add
             </button>
           </div>
         </div>
       </div>
 
-      <div className="px-4 mb-4">
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+      <div className="px-4 pt-3 mb-3">
+        <div className="flex gap-1 bg-zinc-900/80 border border-zinc-800 rounded-xl p-1">
           {["Summary", "Mothers", "Add"].map(t => (
             <button
               key={t}
               onClick={() => { if (t === "Add") { openAddForm(); } else { setTab(t); } }}
-              className={`flex-1 text-xs font-semibold py-1.5 px-2 rounded-lg transition-colors ${
-                tab === t ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"
+              className={`flex-1 text-xs font-bold py-2 px-2 rounded-lg transition-colors ${
+                tab === t
+                  ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40"
+                  : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               {t}
@@ -852,26 +864,28 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
             const txDate = currentTransplantDate(m);
             const days = daysSince(txDate);
             const totalClones = m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+            const lastFed = lastFeedingDate(m.feedingLog || []);
+            const fedDays = daysSince(lastFed);
             return (
-              <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-left hover:border-zinc-700 transition-colors">
+              <button key={m.id} onClick={() => onSelectMother(m)} className={`w-full bg-zinc-900/80 border border-zinc-800 border-l-2 ${cardAccentColor(m)} rounded-xl px-4 py-3 text-left hover:border-zinc-700 hover:bg-zinc-900 transition-colors`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold text-white">{s.code}</span>
+                      <span className="text-sm font-bold text-white">{s.code}</span>
                       <Badge label={m.status} colorClass={statusBadgeColor(m.status)} />
                     </div>
-                    <div className="text-xs text-zinc-500 mt-0.5 truncate">{s.name}</div>
-                    {m.location && <div className="text-xs text-zinc-600 mt-0.5">{m.location}</div>}
+                    <div className="text-xs text-zinc-400 mt-0.5 truncate">{s.name}</div>
+                    {m.location && <div className="text-[10px] text-zinc-600 mt-0.5">{m.location}</div>}
                   </div>
                   <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                     <HealthDots level={m.healthLevel} />
                     {container && <ContainerBadge container={container} />}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 mt-2.5">
+                <div className="flex items-center gap-3 mt-2.5 flex-wrap">
                   {container && <span className="text-[10px] text-zinc-600">{txDate ? `${days}d in container` : "Date unknown"}</span>}
-                  {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones taken</span>}
-                  {m.amendmentLog.length > 0 && <span className="text-[10px] text-zinc-600">{m.amendmentLog.length} amendments</span>}
+                  {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones</span>}
+                  {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
                 </div>
               </button>
             );
@@ -1070,9 +1084,9 @@ function MotherDetailModal({
           {mother.location && <span className="text-xs text-zinc-500">{mother.location}</span>}
         </div>
 
-        <div className="flex gap-1 bg-zinc-800/60 rounded-xl p-1 mb-4 overflow-x-auto">
+        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 mb-4 overflow-x-auto">
           {DETAIL_TABS.map(t => (
-            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-semibold py-1.5 px-2.5 rounded-lg transition-colors ${detailTab === t ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>
+            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-bold py-1.5 px-2.5 rounded-lg transition-colors ${detailTab === t ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40" : "text-zinc-500 hover:text-zinc-300"}`}>
               {t}
             </button>
           ))}
