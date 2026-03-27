@@ -763,6 +763,9 @@ export default function MotherPlantTracker() {
             currentContainer={currentContainer}
             currentTransplantDate={currentTransplantDate}
             onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
+            onQuickWater={mid => addFeedingEntry(mid, { date: today(), type: "Water Only", notes: "" })}
+            onQuickAmend={(mid, amendment, notes) => addAmendment(mid, { date: today(), amendment, notes })}
+            onQuickClone={(mid, count, notes) => addCloneEntry(mid, { date: today(), count, notes })}
           />
         )}
         {tab === "Room" && (
@@ -1043,9 +1046,112 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
 }
 
 // ── Mothers Tab ────────────────────────────────────────────────────────────
-function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelectMother }) {
+function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onSelectMother, onQuickWater, onOpenAmend, onOpenClone, currentContainer, currentTransplantDate }) {
+  const showClone = m.status !== "Sidelined";
+  const ACTION_W = showClone ? 144 : 96;
+  const touchStartX = useRef(null);
+  const swipeDidFire = useRef(false);
+
+  const s = getStrain(m.strainCode);
+  const container = currentContainer(m);
+  const txDate = currentTransplantDate(m);
+  const days = daysSince(txDate);
+  const totalClones = m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+  const lastFed = lastFeedingDate(m.feedingLog || []);
+  const fedDays = daysSince(lastFed);
+  const vegDays = daysInVeg(m);
+
+  function handleTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX;
+    swipeDidFire.current = false;
+  }
+  function handleTouchMove(e) {
+    if (touchStartX.current === null) return;
+    const dx = touchStartX.current - e.touches[0].clientX;
+    if (Math.abs(dx) > 10) e.preventDefault();
+  }
+  function handleTouchEnd(e) {
+    if (touchStartX.current === null) return;
+    const dx = touchStartX.current - e.changedTouches[0].clientX;
+    if (dx > 40) { swipeDidFire.current = true; onSwipeOpen(); }
+    else if (dx < -40) { swipeDidFire.current = true; onSwipeClose(); }
+    touchStartX.current = null;
+  }
+  function handleCardClick() {
+    if (swipeDidFire.current) { swipeDidFire.current = false; return; }
+    if (isOpen) { onSwipeClose(); return; }
+    onSelectMother(m);
+  }
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl">
+      {/* Action buttons revealed on swipe */}
+      <div className="absolute right-0 top-0 bottom-0 flex" style={{ width: ACTION_W }}>
+        <button
+          onClick={() => { onSwipeClose(); onQuickWater(m.id); }}
+          className="flex-1 flex flex-col items-center justify-center gap-1 bg-sky-900 active:bg-sky-800 transition-colors"
+        >
+          <span className="text-base leading-none">💧</span>
+          <span className="text-[9px] font-semibold text-sky-300 leading-none">Water</span>
+        </button>
+        <button
+          onClick={() => { onSwipeClose(); onOpenAmend(m.id); }}
+          className="flex-1 flex flex-col items-center justify-center gap-1 bg-violet-900 active:bg-violet-800 transition-colors"
+        >
+          <span className="text-base leading-none">🌿</span>
+          <span className="text-[9px] font-semibold text-violet-300 leading-none">Amend</span>
+        </button>
+        {showClone && (
+          <button
+            onClick={() => { onSwipeClose(); onOpenClone(m.id); }}
+            className="flex-1 flex flex-col items-center justify-center gap-1 bg-emerald-900 active:bg-emerald-800 transition-colors"
+          >
+            <span className="text-base leading-none">✂️</span>
+            <span className="text-[9px] font-semibold text-emerald-300 leading-none">Clone</span>
+          </button>
+        )}
+      </div>
+      {/* Sliding card */}
+      <div
+        style={{ transform: `translateX(${isOpen ? -ACTION_W : 0}px)`, transition: "transform 0.2s ease" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onClick={handleCardClick}
+        className={`press-card w-full bg-zinc-900/80 border border-zinc-800/80 border-l-2 ${cardAccentColor(m)} rounded-2xl px-4 py-3.5 text-left cursor-pointer select-none`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-bold text-white">{s.code}</span>
+              <Badge label={m.status} colorClass={statusBadgeColor(m.status)} />
+            </div>
+            <div className="text-xs text-zinc-400 mt-0.5 truncate">{s.name}</div>
+            {m.location && <div className="text-[10px] text-zinc-600 mt-0.5">{m.location}</div>}
+          </div>
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <HealthDots level={m.healthLevel} />
+            {container && <ContainerBadge container={container} />}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 mt-2.5 flex-wrap">
+          {container && <span className="text-[10px] text-zinc-600">{txDate ? `${days}d in container` : "Date unknown"}</span>}
+          {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones</span>}
+          {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
+          <span className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-zinc-600"}`}>{vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelectMother, onQuickWater, onQuickAmend, onQuickClone }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
+  const [swipedId, setSwipedId] = useState(null);
+  const [quickSheet, setQuickSheet] = useState(null); // null | { type: 'amend'|'clone', motherId }
+  const [amendInput, setAmendInput] = useState({ amendment: "", notes: "", search: "" });
+  const [cloneInput, setCloneInput] = useState({ count: "", notes: "" });
 
   const filtered = mothers
     .filter(m => filter === "All" || m.status === filter)
@@ -1055,6 +1161,25 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
       const q = search.toLowerCase();
       return s.name.toLowerCase().includes(q) || s.code.includes(q) || (m.location || "").toLowerCase().includes(q);
     });
+
+  function closeSheet() {
+    setQuickSheet(null);
+    setAmendInput({ amendment: "", notes: "", search: "" });
+    setCloneInput({ count: "", notes: "" });
+  }
+
+  function handleAmendConfirm() {
+    if (!amendInput.amendment.trim()) return;
+    onQuickAmend(quickSheet.motherId, amendInput.amendment.trim(), amendInput.notes.trim());
+    closeSheet();
+  }
+
+  function handleCloneConfirm() {
+    const count = parseInt(cloneInput.count);
+    if (!count || count < 1) return;
+    onQuickClone(quickSheet.motherId, count, cloneInput.notes.trim());
+    closeSheet();
+  }
 
   return (
     <div className="space-y-3">
@@ -1085,40 +1210,111 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
         )
       ) : (
         <div className="space-y-2">
-          {filtered.map(m => {
-            const s = getStrain(m.strainCode);
-            const container = currentContainer(m);
-            const txDate = currentTransplantDate(m);
-            const days = daysSince(txDate);
-            const totalClones = m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
-            const lastFed = lastFeedingDate(m.feedingLog || []);
-            const fedDays = daysSince(lastFed);
-            const vegDays = daysInVeg(m);
-            return (
-              <button key={m.id} onClick={() => onSelectMother(m)} className={`press-card w-full bg-zinc-900/80 border border-zinc-800/80 border-l-2 ${cardAccentColor(m)} rounded-2xl px-4 py-3.5 text-left`}>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-bold text-white">{s.code}</span>
-                      <Badge label={m.status} colorClass={statusBadgeColor(m.status)} />
-                    </div>
-                    <div className="text-xs text-zinc-400 mt-0.5 truncate">{s.name}</div>
-                    {m.location && <div className="text-[10px] text-zinc-600 mt-0.5">{m.location}</div>}
+          {filtered.map(m => (
+            <MotherCard
+              key={m.id}
+              m={m}
+              isOpen={swipedId === m.id}
+              onSwipeOpen={() => setSwipedId(m.id)}
+              onSwipeClose={() => setSwipedId(null)}
+              onSelectMother={onSelectMother}
+              onQuickWater={onQuickWater}
+              onOpenAmend={(mid) => setQuickSheet({ type: "amend", motherId: mid })}
+              onOpenClone={(mid) => setQuickSheet({ type: "clone", motherId: mid })}
+              currentContainer={currentContainer}
+              currentTransplantDate={currentTransplantDate}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Quick-log bottom sheets */}
+      {quickSheet?.type === "amend" && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeSheet(); }}>
+          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-9 h-1 rounded-full bg-zinc-700" />
+            </div>
+            <div className="px-5 pb-6 pt-2 space-y-3">
+              <div className="text-sm font-bold text-white">Quick Amend</div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Search or type amendment..."
+                  className={inputCls}
+                  value={amendInput.search !== "" ? amendInput.search : amendInput.amendment}
+                  onChange={e => setAmendInput(p => ({ ...p, search: e.target.value, amendment: e.target.value }))}
+                  onFocus={() => { if (!amendInput.search) setAmendInput(p => ({ ...p, search: p.amendment || "" })); }}
+                  autoFocus
+                />
+                {amendInput.search && (
+                  <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden max-h-36 overflow-y-auto">
+                    {COMMON_AMENDMENTS.filter(a => a.toLowerCase().includes(amendInput.search.toLowerCase())).map(a => (
+                      <button key={a} className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors" onClick={() => setAmendInput(p => ({ ...p, amendment: a, search: "" }))}>
+                        {a}
+                      </button>
+                    ))}
                   </div>
-                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                    <HealthDots level={m.healthLevel} />
-                    {container && <ContainerBadge container={container} />}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 mt-2.5 flex-wrap">
-                  {container && <span className="text-[10px] text-zinc-600">{txDate ? `${days}d in container` : "Date unknown"}</span>}
-                  {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones</span>}
-                  {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
-                  <span className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-zinc-600"}`}>{vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}</span>
-                </div>
-              </button>
-            );
-          })}
+                )}
+              </div>
+              <input
+                type="text"
+                placeholder="Notes (optional)"
+                className={inputCls}
+                value={amendInput.notes}
+                onChange={e => setAmendInput(p => ({ ...p, notes: e.target.value }))}
+              />
+              <div className="flex gap-2 pt-1">
+                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button
+                  onClick={handleAmendConfirm}
+                  disabled={!amendInput.amendment.trim()}
+                  className="flex-1 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-semibold disabled:opacity-40 active:bg-violet-600 transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {quickSheet?.type === "clone" && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeSheet(); }}>
+          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-9 h-1 rounded-full bg-zinc-700" />
+            </div>
+            <div className="px-5 pb-6 pt-2 space-y-3">
+              <div className="text-sm font-bold text-white">Quick Clone</div>
+              <input
+                type="number"
+                min="1"
+                placeholder="Count"
+                className={inputCls}
+                value={cloneInput.count}
+                onChange={e => setCloneInput(p => ({ ...p, count: e.target.value }))}
+                autoFocus
+              />
+              <input
+                type="text"
+                placeholder="Notes (optional)"
+                className={inputCls}
+                value={cloneInput.notes}
+                onChange={e => setCloneInput(p => ({ ...p, notes: e.target.value }))}
+              />
+              <div className="flex gap-2 pt-1">
+                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button
+                  onClick={handleCloneConfirm}
+                  disabled={!cloneInput.count || parseInt(cloneInput.count) < 1}
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 active:bg-emerald-600 transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -1152,16 +1348,19 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
 
   if (type === "mother") {
     const worst = worstHealth(spotMothers);
-    const borderCls = worst <= 2 ? "border-red-700/60" : worst === 3 ? "border-yellow-700/60" : "border-emerald-700/60";
+    const bgCls = worst <= 2 ? "bg-red-950" : worst === 3 ? "bg-amber-950" : "bg-emerald-950";
+    const borderCls = worst <= 2 ? "border-red-600" : worst === 3 ? "border-yellow-600" : "border-green-600";
+    const textCls = worst <= 2 ? "text-red-300" : worst === 3 ? "text-yellow-200" : "text-green-200";
+    const dotCls = worst <= 2 ? "bg-red-400" : worst === 3 ? "bg-yellow-400" : "bg-emerald-400";
     const multi = spotMothers.length > 1;
     return (
       <button
         onClick={handleClick}
-        className={`aspect-square rounded-lg border bg-emerald-900/20 ${borderCls} flex flex-col items-center justify-center gap-0.5 p-0.5 w-full`}
+        className={`aspect-square rounded-lg border ${bgCls} ${borderCls} flex flex-col items-center justify-center gap-0.5 p-0.5 w-full`}
       >
         {multi ? (
           <>
-            <span className="text-[8px] font-bold text-emerald-300 leading-none">{spotMothers.length}x</span>
+            <span className={`text-[8px] font-bold leading-none ${textCls}`}>{spotMothers.length}x</span>
             <div className="flex flex-wrap gap-[2px] justify-center">
               {spotMothers.map(m => (
                 <div
@@ -1173,10 +1372,10 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
           </>
         ) : (
           <>
-            <span className="text-[8px] font-bold text-emerald-300 leading-none truncate max-w-full px-0.5">{getStrain(spotMothers[0].strainCode).code}</span>
+            <span className={`text-[8px] font-bold leading-none truncate max-w-full px-0.5 ${textCls}`}>{getStrain(spotMothers[0].strainCode).code}</span>
             <div className="flex gap-[2px] justify-center">
               {[1,2,3,4,5].map(i => (
-                <div key={i} className={`w-1 h-1 rounded-full ${i <= spotMothers[0].healthLevel ? spotMothers[0].healthLevel <= 2 ? "bg-red-400" : spotMothers[0].healthLevel === 3 ? "bg-yellow-400" : "bg-emerald-400" : "bg-zinc-700"}`} />
+                <div key={i} className={`w-1 h-1 rounded-full ${i <= spotMothers[0].healthLevel ? dotCls : "bg-zinc-700"}`} />
               ))}
             </div>
           </>
@@ -1352,10 +1551,18 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
         );
       })}
 
-      <div className="flex items-center gap-4 pt-2 border-t border-zinc-800/60">
+      <div className="flex items-center gap-3 pt-2 border-t border-zinc-800/60 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded border border-emerald-700/60 bg-emerald-900/20" />
-          <span className="text-[10px] text-zinc-500">Mother</span>
+          <div className="w-3 h-3 rounded border border-green-600 bg-emerald-950" />
+          <span className="text-[10px] text-zinc-500">Excellent/Good</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-yellow-600 bg-amber-950" />
+          <span className="text-[10px] text-zinc-500">Moderate</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border border-red-600 bg-red-950" />
+          <span className="text-[10px] text-zinc-500">Poor/Fair</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-indigo-700/50 bg-indigo-900/20" />
@@ -1585,7 +1792,8 @@ function MotherDetailModal({
   const [locationVal, setLocationVal] = useState(mother.location || "");
   const [sendToCloneEntry, setSendToCloneEntry] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const DETAIL_TABS = ["Overview", "Transplants", "Amendments", "Clones", "Feeding", "Reductions", "Photos"];
+  const DETAIL_TABS = ["Overview", "History", "Photos"];
+  const [activeSheet, setActiveSheet] = useState(null); // null | 'picker'
 
   const feedingLog = mother.feedingLog || [];
   const lastFed = lastFeedingDate(feedingLog);
@@ -1707,125 +1915,102 @@ function MotherDetailModal({
           </div>
         )}
 
-        {detailTab === "Transplants" && (
-          <div className="space-y-3">
-            <button onClick={() => { setTransplantForm({ container: container || "Black Pot", date: today(), dateUnknown: false }); setShowTransplantModal(true); }} className={btnPrimary}>
-              + Log Transplant
-            </button>
-            {mother.transplantHistory.length === 0 ? (
-              <div className="text-center py-8 text-zinc-600 text-sm">No transplants recorded.</div>
-            ) : (
-              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                {[...mother.transplantHistory].reverse().map((t, i) => {
-                  const isLatest = i === 0;
-                  const days = isLatest ? daysSince(t.date) : null;
-                  return (
-                    <div key={t.id} className={`flex items-center justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0 ${isLatest ? "bg-zinc-800/30" : ""}`}>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-zinc-200 font-medium">{t.container}</span>
-                          {isLatest && <Badge label="Current" colorClass="bg-sky-900/50 text-sky-300 border-sky-700/40" />}
+        {detailTab === "History" && (() => {
+          const timeline = [
+            ...[...mother.transplantHistory].map(e => ({ ...e, _type: "transplant" })),
+            ...(mother.amendmentLog || []).map(e => ({ ...e, _type: "amendment" })),
+            ...(mother.feedingLog || []).map(e => ({ ...e, _type: "feeding" })),
+            ...(mother.cloneLog || []).map(e => ({ ...e, _type: "clone" })),
+            ...(mother.reductionLog || []).map(e => ({ ...e, _type: "reduction" })),
+          ].sort((a, b) => {
+            if (!a.date && !b.date) return 0;
+            if (!a.date) return 1;
+            if (!b.date) return -1;
+            return b.date.localeCompare(a.date);
+          });
+          const latestTxId = mother.transplantHistory.length ? mother.transplantHistory[mother.transplantHistory.length - 1].id : null;
+          const TYPE_META = {
+            transplant: { label: "Transplant", text: "text-sky-400", border: "border-sky-700" },
+            amendment:  { label: "Amendment",  text: "text-violet-400", border: "border-violet-700" },
+            feeding:    { label: "Feeding",     text: "text-emerald-400", border: "border-emerald-700" },
+            clone:      { label: "Clone",       text: "text-stone-300", border: "border-stone-600" },
+            reduction:  { label: "Reduction",   text: "text-red-400", border: "border-red-700" },
+          };
+          function entrySummary(e) {
+            if (e._type === "transplant") return `→ ${e.container}`;
+            if (e._type === "amendment") return e.amendment;
+            if (e._type === "feeding") return e.type;
+            if (e._type === "clone") return `${e.count} clone${parseInt(e.count) !== 1 ? "s" : ""} taken`;
+            if (e._type === "reduction") return e.reason;
+            return "";
+          }
+          function removeEntry(e) {
+            if (e._type === "transplant") onRemoveTransplant(e.id);
+            else if (e._type === "amendment") onRemoveAmendment(e.id);
+            else if (e._type === "feeding") onRemoveFeedingEntry(e.id);
+            else if (e._type === "clone") onRemoveCloneEntry(e.id);
+            else if (e._type === "reduction") onRemoveReductionEntry(e.id);
+          }
+          return (
+            <div className="space-y-3">
+              <button onClick={() => setActiveSheet("picker")} className={btnPrimary}>＋ Add</button>
+              {timeline.length === 0 ? (
+                <div className="text-center py-8 text-zinc-600 text-sm">No history yet — tap + to log the first event.</div>
+              ) : (
+                <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
+                  {timeline.map(e => {
+                    const meta = TYPE_META[e._type];
+                    return (
+                      <div key={`${e._type}-${e.id}`} className={`flex items-start gap-3 px-4 py-3 border-b border-zinc-800/50 last:border-0 border-l-2 ${meta.border}`}>
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-[10px] font-bold uppercase tracking-wide mb-0.5 ${meta.text}`}>
+                            {meta.label}{e._type === "transplant" && e.id === latestTxId ? " · Current" : ""}
+                          </div>
+                          <div className="text-sm text-zinc-200 font-medium">{entrySummary(e)}</div>
+                          {e.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{e.notes}</div>}
+                          <div className="text-xs text-zinc-600 mt-0.5">{e.date ? fmtDate(e.date) : "Date unknown"}</div>
+                          {e._type === "clone" && (
+                            <button
+                              onClick={() => setSendToCloneEntry(e)}
+                              className="text-[10px] text-sky-400 hover:text-sky-300 border border-sky-800/50 hover:border-sky-700 rounded-lg px-2 py-1 mt-1.5 transition-colors"
+                            >
+                              Send to Clone Log
+                            </button>
+                          )}
                         </div>
-                        <div className="text-xs text-zinc-500 mt-0.5">{t.date ? `${fmtDate(t.date)}${days !== null ? ` · ${days}d ago` : ""}` : "Date unknown"}</div>
+                        <button onClick={() => removeEntry(e)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
                       </div>
-                      <button onClick={() => onRemoveTransplant(t.id)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors">✕</button>
+                    );
+                  })}
+                </div>
+              )}
+              {activeSheet === "picker" && (
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setActiveSheet(null); }}>
+                  <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+                    <div className="flex justify-center pt-3 pb-1">
+                      <div className="w-9 h-1 rounded-full bg-zinc-700" />
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {detailTab === "Amendments" && (
-          <div className="space-y-3">
-            <button onClick={() => { setAmendForm({ date: today(), amendment: "", notes: "" }); setAmendSearch(""); setShowAmendModal(true); }} className={btnPrimary}>
-              + Log Amendment
-            </button>
-            {mother.amendmentLog.length === 0 ? (
-              <div className="text-center py-8 text-zinc-600 text-sm">No amendments recorded.</div>
-            ) : (
-              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                {mother.amendmentLog.map(a => (
-                  <div key={a.id} className="flex items-start justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-zinc-200 font-medium">{a.amendment}</div>
-                      {a.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{a.notes}</div>}
-                      <div className="text-xs text-zinc-600 mt-0.5">{fmtDate(a.date)}</div>
-                    </div>
-                    <button onClick={() => onRemoveAmendment(a.id)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {detailTab === "Clones" && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <StatBox label="Total Taken" value={totalClones} colorClass="text-emerald-400" />
-              <StatBox label="Sessions" value={mother.cloneLog.length} colorClass="text-sky-400" />
-            </div>
-            <button onClick={() => { setCloneForm({ date: today(), count: "", notes: "" }); setShowCloneModal(true); }} className={btnPrimary}>
-              + Log Clone Cut
-            </button>
-            {mother.cloneLog.length === 0 ? (
-              <div className="text-center py-8 text-zinc-600 text-sm">No clone sessions recorded.</div>
-            ) : (
-              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                {mother.cloneLog.map(c => (
-                  <div key={c.id} className="border-b border-zinc-800/50 last:border-0">
-                    <div className="flex items-start justify-between px-4 py-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-emerald-300 font-bold">{c.count}</span>
-                          <span className="text-xs text-zinc-400">clones</span>
-                        </div>
-                        {c.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{c.notes}</div>}
-                        <div className="text-xs text-zinc-600 mt-0.5">{fmtDate(c.date)}</div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => setSendToCloneEntry(c)}
-                          className="text-[10px] text-sky-400 hover:text-sky-300 border border-sky-800/50 hover:border-sky-700 rounded-lg px-2 py-1 transition-colors"
-                        >
-                          Send to Clone Log
+                    <div className="px-5 pb-6 pt-2 space-y-2">
+                      <div className="text-sm font-bold text-white mb-3">What would you like to log?</div>
+                      {[
+                        { label: "Transplant", action: () => { setActiveSheet(null); setTransplantForm({ container: container || "Black Pot", date: today(), dateUnknown: false }); setShowTransplantModal(true); } },
+                        { label: "Amendment",  action: () => { setActiveSheet(null); setAmendForm({ date: today(), amendment: "", notes: "" }); setAmendSearch(""); setShowAmendModal(true); } },
+                        { label: "Clone Cut",  action: () => { setActiveSheet(null); setCloneForm({ date: today(), count: "", notes: "" }); setShowCloneModal(true); } },
+                        { label: "Feeding",    action: () => { setActiveSheet(null); setFeedingForm({ date: today(), type: "Water Only", notes: "" }); setShowFeedingModal(true); } },
+                        { label: "Reduction",  action: () => { setActiveSheet(null); setReductionForm({ date: today(), reason: "Space", notes: "" }); setShowReductionModal(true); } },
+                      ].map(({ label, action }) => (
+                        <button key={label} onClick={action} className="w-full text-left px-4 py-3 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-xl text-sm text-zinc-200 font-medium transition-colors">
+                          {label}
                         </button>
-                        <button onClick={() => onRemoveCloneEntry(c.id)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors">✕</button>
-                      </div>
+                      ))}
+                      <button onClick={() => setActiveSheet(null)} className="w-full py-2.5 mt-1 rounded-xl border border-zinc-700 text-zinc-500 text-sm font-semibold">Cancel</button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {detailTab === "Reductions" && (
-          <div className="space-y-3">
-            <StatBox label="Total Reductions" value={(mother.reductionLog || []).length} colorClass="text-amber-400" />
-            <button onClick={() => { setReductionForm({ date: today(), reason: "Space", notes: "" }); setShowReductionModal(true); }} className={btnPrimary}>
-              + Log Reduction
-            </button>
-            {(mother.reductionLog || []).length === 0 ? (
-              <div className="text-center py-8 text-zinc-600 text-sm">No reductions recorded.</div>
-            ) : (
-              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                {(mother.reductionLog || []).map(r => (
-                  <div key={r.id} className="flex items-start justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-amber-300 font-medium">{r.reason}</div>
-                      {r.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{r.notes}</div>}
-                      <div className="text-xs text-zinc-600 mt-0.5">{fmtDate(r.date)}</div>
-                    </div>
-                    <button onClick={() => onRemoveReductionEntry(r.id)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {detailTab === "Photos" && (
           <PhotosTab
@@ -1833,42 +2018,6 @@ function MotherDetailModal({
             onAddPhoto={onAddPhoto}
             onRemovePhoto={onRemovePhoto}
           />
-        )}
-
-        {detailTab === "Feeding" && (
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-                <div className={`text-2xl font-bold ${feedingDaysColor(daysSinceFed)}`}>
-                  {daysSinceFed === null ? "—" : daysSinceFed}
-                </div>
-                <div className="text-[10px] text-zinc-500 mt-0.5 leading-tight">Days Since Fed</div>
-              </div>
-              <StatBox label="Total Sessions" value={feedingLog.length} colorClass="text-sky-400" />
-            </div>
-            <button
-              onClick={() => { setFeedingForm({ date: today(), type: "Water Only", notes: "" }); setShowFeedingModal(true); }}
-              className={btnPrimary}
-            >
-              + Log Feeding
-            </button>
-            {feedingLog.length === 0 ? (
-              <div className="text-center py-8 text-zinc-600 text-sm">No feedings recorded.</div>
-            ) : (
-              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                {feedingLog.map(f => (
-                  <div key={f.id} className="flex items-start justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-zinc-200 font-medium">{f.type}</div>
-                      {f.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{f.notes}</div>}
-                      <div className="text-xs text-zinc-600 mt-0.5">{fmtDate(f.date)}</div>
-                    </div>
-                    <button onClick={() => onRemoveFeedingEntry(f.id)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         )}
       </Modal>
 
