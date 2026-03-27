@@ -29,6 +29,11 @@ html, body {
   scrollbar-width: none;
 }
 
+/* Safe-area header padding — respects iPhone notch / Dynamic Island */
+.pt-safe {
+  padding-top: max(20px, env(safe-area-inset-top));
+}
+
 /* Smooth press feedback for card-style buttons */
 .press-card {
   transition: transform 150ms ease-out, opacity 150ms ease-out;

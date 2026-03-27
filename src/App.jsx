@@ -90,6 +90,14 @@ const FEEDING_TYPES = [
   "Compost Tea",
 ];
 
+// Tab bar items — static, hoisted to module scope to avoid per-render allocation
+const TAB_ITEMS = [
+  { key: "Summary", label: "Summary", icon: LayoutDashboard },
+  { key: "Mothers", label: "Mothers", icon: Leaf },
+  { key: "Room",    label: "Room",    icon: Grid3X3 },
+  { key: "Add",     label: "Add",     icon: Plus },
+];
+
 // ── Utilities ──────────────────────────────────────────────────────────────
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function today() { return new Date().toISOString().split("T")[0]; }
@@ -664,13 +672,6 @@ export default function MotherPlantTracker() {
     );
   }
 
-  const TAB_ITEMS = [
-    { key: "Summary", label: "Summary", icon: LayoutDashboard },
-    { key: "Mothers", label: "Mothers", icon: Leaf },
-    { key: "Room",    label: "Room",    icon: Grid3X3 },
-    { key: "Add",     label: "Add",     icon: Plus },
-  ];
-
   const SyncIcon = syncStatus === "syncing" ? Loader2
     : syncStatus === "error" ? AlertCircle
     : Wifi;
@@ -678,11 +679,11 @@ export default function MotherPlantTracker() {
   return (
     <div className="min-h-screen bg-[#080c09] text-zinc-300 max-w-md mx-auto flex flex-col pb-4">
       {/* ── Header ── */}
-      <div className="px-4 pt-safe-top pt-5 pb-3 border-b border-zinc-800/50">
+      <div className="px-4 pt-safe pb-3 border-b border-zinc-800/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-emerald-900/50 border border-emerald-800/50 flex items-center justify-center flex-shrink-0">
-              <Leaf className="w-4.5 h-4.5 text-emerald-400" strokeWidth={1.75} />
+              <Leaf className="w-[18px] h-[18px] text-emerald-400" strokeWidth={1.75} />
             </div>
             <div>
               <h1 className="text-white font-bold text-base leading-tight tracking-tight">Mother Log</h1>
@@ -734,7 +735,7 @@ export default function MotherPlantTracker() {
                     : "text-zinc-600 active:text-zinc-300 active:bg-zinc-800/50"
                 }`}
               >
-                <Icon className={`w-4.5 h-4.5 ${active ? "text-emerald-300" : "text-zinc-500"}`} strokeWidth={active ? 2 : 1.75} />
+                <Icon className={`w-[18px] h-[18px] ${active ? "text-emerald-300" : "text-zinc-500"}`} strokeWidth={active ? 2 : 1.75} />
                 <span className={`text-[10px] font-semibold tracking-wide ${active ? "text-emerald-200" : "text-zinc-600"}`}>{label}</span>
               </button>
             );
