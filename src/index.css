@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,11 +7,14 @@
 * {
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
+  /* Eliminates 300ms tap delay on mobile */
+  touch-action: manipulation;
 }
 
 html, body {
   overscroll-behavior: none;
-  background-color: #09090b;
+  background-color: #080c09;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 .overflow-y-auto {
@@ -22,4 +27,13 @@ html, body {
 .overflow-x-auto {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Smooth press feedback for card-style buttons */
+.press-card {
+  transition: transform 150ms ease-out, opacity 150ms ease-out;
+}
+.press-card:active {
+  transform: scale(0.985);
+  opacity: 0.85;
 }

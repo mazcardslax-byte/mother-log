@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
+import {
+  LayoutDashboard, Leaf, Grid3X3, Plus, Download,
+  Wifi, WifiOff, Loader2, AlertCircle,
+} from "lucide-react";
 
 // ── Image Compression ───────────────────────────────────────────────────────
 function compressImage(file, maxPx = 800, quality = 0.7) {
@@ -176,11 +180,15 @@ function Badge({ label, colorClass }) {
 
 function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#0d1410] border border-zinc-700/60 rounded-t-2xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 flex-shrink-0">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
+        {/* drag handle */}
+        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 bg-zinc-700 rounded-full" />
+        </div>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/80 flex-shrink-0">
           <span className="text-white font-semibold text-sm">{title}</span>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white text-xl w-8 h-8 flex items-center justify-center rounded-lg">✕</button>
+          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center rounded-xl text-zinc-500 active:text-white active:bg-zinc-800 transition-colors">✕</button>
         </div>
         <div className="p-5 overflow-y-auto flex-1">{children}</div>
       </div>
@@ -190,16 +198,16 @@ function Modal({ title, onClose, children }) {
 
 function StatBox({ label, value, colorClass, sub }) {
   return (
-    <div className="bg-gradient-to-b from-zinc-800/60 to-zinc-900 border border-zinc-700/60 rounded-xl p-3 text-center shadow-sm">
-      <div className={`text-2xl font-bold ${colorClass}`}>{value}</div>
-      <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">{label}</div>
+    <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3.5 text-center">
+      <div className={`text-2xl font-bold tracking-tight ${colorClass}`}>{value}</div>
+      <div className="text-[10px] text-zinc-500 mt-1 leading-tight font-medium uppercase tracking-wide">{label}</div>
       {sub && <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
 function SectionLabel({ children }) {
-  return <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold mb-2">{children}</div>;
+  return <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold mb-2 px-0.5">{children}</div>;
 }
 
 function FormField({ label, children }) {
@@ -643,71 +651,94 @@ export default function MotherPlantTracker() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#080c09] flex flex-col items-center justify-center gap-3">
-        <span className="text-4xl">🌿</span>
-        <div className="text-white font-bold text-lg tracking-tight">Mother Log</div>
-        <div className="text-emerald-700 text-xs font-medium tracking-widest uppercase">Stacks Family Farms</div>
-        <div className="flex gap-1.5 mt-4">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
-          ))}
+      <div className="min-h-screen bg-[#080c09] flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-900/40 border border-emerald-800/60 flex items-center justify-center shadow-lg shadow-emerald-950/50">
+          <Leaf className="w-8 h-8 text-emerald-400" strokeWidth={1.5} />
         </div>
+        <div>
+          <div className="text-white font-bold text-xl tracking-tight text-center">Mother Log</div>
+          <div className="text-emerald-700 text-[11px] font-semibold tracking-widest uppercase text-center mt-0.5">Stacks Family Farms</div>
+        </div>
+        <Loader2 className="w-4 h-4 text-emerald-700 animate-spin mt-2" />
       </div>
     );
   }
 
+  const TAB_ITEMS = [
+    { key: "Summary", label: "Summary", icon: LayoutDashboard },
+    { key: "Mothers", label: "Mothers", icon: Leaf },
+    { key: "Room",    label: "Room",    icon: Grid3X3 },
+    { key: "Add",     label: "Add",     icon: Plus },
+  ];
+
+  const SyncIcon = syncStatus === "syncing" ? Loader2
+    : syncStatus === "error" ? AlertCircle
+    : Wifi;
+
   return (
-    <div className="min-h-screen bg-[#080c09] text-zinc-300 max-w-md mx-auto flex flex-col pb-8">
-      <div className="px-4 pt-6 pb-4 border-b border-zinc-800/60">
+    <div className="min-h-screen bg-[#080c09] text-zinc-300 max-w-md mx-auto flex flex-col pb-4">
+      {/* ── Header ── */}
+      <div className="px-4 pt-safe-top pt-5 pb-3 border-b border-zinc-800/50">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🌿</span>
-              <h1 className="text-white font-bold text-lg leading-tight tracking-tight">Mother Log</h1>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-900/50 border border-emerald-800/50 flex items-center justify-center flex-shrink-0">
+              <Leaf className="w-4.5 h-4.5 text-emerald-400" strokeWidth={1.75} />
             </div>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <p className="text-emerald-700 text-xs font-medium tracking-wide">STACKS FAMILY FARMS</p>
-              <div
-                title={syncStatus === "syncing" ? "Saving..." : syncStatus === "error" ? "Sync error" : "Live"}
-                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                  syncStatus === "syncing" ? "bg-yellow-400 animate-pulse" :
-                  syncStatus === "error" ? "bg-red-500" :
-                  "bg-emerald-500"
-                }`}
-              />
+            <div>
+              <h1 className="text-white font-bold text-base leading-tight tracking-tight">Mother Log</h1>
+              <div className="flex items-center gap-1.5">
+                <p className="text-emerald-700 text-[10px] font-semibold tracking-widest uppercase">Stacks Family Farms</p>
+                <SyncIcon
+                  title={syncStatus === "syncing" ? "Saving…" : syncStatus === "error" ? "Sync error" : "Live"}
+                  className={`w-2.5 h-2.5 flex-shrink-0 ${
+                    syncStatus === "syncing" ? "text-yellow-400 animate-spin" :
+                    syncStatus === "error"   ? "text-red-500" :
+                                              "text-emerald-600"
+                  }`}
+                  strokeWidth={2.5}
+                />
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => exportMotherCSV(mothers)}
               title="Export CSV"
-              className="text-zinc-500 hover:text-zinc-300 text-base w-8 h-8 flex items-center justify-center border border-zinc-800 rounded-xl transition-colors"
-            >↓</button>
+              className="w-11 h-11 flex items-center justify-center rounded-xl border border-zinc-800 text-zinc-500 active:text-zinc-200 active:bg-zinc-800 transition-colors"
+            >
+              <Download className="w-4 h-4" strokeWidth={2} />
+            </button>
             <button
               onClick={openAddForm}
-              className="bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors shadow-sm shadow-emerald-900/50"
+              className="h-11 px-4 flex items-center gap-1.5 bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold rounded-xl transition-colors shadow-md shadow-emerald-950/60"
             >
-              + Add
+              <Plus className="w-4 h-4" strokeWidth={2.5} />
+              Add
             </button>
           </div>
         </div>
       </div>
 
-      <div className="px-4 pt-3 mb-3">
-        <div className="flex gap-1 bg-zinc-900/80 border border-zinc-800 rounded-xl p-1">
-          {["Summary", "Mothers", "Room", "Add"].map(t => (
-            <button
-              key={t}
-              onClick={() => { if (t === "Add") { openAddForm(); } else { setTab(t); } }}
-              className={`flex-1 text-xs font-bold py-2 px-2 rounded-lg transition-colors ${
-                tab === t
-                  ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40"
-                  : "text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+      {/* ── Tab Bar ── */}
+      <div className="px-3 pt-2.5 pb-1">
+        <div className="flex gap-0.5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-1">
+          {TAB_ITEMS.map(({ key, label, icon: Icon }) => {
+            const active = tab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => { if (key === "Add") { openAddForm(); } else { setTab(key); } }}
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all duration-150 min-h-[52px] justify-center ${
+                  active
+                    ? "bg-emerald-800/50 text-emerald-200 border border-emerald-700/30 shadow-sm"
+                    : "text-zinc-600 active:text-zinc-300 active:bg-zinc-800/50"
+                }`}
+              >
+                <Icon className={`w-4.5 h-4.5 ${active ? "text-emerald-300" : "text-zinc-500"}`} strokeWidth={active ? 2 : 1.75} />
+                <span className={`text-[10px] font-semibold tracking-wide ${active ? "text-emerald-200" : "text-zinc-600"}`}>{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -862,7 +893,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
       {byHealth.length > 0 && (
         <div>
           <SectionLabel>Health Breakdown</SectionLabel>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
             {byHealth.map(({ h, cnt }) => (
               <div key={h} className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 last:border-0">
                 <span className="text-xs text-zinc-300">{healthLabels[h]}</span>
@@ -876,7 +907,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
       {Object.keys(strainCounts).length > 0 && (
         <div>
           <SectionLabel>By Strain</SectionLabel>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
             {Object.entries(strainCounts).sort((a, b) => b[1] - a[1]).map(([name, cnt]) => (
               <div key={name} className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 last:border-0">
                 <span className="text-xs text-zinc-300">{name}</span>
@@ -890,7 +921,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
       {topAmends.length > 0 && (
         <div>
           <SectionLabel>Most Used Amendments</SectionLabel>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+          <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
             {topAmends.map(([name, cnt]) => (
               <div key={name} className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 last:border-0">
                 <span className="text-xs text-zinc-300">{name}</span>
@@ -910,7 +941,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
               const last = lastFeedingDate(m.feedingLog);
               const days = daysSince(last);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-sky-950/30 border border-sky-800/40 rounded-xl px-4 py-3 text-left">
+                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-sky-950/30 border border-sky-800/40 rounded-2xl px-4 py-3.5 text-left">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-sky-300 font-medium">{s.code} – {s.name}</div>
@@ -934,7 +965,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
             {vegOverdue.map(m => {
               const s = getStrain(m.strainCode);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-red-900/50 rounded-xl px-4 py-3 text-left">
+                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-zinc-900 border border-red-900/50 rounded-2xl px-4 py-3.5 text-left">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-red-400 font-medium">{s.code} – {s.name}</div>
@@ -958,7 +989,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
               const last = lastFeedingDate(m.feedingLog);
               const days = daysSince(last);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-left">
+                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl px-4 py-3.5 text-left">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-zinc-300 font-medium">{s.code} – {s.name}</div>
@@ -982,7 +1013,7 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
             {sidelined.filter(m => !sidelinedNeedsWater.includes(m)).map(m => {
               const s = getStrain(m.strainCode);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3 text-left">
+                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl px-4 py-3.5 text-left">
                   <div className="text-sm text-zinc-400 font-medium">{s.code} – {s.name}</div>
                   {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
                 </button>
@@ -1045,7 +1076,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
       <input type="text" placeholder="Search strain, code, location..." value={search} onChange={e => setSearch(e.target.value)} className={inputCls} />
       <div className="flex gap-1.5 flex-wrap">
         {["All", "Active", "Sidelined"].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${filter === f ? "bg-zinc-700 text-white" : "bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300"}`}>
+          <button key={f} onClick={() => setFilter(f)} className={`text-xs px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[36px] flex items-center ${filter === f ? "bg-zinc-700 text-white" : "bg-zinc-900/80 border border-zinc-800 text-zinc-500 active:text-zinc-200"}`}>
             {f}
           </button>
         ))}
@@ -1079,7 +1110,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
             const fedDays = daysSince(lastFed);
             const vegDays = daysInVeg(m);
             return (
-              <button key={m.id} onClick={() => onSelectMother(m)} className={`w-full bg-zinc-900/80 border border-zinc-800 border-l-2 ${cardAccentColor(m)} rounded-xl px-4 py-3 text-left hover:border-zinc-700 hover:bg-zinc-900 transition-colors`}>
+              <button key={m.id} onClick={() => onSelectMother(m)} className={`press-card w-full bg-zinc-900/80 border border-zinc-800/80 border-l-2 ${cardAccentColor(m)} rounded-2xl px-4 py-3.5 text-left`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -1694,7 +1725,7 @@ function MotherDetailModal({
             {mother.transplantHistory.length === 0 ? (
               <div className="text-center py-8 text-zinc-600 text-sm">No transplants recorded.</div>
             ) : (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
                 {[...mother.transplantHistory].reverse().map((t, i) => {
                   const isLatest = i === 0;
                   const days = isLatest ? daysSince(t.date) : null;
@@ -1724,7 +1755,7 @@ function MotherDetailModal({
             {mother.amendmentLog.length === 0 ? (
               <div className="text-center py-8 text-zinc-600 text-sm">No amendments recorded.</div>
             ) : (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
                 {mother.amendmentLog.map(a => (
                   <div key={a.id} className="flex items-start justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0">
                     <div className="flex-1 min-w-0">
@@ -1752,7 +1783,7 @@ function MotherDetailModal({
             {mother.cloneLog.length === 0 ? (
               <div className="text-center py-8 text-zinc-600 text-sm">No clone sessions recorded.</div>
             ) : (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
                 {mother.cloneLog.map(c => (
                   <div key={c.id} className="border-b border-zinc-800/50 last:border-0">
                     <div className="flex items-start justify-between px-4 py-3">
@@ -1790,7 +1821,7 @@ function MotherDetailModal({
             {(mother.reductionLog || []).length === 0 ? (
               <div className="text-center py-8 text-zinc-600 text-sm">No reductions recorded.</div>
             ) : (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
                 {(mother.reductionLog || []).map(r => (
                   <div key={r.id} className="flex items-start justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0">
                     <div className="flex-1 min-w-0">
@@ -1834,7 +1865,7 @@ function MotherDetailModal({
             {feedingLog.length === 0 ? (
               <div className="text-center py-8 text-zinc-600 text-sm">No feedings recorded.</div>
             ) : (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
                 {feedingLog.map(f => (
                   <div key={f.id} className="flex items-start justify-between px-4 py-3 border-b border-zinc-800/50 last:border-0">
                     <div className="flex-1 min-w-0">
