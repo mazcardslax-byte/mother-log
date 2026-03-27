@@ -15,21 +15,26 @@ Logging a feeding, amendment, or clone requires opening a plant's detail modal, 
 Swipe left on any plant card in the Mothers tab to reveal three action buttons. The card slides left to expose the buttons underneath; tapping anywhere outside collapses it back.
 
 **Actions:**
-- **💧 Water** — logs immediately with today's date and type "Water Only". No sheet, no confirmation. Single tap.
-- **🌿 Amend** — opens a minimal bottom sheet containing: amendment dropdown (same 13 options as detail modal), optional notes text field, and a Confirm button. Closes and collapses the card on confirm.
-- **✂️ Clone** — opens a minimal bottom sheet containing: numeric count input, optional notes text field, and a Confirm button. Closes and collapses the card on confirm.
+- **💧 Water** — logs immediately with today's date, no sheet, no confirmation. Single tap. The Clone action is hidden for Sidelined plants. Water and Amend remain available for all statuses.
+- **🌿 Amend** — opens a minimal bottom sheet. Amendment input uses the same searchable text field with autocomplete suggestion list as the existing Log Amendment modal (not a `<select>`). Includes an optional notes field and a Confirm button. Closes and collapses the card on confirm. Confirm is disabled until an amendment name is entered.
+- **✂️ Clone** — opens a minimal bottom sheet containing: numeric count input (min 1), optional notes text field, and a Confirm button. Closes and collapses the card on confirm. Confirm is disabled until count ≥ 1. Hidden for Sidelined plants.
+
+**Entry construction:**
+- Water log: `{ id: uid(), date: today(), type: 'Water Only', notes: '' }` — passed to the existing `addFeedingEntry` function on the mother.
+- Amend log: `{ id: uid(), date: today(), amendment: <selected>, notes: <input> }` — passed to existing `addAmendEntry`.
+- Clone log: `{ id: uid(), date: today(), count: <input>, notes: <input> }` — passed to existing `addCloneEntry`.
 
 **Interaction details:**
-- Swipe implemented with native touch events (touchstart / touchmove / touchend) — no library dependency
-- Each card tracks its own open/closed swipe state via a `swipedId` state in the MothersTab component
-- Only one card can be swiped open at a time; opening a new one collapses the previous
-- Tapping the card body while swiped navigates to the detail modal as normal
-- All quick-log entries write to the same `amendmentLog`, `cloneLog`, and `feedingLog` arrays on the mother object and trigger the existing Supabase save effect
+- Implemented with native touch events (touchstart / touchmove / touchend).
+- If horizontal swipe distance exceeds 40px, `preventDefault()` is called on touchend and the resulting click event is suppressed via a ref flag (`swipeDidFire`) checked in the card's onClick handler. Below 40px, treat as a tap and open the detail modal.
+- Each card tracks its own open/closed swipe state via a single `swipedId` state in MothersTab — setting a new `swipedId` collapses the previous card.
+- Only one card can be swiped open at a time.
+- Tapping the card body while not swiped (or after snap-back) opens the detail modal as normal.
+- All quick-log entries write to the existing state arrays and trigger the existing Supabase save effect.
 
 **Bottom sheet spec:**
-- Same modal pattern as existing sheets (backdrop blur, rounded-3xl, drag handle)
-- Minimal: no date picker (defaults to today), no secondary fields
-- Confirm button disabled until required field is filled (amendment name or clone count ≥ 1)
+- Same modal pattern as existing sheets (backdrop blur, rounded-3xl, drag handle).
+- Minimal: no date picker (defaults to today), no secondary fields beyond those listed.
 
 ---
 
@@ -52,25 +57,28 @@ Replace the 5 log tabs with a single **History** tab. The modal moves from 7 tab
 | Photos | |
 
 **Timeline layout:**
-- Entries sorted newest-first
-- Each entry shows: colored type pill (left border accent), event summary line, date, optional notes
+- All entries from `transplantHistory`, `amendmentLog`, `feedingLog`, `cloneLog`, and `reductionLog` are merged and sorted newest-first by `date`.
+- Entries with `date: null` (transplants marked "date unknown") sort to the bottom and display "Date unknown" in the date field.
+- Each entry shows: colored left-border type pill, event summary line, date, optional notes.
 - Type color coding:
-  - Transplant — sky blue
-  - Amendment — violet
-  - Feeding — emerald
-  - Clone — stone/warm gray
-  - Reduction — red
+  - Transplant — sky blue (`text-sky-400 border-sky-700`)
+  - Amendment — violet (`text-violet-400 border-violet-700`)
+  - Feeding — emerald (`text-emerald-400 border-emerald-700`)
+  - Clone — stone (`text-stone-300 border-stone-600`)
+  - Reduction — red (`text-red-400 border-red-700`)
+- Clone-type timeline entries include the "Send to Clone Log" button, same as the current Clones tab.
 
 **Adding entries:**
-- A **＋ Add** button at the top of the History tab opens a type picker sheet (5 buttons, one per log type)
-- Selecting a type opens the same minimal form used today for that log type
-- No functional change to the data structures — entries still write to their respective arrays (`transplantHistory`, `amendmentLog`, etc.)
+- A **＋ Add** button at the top of the History tab opens a type-picker sheet (5 labeled buttons, one per log type).
+- Selecting a type closes the type-picker and opens that type's form sheet. If the user closes the form sheet without submitting, they return to the History tab — the type-picker does not reappear.
+- Implemented with a single `activeSheet` state: `null | 'picker' | 'transplant' | 'amendment' | 'clone' | 'feeding' | 'reduction'`.
+- No functional change to data structures — entries still write to their respective arrays.
 
 **Deleting entries:**
-- Long-press or swipe-left on any timeline entry reveals a delete button (same pattern as current per-tab delete)
+- Each timeline entry shows the same always-visible ✕ delete button used in existing log tabs. No swipe-to-delete; long-press is out of scope.
 
 **Empty state:**
-- "No history yet — tap + to log the first event" with a faint timeline graphic
+- "No history yet — tap + to log the first event."
 
 ---
 
@@ -80,21 +88,23 @@ Replace the 5 log tabs with a single **History** tab. The modal moves from 7 tab
 The room grid shows occupied spots with small health dots that are hard to read at a glance. You can't quickly identify which corner of the room has struggling plants without inspecting each cell.
 
 ### Design
-Occupied spot cells use a full background color driven by the plant's health level:
+Occupied spot cells use full background and border colors driven by the plant's health level, using Tailwind utility classes consistent with the rest of the codebase:
 
-| Health | Background | Border | Text |
-|--------|-----------|--------|------|
-| 5 — Excellent | `#052e16` (deep emerald) | `#16a34a` | `#bbf7d0` |
-| 4 — Good | `#052e16` (deep emerald) | `#16a34a` | `#bbf7d0` |
-| 3 — Moderate | `#422006` (dark amber) | `#ca8a04` | `#fef08a` |
-| 2 — Fair | `#3b0000` (deep red) | `#dc2626` | `#fca5a5` |
-| 1 — Poor | `#3b0000` (deep red) | `#dc2626` | `#fca5a5` |
+| Health | Tailwind Background | Tailwind Border | Tailwind Text |
+|--------|-------------------|-----------------|---------------|
+| 5 — Excellent | `bg-emerald-950` | `border-green-600` | `text-green-200` |
+| 4 — Good | `bg-emerald-950` | `border-green-600` | `text-green-200` |
+| 3 — Moderate | `bg-amber-950` | `border-yellow-600` | `text-yellow-200` |
+| 2 — Fair | `bg-red-950` | `border-red-600` | `text-red-300` |
+| 1 — Poor | `bg-red-950` | `border-red-600` | `text-red-300` |
 
 For spots with multiple mothers, the worst (lowest) health level determines the cell color.
 
 Empty spots (dashed border) and upcoming spots (indigo) are visually unchanged.
 
-**Implementation:** Change is isolated to the `SpotCell` component — update the background class logic that currently uses a near-black background for all occupied cells.
+**Legend update:** The Room tab legend is updated to show three colored swatches: green (Excellent/Good), amber (Moderate), red (Poor/Fair), labeled accordingly. The single generic "Mother" swatch is removed.
+
+**Implementation:** Change is isolated to the `SpotCell` component — update the background/border/text class logic. No inline `style` attributes; all classes must be complete Tailwind strings (no dynamic string construction, to ensure PurgeCSS compatibility).
 
 ---
 
@@ -115,3 +125,5 @@ No schema changes. All three features operate on existing data structures:
 - Clone tracker tab (handled by separate app)
 - Feeding schedule / daily checklist
 - Any schema normalization
+- Swipe-to-delete on timeline entries
+- Long-press interactions of any kind
