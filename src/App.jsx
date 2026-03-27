@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo, useCallback } from "react";
 import QRCode from "qrcode";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import {
@@ -464,11 +464,15 @@ export default function MotherPlantTracker() {
       .finally(() => { setTimeout(() => pendingTimestampsRef.current.delete(ts), 3000); });
   }, [roomSpots]);
 
+  // Normalize Supabase timestamp strings before echo-filter comparison.
+  // Supabase may return "2024-03-26 10:30:00+00" while we store "2024-03-26T10:30:00.000Z".
+  function normTs(ts) { try { return ts ? new Date(ts).toISOString() : null; } catch { return ts; } }
+
   // Real-time sync: when another device saves, update our state.
   // Filters echoes of our own saves by checking the pendingTimestamps Set.
   useEffect(() => {
     const sub = subscribeToKey("mothers_v1", (value, updatedAt) => {
-      if (updatedAt && pendingTimestampsRef.current.has(updatedAt)) return;
+      if (normTs(updatedAt) && pendingTimestampsRef.current.has(normTs(updatedAt))) return;
       if (!value) return;
       setMothers(value.map(m => ({
         transplantHistory: [], amendmentLog: [], cloneLog: [],
@@ -482,7 +486,7 @@ export default function MotherPlantTracker() {
   // Real-time sync for room layout.
   useEffect(() => {
     const sub = subscribeToKey("room_v1", (value, updatedAt) => {
-      if (updatedAt && pendingTimestampsRef.current.has(updatedAt)) return;
+      if (normTs(updatedAt) && pendingTimestampsRef.current.has(normTs(updatedAt))) return;
       if (!value) return;
       setRoomSpots(new Set(value));
     });
@@ -863,12 +867,6 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
     return acc;
   }, {});
 
-  const amendCounts = mothers.flatMap(m => m.amendmentLog).reduce((acc, a) => {
-    acc[a.amendment] = (acc[a.amendment] || 0) + 1;
-    return acc;
-  }, {});
-  const topAmends = Object.entries(amendCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
-
   const byHealth = [5, 4, 3, 2, 1].map(h => ({ h, cnt: mothers.filter(m => m.healthLevel === h).length })).filter(x => x.cnt > 0);
   const healthLabels = { 5: "Excellent (5)", 4: "Good (4)", 3: "Moderate (3)", 2: "Fair (2)", 1: "Poor (1)" };
   const healthClasses = {
@@ -913,20 +911,6 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
               <div key={name} className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 last:border-0">
                 <span className="text-xs text-zinc-300">{name}</span>
                 <span className="text-xs text-zinc-500">{cnt}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {topAmends.length > 0 && (
-        <div>
-          <SectionLabel>Most Used Amendments</SectionLabel>
-          <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
-            {topAmends.map(([name, cnt]) => (
-              <div key={name} className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 last:border-0">
-                <span className="text-xs text-zinc-300">{name}</span>
-                <span className="text-xs text-zinc-500">{cnt}x</span>
               </div>
             ))}
           </div>
@@ -1162,8 +1146,9 @@ function worstHealth(spotMothers) {
   return Math.min(...spotMothers.map(m => m.healthLevel));
 }
 
-function SpotCell({ bench, spot, spotMothers, isUpcoming, onClick }) {
+const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, onCellClick }) {
   const type = spotMothers.length > 0 ? "mother" : isUpcoming ? "upcoming" : "empty";
+  function handleClick() { onCellClick(bench, spot); }
 
   if (type === "mother") {
     const worst = worstHealth(spotMothers);
@@ -1171,7 +1156,7 @@ function SpotCell({ bench, spot, spotMothers, isUpcoming, onClick }) {
     const multi = spotMothers.length > 1;
     return (
       <button
-        onClick={onClick}
+        onClick={handleClick}
         className={`aspect-square rounded-lg border bg-emerald-900/20 ${borderCls} flex flex-col items-center justify-center gap-0.5 p-0.5 w-full`}
       >
         {multi ? (
@@ -1203,7 +1188,7 @@ function SpotCell({ bench, spot, spotMothers, isUpcoming, onClick }) {
   if (type === "upcoming") {
     return (
       <button
-        onClick={onClick}
+        onClick={handleClick}
         className="aspect-square rounded-lg border border-indigo-700/50 bg-indigo-900/20 flex flex-col items-center justify-center gap-0.5 w-full"
       >
         <span className="text-[8px] font-bold text-indigo-300 leading-none">RND</span>
@@ -1214,13 +1199,13 @@ function SpotCell({ bench, spot, spotMothers, isUpcoming, onClick }) {
 
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className="aspect-square rounded-lg border border-dashed border-zinc-800 flex items-center justify-center w-full hover:border-zinc-600 transition-colors"
     >
       <span className="text-zinc-700 text-sm leading-none">+</span>
     </button>
   );
-}
+});
 
 function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onSelectMother, onUpdateMother, onMarkUpcoming, onClearUpcoming }) {
   const key = locationKey(bench, spot);
@@ -1312,6 +1297,10 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
 function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMother }) {
   const [activeSpot, setActiveSpot] = useState(null); // { bench, spot }
 
+  const handleCellClick = useCallback((bench, spot) => {
+    setActiveSpot({ bench, spot });
+  }, []);
+
   function markUpcoming(key) {
     setRoomSpots(prev => new Set([...prev, key]));
   }
@@ -1354,7 +1343,7 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
                     spot={spot}
                     spotMothers={spotMothers}
                     isUpcoming={isUpcoming}
-                    onClick={() => setActiveSpot({ bench: bench.id, spot })}
+                    onCellClick={handleCellClick}
                   />
                 );
               })}
