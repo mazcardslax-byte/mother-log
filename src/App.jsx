@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import QRCode from "qrcode";
+import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 
 // ── Image Compression ───────────────────────────────────────────────────────
 function compressImage(file, maxPx = 800, quality = 0.7) {
@@ -357,7 +358,9 @@ export default function MotherPlantTracker() {
   const [tab, setTab] = useState("Summary");
   const [mothers, setMothers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [roomSpots, setRoomSpots] = useState(() => new Set(load("room_v1") || []));
+  const [syncStatus, setSyncStatus] = useState("live"); // "live" | "syncing" | "error"
+  const isSavingRef = useRef(false);
+  const [roomSpots, setRoomSpots] = useState(new Set());
 
   const [detailMother, setDetailMother] = useState(null);
   const [detailTab, setDetailTab] = useState("Overview");
@@ -376,19 +379,69 @@ export default function MotherPlantTracker() {
   const [reductionForm, setReductionForm] = useState({ date: today(), reason: "Space", notes: "" });
 
   useEffect(() => {
-    const stored = load("mothers_v1");
-    if (stored) {
-      // Migrate: ensure all array fields exist on existing mothers
-      setMothers(stored.map(m => ({ transplantHistory: [], amendmentLog: [], cloneLog: [], feedingLog: [], reductionLog: [], photos: [], createdAt: today(), ...m })));
+    async function init() {
+      let stored = await loadFromDB("mothers_v1");
+
+      // One-time migration: if Supabase is empty but localStorage has data, push it up
+      if (!stored) {
+        try {
+          const local = localStorage.getItem("mothers_v1");
+          if (local) {
+            stored = JSON.parse(local);
+            await saveToDB("mothers_v1", stored);
+          }
+        } catch {}
+      }
+
+      if (stored) {
+        setMothers(stored.map(m => ({ transplantHistory: [], amendmentLog: [], cloneLog: [], feedingLog: [], reductionLog: [], photos: [], createdAt: today(), ...m })));
+      }
+
+      let spots = await loadFromDB("room_v1");
+      if (!spots) {
+        try {
+          const local = localStorage.getItem("room_v1");
+          if (local) {
+            spots = JSON.parse(local);
+            await saveToDB("room_v1", spots);
+          }
+        } catch {}
+      }
+      if (spots) setRoomSpots(new Set(spots));
+
+      setLoading(false);
     }
-    setLoading(false);
+    init();
   }, []);
 
   useEffect(() => {
-    if (!loading) save("mothers_v1", mothers);
+    if (loading) return;
+    setSyncStatus("syncing");
+    isSavingRef.current = true;
+    saveToDB("mothers_v1", mothers)
+      .then(() => setSyncStatus("live"))
+      .catch(() => setSyncStatus("error"))
+      .finally(() => { setTimeout(() => { isSavingRef.current = false; }, 800); });
   }, [mothers, loading]);
 
-  useEffect(() => { save("room_v1", [...roomSpots]); }, [roomSpots]);
+  useEffect(() => {
+    if (loading) return;
+    saveToDB("room_v1", [...roomSpots]).catch(() => {});
+  }, [roomSpots, loading]);
+
+  // Real-time sync: when another device saves, update our state
+  useEffect(() => {
+    const sub = subscribeToKey("mothers_v1", (value) => {
+      if (isSavingRef.current) return; // skip — we just saved this
+      if (!value) return;
+      setMothers(value.map(m => ({
+        transplantHistory: [], amendmentLog: [], cloneLog: [],
+        feedingLog: [], reductionLog: [], photos: [], createdAt: today(),
+        ...m
+      })));
+    });
+    return () => sub.unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (detailMother) {
@@ -559,8 +612,15 @@ export default function MotherPlantTracker() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#080c09] flex items-center justify-center">
-        <div className="text-zinc-600 text-sm">Loading...</div>
+      <div className="min-h-screen bg-[#080c09] flex flex-col items-center justify-center gap-3">
+        <span className="text-4xl">🌿</span>
+        <div className="text-white font-bold text-lg tracking-tight">Mother Log</div>
+        <div className="text-emerald-700 text-xs font-medium tracking-widest uppercase">Stacks Family Farms</div>
+        <div className="flex gap-1.5 mt-4">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" style={{ animationDelay: `${i * 0.2}s` }} />
+          ))}
+        </div>
       </div>
     );
   }
@@ -574,7 +634,17 @@ export default function MotherPlantTracker() {
               <span className="text-lg">🌿</span>
               <h1 className="text-white font-bold text-lg leading-tight tracking-tight">Mother Log</h1>
             </div>
-            <p className="text-emerald-700 text-xs mt-0.5 font-medium tracking-wide">STACKS FAMILY FARMS</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <p className="text-emerald-700 text-xs font-medium tracking-wide">STACKS FAMILY FARMS</p>
+              <div
+                title={syncStatus === "syncing" ? "Saving..." : syncStatus === "error" ? "Sync error" : "Live"}
+                className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                  syncStatus === "syncing" ? "bg-yellow-400 animate-pulse" :
+                  syncStatus === "error" ? "bg-red-500" :
+                  "bg-emerald-500"
+                }`}
+              />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
