@@ -456,13 +456,25 @@ export default function MotherPlantTracker() {
     return () => sub.unsubscribe();
   }, []);
 
+  // Real-time sync for room layout so concurrent spot changes from other
+  // devices show up without a page reload.
+  useEffect(() => {
+    const sub = subscribeToKey("room_v1", (value, updatedAt) => {
+      if (updatedAt && updatedAt === lastSaveTimestampRef.current) return;
+      if (!value) return;
+      setRoomSpots(new Set(value));
+    });
+    return () => sub.unsubscribe();
+  }, []);
+
   useEffect(() => {
     if (detailMother) {
       const updated = mothers.find(m => m.id === detailMother.id);
       if (updated) setDetailMother(updated);
       else setDetailMother(null);
     }
-  }, [mothers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mothers, detailMother?.id]);
 
   useEffect(() => {
     // Reset all modal forms when switching to a different mother
@@ -1447,8 +1459,22 @@ function SendToCloneLogModal({ cloneEntry, strainName, strainCode, motherLocatio
         setTimeout(() => setCopied(false), 2500);
       });
     } else {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      // Fallback for non-HTTPS / older WebViews — don't claim success if it fails
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = jsonString;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch {
+        // execCommand also unavailable — nothing to do
+      }
     }
   }
 
@@ -1995,15 +2021,6 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
     setStorageWarning(false);
     try {
       const dataUrl = await compressImage(selectedFile);
-      // Test if localStorage has space
-      try {
-        localStorage.setItem("__photo_test__", dataUrl);
-        localStorage.removeItem("__photo_test__");
-      } catch {
-        setStorageWarning(true);
-        setUploading(false);
-        return;
-      }
       onAddPhoto({ dataUrl, caption: caption.trim(), date: photoDate });
       setAdding(false);
       setCaption("");
