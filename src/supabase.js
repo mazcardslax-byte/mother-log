@@ -18,15 +18,13 @@ export async function loadFromDB(key) {
   return data?.value ?? null;
 }
 
-// Returns the updated_at timestamp used, so callers can compare against
-// incoming realtime payloads to identify their own saves.
-export async function saveToDB(key, value) {
-  const updatedAt = new Date().toISOString();
+// Caller passes in the timestamp so it can be registered in pendingTimestamps
+// before the async save starts — preventing echo-overwrite races.
+export async function saveToDB(key, value, updatedAt) {
   const { error } = await supabase
     .from("app_data")
     .upsert({ key, value, updated_at: updatedAt });
   if (error) throw error;
-  return updatedAt;
 }
 
 // Subscribe to real-time changes on a key.

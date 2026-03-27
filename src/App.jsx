@@ -359,9 +359,11 @@ export default function MotherPlantTracker() {
   const [mothers, setMothers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("live"); // "live" | "syncing" | "error"
-  // Track the updated_at timestamp of our last save so we can filter our own
-  // realtime echoes without blocking concurrent updates from other clients.
-  const lastSaveTimestampRef = useRef(null);
+  // Set of timestamps for all in-flight saves. Real-time echoes whose
+  // updated_at is in this set are our own and should be ignored.
+  // Using a Set (vs a single "last" timestamp) prevents rapid successive saves
+  // from letting older echoes slip through and overwrite newer state.
+  const pendingTimestampsRef = useRef(new Set());
   // Tracks whether init() has completed so the mothers save effect skips the
   // first fire (which would re-save data we just loaded from the DB).
   const saveReadyRef = useRef(false);
@@ -428,24 +430,29 @@ export default function MotherPlantTracker() {
     // Skip the first fire after init — data was just loaded FROM the DB,
     // no need to write it back immediately.
     if (!saveReadyRef.current) return;
+    const ts = new Date().toISOString();
+    pendingTimestampsRef.current.add(ts);
     setSyncStatus("syncing");
-    saveToDB("mothers_v1", mothers)
-      .then((ts) => { lastSaveTimestampRef.current = ts; setSyncStatus("live"); })
-      .catch((err) => { console.error("[supabase] mothers save failed:", err); setSyncStatus("error"); });
+    saveToDB("mothers_v1", mothers, ts)
+      .then(() => setSyncStatus("live"))
+      .catch((err) => { console.error("[supabase] mothers save failed:", err); setSyncStatus("error"); })
+      .finally(() => { setTimeout(() => pendingTimestampsRef.current.delete(ts), 3000); });
   }, [mothers]);
 
   useEffect(() => {
     if (!saveReadyRef.current) return;
-    saveToDB("room_v1", [...roomSpots])
-      .catch((err) => console.error("[supabase] room save failed:", err));
+    const ts = new Date().toISOString();
+    pendingTimestampsRef.current.add(ts);
+    saveToDB("room_v1", [...roomSpots], ts)
+      .catch((err) => console.error("[supabase] room save failed:", err))
+      .finally(() => { setTimeout(() => pendingTimestampsRef.current.delete(ts), 3000); });
   }, [roomSpots]);
 
   // Real-time sync: when another device saves, update our state.
-  // Filters out our own saves by comparing updated_at timestamps.
+  // Filters echoes of our own saves by checking the pendingTimestamps Set.
   useEffect(() => {
     const sub = subscribeToKey("mothers_v1", (value, updatedAt) => {
-      // Skip if this event was triggered by our own last save
-      if (updatedAt && updatedAt === lastSaveTimestampRef.current) return;
+      if (updatedAt && pendingTimestampsRef.current.has(updatedAt)) return;
       if (!value) return;
       setMothers(value.map(m => ({
         transplantHistory: [], amendmentLog: [], cloneLog: [],
@@ -456,11 +463,10 @@ export default function MotherPlantTracker() {
     return () => sub.unsubscribe();
   }, []);
 
-  // Real-time sync for room layout so concurrent spot changes from other
-  // devices show up without a page reload.
+  // Real-time sync for room layout.
   useEffect(() => {
     const sub = subscribeToKey("room_v1", (value, updatedAt) => {
-      if (updatedAt && updatedAt === lastSaveTimestampRef.current) return;
+      if (updatedAt && pendingTimestampsRef.current.has(updatedAt)) return;
       if (!value) return;
       setRoomSpots(new Set(value));
     });
