@@ -359,7 +359,12 @@ export default function MotherPlantTracker() {
   const [mothers, setMothers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState("live"); // "live" | "syncing" | "error"
-  const isSavingRef = useRef(false);
+  // Track the updated_at timestamp of our last save so we can filter our own
+  // realtime echoes without blocking concurrent updates from other clients.
+  const lastSaveTimestampRef = useRef(null);
+  // Tracks whether init() has completed so the mothers save effect skips the
+  // first fire (which would re-save data we just loaded from the DB).
+  const saveReadyRef = useRef(false);
   const [roomSpots, setRoomSpots] = useState(new Set());
 
   const [detailMother, setDetailMother] = useState(null);
@@ -380,59 +385,67 @@ export default function MotherPlantTracker() {
 
   useEffect(() => {
     async function init() {
-      let stored = await loadFromDB("mothers_v1");
+      try {
+        let stored = await loadFromDB("mothers_v1");
 
-      // One-time migration: if Supabase is empty but localStorage has data, push it up
-      if (!stored) {
-        try {
-          const local = localStorage.getItem("mothers_v1");
-          if (local) {
-            stored = JSON.parse(local);
-            await saveToDB("mothers_v1", stored);
-          }
-        } catch {}
+        // One-time migration: if Supabase is empty but localStorage has data, push it up
+        if (!stored) {
+          try {
+            const local = localStorage.getItem("mothers_v1");
+            if (local) {
+              stored = JSON.parse(local);
+              await saveToDB("mothers_v1", stored);
+            }
+          } catch {}
+        }
+
+        if (stored) {
+          setMothers(stored.map(m => ({ transplantHistory: [], amendmentLog: [], cloneLog: [], feedingLog: [], reductionLog: [], photos: [], createdAt: today(), ...m })));
+        }
+
+        let spots = await loadFromDB("room_v1");
+        if (!spots) {
+          try {
+            const local = localStorage.getItem("room_v1");
+            if (local) {
+              spots = JSON.parse(local);
+              await saveToDB("room_v1", spots);
+            }
+          } catch {}
+        }
+        if (spots) setRoomSpots(new Set(spots));
+      } catch (err) {
+        console.error("[init] failed to load from Supabase:", err);
+      } finally {
+        saveReadyRef.current = true;
+        setLoading(false);
       }
-
-      if (stored) {
-        setMothers(stored.map(m => ({ transplantHistory: [], amendmentLog: [], cloneLog: [], feedingLog: [], reductionLog: [], photos: [], createdAt: today(), ...m })));
-      }
-
-      let spots = await loadFromDB("room_v1");
-      if (!spots) {
-        try {
-          const local = localStorage.getItem("room_v1");
-          if (local) {
-            spots = JSON.parse(local);
-            await saveToDB("room_v1", spots);
-          }
-        } catch {}
-      }
-      if (spots) setRoomSpots(new Set(spots));
-
-      setLoading(false);
     }
     init();
   }, []);
 
   useEffect(() => {
-    if (loading) return;
+    // Skip the first fire after init — data was just loaded FROM the DB,
+    // no need to write it back immediately.
+    if (!saveReadyRef.current) return;
     setSyncStatus("syncing");
-    isSavingRef.current = true;
     saveToDB("mothers_v1", mothers)
-      .then(() => setSyncStatus("live"))
-      .catch(() => setSyncStatus("error"))
-      .finally(() => { setTimeout(() => { isSavingRef.current = false; }, 800); });
-  }, [mothers, loading]);
+      .then((ts) => { lastSaveTimestampRef.current = ts; setSyncStatus("live"); })
+      .catch((err) => { console.error("[supabase] mothers save failed:", err); setSyncStatus("error"); });
+  }, [mothers]);
 
   useEffect(() => {
-    if (loading) return;
-    saveToDB("room_v1", [...roomSpots]).catch(() => {});
-  }, [roomSpots, loading]);
+    if (!saveReadyRef.current) return;
+    saveToDB("room_v1", [...roomSpots])
+      .catch((err) => console.error("[supabase] room save failed:", err));
+  }, [roomSpots]);
 
-  // Real-time sync: when another device saves, update our state
+  // Real-time sync: when another device saves, update our state.
+  // Filters out our own saves by comparing updated_at timestamps.
   useEffect(() => {
-    const sub = subscribeToKey("mothers_v1", (value) => {
-      if (isSavingRef.current) return; // skip — we just saved this
+    const sub = subscribeToKey("mothers_v1", (value, updatedAt) => {
+      // Skip if this event was triggered by our own last save
+      if (updatedAt && updatedAt === lastSaveTimestampRef.current) return;
       if (!value) return;
       setMothers(value.map(m => ({
         transplantHistory: [], amendmentLog: [], cloneLog: [],
