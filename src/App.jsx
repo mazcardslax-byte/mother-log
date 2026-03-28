@@ -4,6 +4,7 @@ import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, Loader2, AlertCircle,
   ChevronDown, Droplets, ClipboardList,
+  Scissors, FlaskConical, ChevronRight,
 } from "lucide-react";
 
 // ── Image Compression ───────────────────────────────────────────────────────
@@ -817,6 +818,7 @@ export default function MotherPlantTracker() {
             mothers={mothers}
             onSelectMother={handleSelectMother}
             onQuickWater={mid => addFeedingEntry(mid, { date: today(), type: "Water Only", notes: "" })}
+            onQuickFeed={(mid, type) => addFeedingEntry(mid, { date: today(), type, notes: "" })}
             onQuickAmend={(mid, amendment, notes) => addAmendment(mid, { date: today(), amendment, notes })}
             onQuickClone={(mid, count, notes) => addCloneEntry(mid, { date: today(), count, notes })}
             onWaterAll={waterAll}
@@ -1083,7 +1085,7 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
 });
 
 // ── Mothers Tab ────────────────────────────────────────────────────────────
-const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onSelectMother, onQuickWater, onOpenAmend, onOpenClone }) {
+const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onOpenQuickLog, onQuickWater, onOpenAmend, onOpenClone }) {
   const showClone = m.status !== "Sidelined";
   const ACTION_W = showClone ? 144 : 96;
   const touchStartX = useRef(null);
@@ -1117,7 +1119,7 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
   function handleCardClick() {
     if (swipeDidFire.current) { swipeDidFire.current = false; return; }
     if (isOpen) { onSwipeClose(); return; }
-    onSelectMother(m);
+    onOpenQuickLog(m.id);
   }
 
   return (
@@ -1186,7 +1188,7 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
 const StrainGroup = memo(function StrainGroup({
   group, isCollapsed, onToggle,
   swipedId, onSwipeOpen, onSwipeClose,
-  onSelectMother, onQuickWater, onOpenAmend, onOpenClone,
+  onOpenQuickLog, onQuickWater, onOpenAmend, onOpenClone,
 }) {
   const cards = (
     <div className="space-y-2 mb-3">
@@ -1197,7 +1199,7 @@ const StrainGroup = memo(function StrainGroup({
           isOpen={swipedId === m.id}
           onSwipeOpen={() => onSwipeOpen(m.id)}
           onSwipeClose={onSwipeClose}
-          onSelectMother={onSelectMother}
+          onOpenQuickLog={onOpenQuickLog}
           onQuickWater={onQuickWater}
           onOpenAmend={onOpenAmend}
           onOpenClone={onOpenClone}
@@ -1232,10 +1234,11 @@ const StrainGroup = memo(function StrainGroup({
   );
 });
 
-function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickAmend, onQuickClone, onWaterAll }) {
+function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuickAmend, onQuickClone, onWaterAll }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [swipedId, setSwipedId] = useState(null);
+  const [quickLogSheet, setQuickLogSheet] = useState(null); // null | { motherId }
   const [quickSheet, setQuickSheet] = useState(null); // null | { type: 'amend'|'clone', motherId }
   const [amendInput, setAmendInput] = useState({ amendment: "", notes: "", search: "" });
   const [cloneInput, setCloneInput] = useState({ count: "", notes: "" });
@@ -1275,6 +1278,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickAmend, onQui
   const handleSwipeClose = useCallback(() => setSwipedId(null), []);
   const handleOpenAmend = useCallback((mid) => setQuickSheet({ type: "amend", motherId: mid }), []);
   const handleOpenClone = useCallback((mid) => setQuickSheet({ type: "clone", motherId: mid }), []);
+  const handleOpenQuickLog = useCallback((mid) => { setSwipedId(null); setQuickLogSheet({ motherId: mid }); }, []);
 
   function showToast(msg) {
     setToast(msg);
@@ -1283,6 +1287,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickAmend, onQui
 
   function closeSheet() {
     setQuickSheet(null);
+    setQuickLogSheet(null);
     setAmendInput({ amendment: "", notes: "", search: "" });
     setCloneInput({ count: "", notes: "" });
   }
@@ -1352,7 +1357,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickAmend, onQui
               swipedId={swipedId}
               onSwipeOpen={handleSwipeOpen}
               onSwipeClose={handleSwipeClose}
-              onSelectMother={onSelectMother}
+              onOpenQuickLog={handleOpenQuickLog}
               onQuickWater={onQuickWater}
               onOpenAmend={handleOpenAmend}
               onOpenClone={handleOpenClone}
@@ -1360,6 +1365,66 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickAmend, onQui
           ))}
         </div>
       )}
+
+      {/* Quick Log sheet — tap a card to log */}
+      {quickLogSheet && (() => {
+        const qlMother = mothers.find(m => m.id === quickLogSheet.motherId);
+        if (!qlMother) return null;
+        const qlStrain = getStrain(qlMother.strainCode);
+        const showClone = qlMother.status !== "Sidelined";
+        function logFeed(type) {
+          onQuickFeed(quickLogSheet.motherId, type);
+          setQuickLogSheet(null);
+          showToast(`${type} — ${qlStrain.code}`);
+        }
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setQuickLogSheet(null); }}>
+            <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+              <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-zinc-700" /></div>
+              <div className="px-5 pb-6 pt-2 space-y-4">
+                {/* Header */}
+                <div>
+                  <div className="text-base font-bold text-white">{qlStrain.code} — {qlStrain.name}</div>
+                  {qlMother.location && <div className="text-xs text-zinc-500 mt-0.5">{qlMother.location}</div>}
+                </div>
+                {/* Feeding row */}
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => logFeed("Water Only")} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-sky-900/60 border border-sky-800/50 active:bg-sky-800 transition-colors min-h-[72px]">
+                    <Droplets className="w-5 h-5 text-sky-400" strokeWidth={2} />
+                    <span className="text-[10px] font-semibold text-sky-300 leading-none">Water</span>
+                  </button>
+                  <button onClick={() => logFeed("Light Feed")} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-teal-900/60 border border-teal-800/50 active:bg-teal-800 transition-colors min-h-[72px]">
+                    <Leaf className="w-5 h-5 text-teal-400" strokeWidth={2} />
+                    <span className="text-[10px] font-semibold text-teal-300 leading-none">Light Feed</span>
+                  </button>
+                  <button onClick={() => logFeed("Full Feed")} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-green-900/60 border border-green-800/50 active:bg-green-800 transition-colors min-h-[72px]">
+                    <Leaf className="w-5 h-5 text-green-400" strokeWidth={2} />
+                    <span className="text-[10px] font-semibold text-green-300 leading-none">Full Feed</span>
+                  </button>
+                </div>
+                {/* Amend + Clone row */}
+                <div className={`grid gap-2 ${showClone ? "grid-cols-2" : "grid-cols-1"}`}>
+                  <button onClick={() => { setQuickLogSheet(null); handleOpenAmend(quickLogSheet.motherId); }} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-violet-900/60 border border-violet-800/50 active:bg-violet-800 transition-colors min-h-[72px]">
+                    <FlaskConical className="w-5 h-5 text-violet-400" strokeWidth={2} />
+                    <span className="text-[10px] font-semibold text-violet-300 leading-none">Amendment</span>
+                  </button>
+                  {showClone && (
+                    <button onClick={() => { setQuickLogSheet(null); handleOpenClone(quickLogSheet.motherId); }} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-emerald-900/60 border border-emerald-800/50 active:bg-emerald-800 transition-colors min-h-[72px]">
+                      <Scissors className="w-5 h-5 text-emerald-400" strokeWidth={2} />
+                      <span className="text-[10px] font-semibold text-emerald-300 leading-none">Clone Cut</span>
+                    </button>
+                  )}
+                </div>
+                {/* View full details */}
+                <button onClick={() => { setQuickLogSheet(null); onSelectMother(qlMother); }} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold active:bg-zinc-800/60 transition-colors min-h-[44px]">
+                  View Full Details
+                  <ChevronRight className="w-4 h-4" strokeWidth={2} />
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Water All confirm sheet */}
       {waterAllSheet && (
