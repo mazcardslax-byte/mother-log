@@ -401,6 +401,15 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
   const [error, setError] = useState("");
   const [transplantModal, setTransplantModal] = useState(null);
   const [transplantDate, setTransplantDate] = useState(today());
+  const [collapsedStrains, setCollapsedStrains] = useState(new Set());
+
+  function toggleStrainCollapse(strainName) {
+    setCollapsedStrains(prev => {
+      const n = new Set(prev);
+      n.has(strainName) ? n.delete(strainName) : n.add(strainName);
+      return n;
+    });
+  }
 
   function autoCode() {
     if (!strainCode) return "";
@@ -462,46 +471,87 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
       {activeTrys.length > 0 && (
         <div>
           <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-2">Active Trays</div>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden divide-y divide-zinc-800/50">
-            {activeTrys.map(t => {
-              const days = daysSince(t.dateStarted);
-              const alert = isAlert(t);
-              const loggedCount = plants.filter(p => p.tray === t.code && !p.archived).length;
-              return (
-                <div key={t.id} className={`px-4 py-3 ${alert ? "bg-red-950/20" : ""}`}>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div>
-                      <span className={`text-sm font-bold ${alert ? "text-red-300" : "text-emerald-400"}`}>{t.code}</span>
-                      {alert && <span className="ml-2 text-[10px] text-red-400 font-bold">⚠ OVERDUE</span>}
-                      <div className="text-xs text-zinc-400 mt-0.5">{t.strainName}</div>
-                    </div>
-                    <div className="flex gap-1.5 flex-shrink-0">
-                      <button onClick={() => { setTransplantModal(t); setTransplantDate(today()); }}
-                        className={`text-[10px] font-medium border rounded px-2 py-0.5 transition-colors ${alert ? "border-red-700/50 text-red-300 hover:bg-red-900/30" : "border-emerald-700/50 text-emerald-400 hover:bg-emerald-900/20"}`}>
-                        Transplant
-                      </button>
-                      <button onClick={() => setTrayStatus(t.id, "Done")}
-                        className="text-[10px] text-zinc-600 border border-zinc-700 rounded px-2 py-0.5 hover:text-zinc-300 transition-colors">Done</button>
-                      <button onClick={() => deleteTray(t.id)}
-                        className="text-[10px] text-zinc-700 hover:text-red-400 transition-colors px-1">✕</button>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-3 text-[10px]">
-                    <span className={`font-bold ${alert ? "text-red-400" : days >= 10 ? "text-amber-400" : "text-zinc-500"}`}>Day {days ?? "—"}</span>
-                    <div className="flex-1 flex items-center gap-1.5 min-w-20">
-                      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${alert ? "bg-red-500" : days >= 10 ? "bg-amber-500" : "bg-emerald-500"}`}
-                          style={{ width: `${Math.min(100, ((days || 0) / 14) * 100)}%` }} />
+          <div className="space-y-2">
+            {(() => {
+              // Group by strain name
+              const groups = {};
+              for (const t of activeTrys) {
+                const key = t.strainName || t.strainCode;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(t);
+              }
+              return Object.entries(groups).map(([strainName, groupTrays]) => {
+                const collapsed = collapsedStrains.has(strainName);
+                const hasAlert = groupTrays.some(t => isAlert(t));
+                const totalCount = groupTrays.reduce((s, t) => s + (t.count || 0), 0);
+                const minDay = Math.min(...groupTrays.map(t => daysSince(t.dateStarted) ?? 0));
+                const maxDay = Math.max(...groupTrays.map(t => daysSince(t.dateStarted) ?? 0));
+                const dayLabel = groupTrays.length === 1
+                  ? `Day ${daysSince(groupTrays[0].dateStarted) ?? "—"}`
+                  : `Day ${minDay}–${maxDay}`;
+                return (
+                  <div key={strainName} className={`bg-zinc-900 border rounded-xl overflow-hidden ${hasAlert ? "border-red-700/40" : "border-zinc-800"}`}>
+                    {/* Collapsible header */}
+                    <button
+                      onClick={() => toggleStrainCollapse(strainName)}
+                      className={`w-full px-4 py-3 flex items-center justify-between gap-2 ${hasAlert ? "bg-red-950/20" : "bg-zinc-800/60"}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className={`text-xs font-semibold truncate ${hasAlert ? "text-red-300" : "text-white"}`}>{strainName}</span>
+                        {hasAlert && <span className="text-[10px] text-red-400 font-bold flex-shrink-0">⚠ OVERDUE</span>}
                       </div>
-                      <span className="text-zinc-700 text-[9px]">14</span>
-                    </div>
-                    {t.count && <span className="text-zinc-600">Cap: <span className="text-zinc-500">{t.count}</span></span>}
-                    {loggedCount > 0 && <span className="text-zinc-600">Logged: <span className="text-emerald-500">{loggedCount}</span></span>}
-                    {t.notes && <span className="text-zinc-700 italic">{t.notes}</span>}
+                      <div className="flex items-center gap-2 flex-shrink-0 text-[10px]">
+                        <span className={hasAlert ? "text-red-400 font-bold" : "text-zinc-500"}>{dayLabel}</span>
+                        <span className="text-zinc-600">{groupTrays.length} tray{groupTrays.length > 1 ? "s" : ""}</span>
+                        {totalCount > 0 && <span className="text-zinc-600">{totalCount} clones</span>}
+                        <span className={`text-zinc-500 transition-transform duration-150 ${collapsed ? "" : "rotate-180"}`}>▾</span>
+                      </div>
+                    </button>
+                    {/* Tray rows */}
+                    {!collapsed && (
+                      <div className="divide-y divide-zinc-800/50">
+                        {groupTrays.map(t => {
+                          const days = daysSince(t.dateStarted);
+                          const alert = isAlert(t);
+                          const loggedCount = plants.filter(p => p.tray === t.code && !p.archived).length;
+                          return (
+                            <div key={t.id} className={`px-4 py-3 ${alert ? "bg-red-950/10" : ""}`}>
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div>
+                                  <span className={`text-sm font-bold ${alert ? "text-red-300" : "text-emerald-400"}`}>{t.code}</span>
+                                </div>
+                                <div className="flex gap-1.5 flex-shrink-0">
+                                  <button onClick={() => { setTransplantModal(t); setTransplantDate(today()); }}
+                                    className={`text-[10px] font-medium border rounded px-2 py-0.5 transition-colors ${alert ? "border-red-700/50 text-red-300 hover:bg-red-900/30" : "border-emerald-700/50 text-emerald-400 hover:bg-emerald-900/20"}`}>
+                                    Transplant
+                                  </button>
+                                  <button onClick={() => setTrayStatus(t.id, "Done")}
+                                    className="text-[10px] text-zinc-600 border border-zinc-700 rounded px-2 py-0.5 hover:text-zinc-300 transition-colors">Done</button>
+                                  <button onClick={() => deleteTray(t.id)}
+                                    className="text-[10px] text-zinc-700 hover:text-red-400 transition-colors px-1">✕</button>
+                                </div>
+                              </div>
+                              <div className="flex flex-wrap gap-3 text-[10px]">
+                                <span className={`font-bold ${alert ? "text-red-400" : days >= 10 ? "text-amber-400" : "text-zinc-500"}`}>Day {days ?? "—"}</span>
+                                <div className="flex-1 flex items-center gap-1.5 min-w-20">
+                                  <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                    <div className={`h-full rounded-full transition-all ${alert ? "bg-red-500" : days >= 10 ? "bg-amber-500" : "bg-emerald-500"}`}
+                                      style={{ width: `${Math.min(100, ((days || 0) / 14) * 100)}%` }} />
+                                  </div>
+                                  <span className="text-zinc-700 text-[9px]">14</span>
+                                </div>
+                                {t.count && <span className="text-zinc-600">Cap: <span className="text-zinc-500">{t.count}</span></span>}
+                                {loggedCount > 0 && <span className="text-zinc-600">Logged: <span className="text-emerald-500">{loggedCount}</span></span>}
+                                {t.notes && <span className="text-zinc-700 italic">{t.notes}</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </div>
       )}
@@ -909,8 +959,8 @@ export default function ClonesTab() {
   return (
     <div>
       {/* ── Sub-tab navigation ── */}
-      <div className="flex items-center border-b border-zinc-800 overflow-x-auto">
-        <div className="flex flex-1 px-1 min-w-0">
+      <div className="border-b border-zinc-800">
+        <div className="flex overflow-x-auto">
           {CLONE_SUB_TABS.map(t => (
             <button key={t} onClick={() => { setTab(t); if (t !== "Log") clearSelect(); }}
               className={`px-3 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-colors flex-shrink-0 ${tab === t ? "border-emerald-500 text-emerald-400" : "border-transparent text-zinc-500 active:text-zinc-300"}`}>
@@ -921,16 +971,16 @@ export default function ClonesTab() {
             </button>
           ))}
         </div>
-        {/* Sync + export icons */}
-        <div className="flex items-center gap-1.5 px-3 flex-shrink-0">
-          <SyncIcon size={12} className={syncColor} />
+        {/* Utility row: sync + export + search */}
+        <div className="flex items-center justify-end gap-1 px-3 pb-1">
+          <SyncIcon size={11} className={syncColor} />
           <button onClick={exportCSV} aria-label="Export CSV"
-            className="text-zinc-600 active:text-zinc-300 w-8 h-8 flex items-center justify-center">
-            <Download size={13} />
+            className="text-zinc-600 active:text-zinc-300 w-8 h-7 flex items-center justify-center">
+            <Download size={12} />
           </button>
           <button onClick={() => setShowSearch(s => !s)} aria-label="Search"
-            className={`w-8 h-8 flex items-center justify-center ${showSearch ? "text-emerald-400" : "text-zinc-600 active:text-zinc-300"}`}>
-            <Search size={13} />
+            className={`w-8 h-7 flex items-center justify-center ${showSearch ? "text-emerald-400" : "text-zinc-600 active:text-zinc-300"}`}>
+            <Search size={12} />
           </button>
         </div>
       </div>
