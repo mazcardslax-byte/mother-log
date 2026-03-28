@@ -655,6 +655,13 @@ export default function ClonesTab() {
 
   // Log view mode
   const [compactView, setCompactView] = useState(false);
+  const [collapsedLogStrains, setCollapsedLogStrains] = useState(new Set());
+
+  function toggleLogStrain(name) {
+    setCollapsedLogStrains(prev => {
+      const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n;
+    });
+  }
 
   // Quick Log
   const [quickStrain, setQuickStrain] = useState("");
@@ -1329,6 +1336,7 @@ export default function ClonesTab() {
             const survData = survivalByStrain[strainName];
             const rate = survData && survData.total > 0 ? Math.round((survData.transplanted / survData.total) * 100) : null;
             const dotColor = strainColorMap[strainName] || STRAIN_PALETTE[0];
+            const isCollapsed = collapsedLogStrains.has(strainName);
             return (
               <div key={strainName} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
                 <div className="px-4 py-3 bg-zinc-800/60 flex items-center gap-2 justify-between">
@@ -1341,17 +1349,22 @@ export default function ClonesTab() {
                         className="w-4 h-4 accent-emerald-500 flex-shrink-0" />
                     )}
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
-                    <span className="text-sm font-semibold text-white truncate">{strainName}</span>
+                    <button onClick={() => toggleLogStrain(strainName)}
+                      className="text-sm font-semibold text-white truncate text-left">
+                      {strainName}
+                    </button>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {rate !== null && <span className={`text-[10px] font-bold ${rate >= 80 ? "text-emerald-500" : rate >= 60 ? "text-amber-500" : "text-red-500"}`}>{rate}%</span>}
                     <span className="text-xs text-zinc-500">{group.length}</span>
+                    <button onClick={() => toggleLogStrain(strainName)}
+                      className={`text-zinc-500 transition-transform duration-150 text-xs ${isCollapsed ? "" : "rotate-180"}`}>▾</button>
                   </div>
                 </div>
-                {!compactView && group[0]?.batchNote && (
+                {!isCollapsed && !compactView && group[0]?.batchNote && (
                   <div className="px-4 py-2 bg-zinc-800/20 text-xs text-zinc-500 italic border-b border-zinc-800/40">📝 {group[0].batchNote}</div>
                 )}
-                {compactView ? (
+                {!isCollapsed && compactView ? (
                   <div className="divide-y divide-zinc-800/30">
                     {group.map(p => (
                       <div key={p.id} onClick={selectMode ? () => toggleSelect(p.id) : undefined}
@@ -1370,7 +1383,7 @@ export default function ClonesTab() {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : !isCollapsed ? (
                   <div className="divide-y divide-zinc-800/40">
                     {group.map(p => (
                       <div key={p.id} onClick={selectMode ? () => toggleSelect(p.id) : undefined}
@@ -1397,7 +1410,7 @@ export default function ClonesTab() {
                       </div>
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
             );
           })}
