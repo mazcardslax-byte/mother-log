@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, memo, useCallback } from "react";
+import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
 import QRCode from "qrcode";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, WifiOff, Loader2, AlertCircle,
+  ChevronDown, Droplets, ClipboardList,
 } from "lucide-react";
 
 // ── Image Compression ───────────────────────────────────────────────────────
@@ -92,10 +93,27 @@ const FEEDING_TYPES = [
 
 // Tab bar items — static, hoisted to module scope to avoid per-render allocation
 const TAB_ITEMS = [
-  { key: "Summary", label: "Summary", icon: LayoutDashboard },
-  { key: "Mothers", label: "Mothers", icon: Leaf },
-  { key: "Room",    label: "Room",    icon: Grid3X3 },
-  { key: "Add",     label: "Add",     icon: Plus },
+  { key: "Summary",  label: "Summary",  icon: LayoutDashboard },
+  { key: "Mothers",  label: "Mothers",  icon: Leaf },
+  { key: "Room",     label: "Room",     icon: Grid3X3 },
+  { key: "Facility", label: "Facility", icon: ClipboardList },
+];
+
+// ── Facility Data ───────────────────────────────────────────────────────────
+const DEFAULT_FACILITY = {
+  room2floor:  { label: "Room 2 Floor",      log: [] },
+  bench1:      { label: "Bench 1",           log: [] },
+  bench2:      { label: "Bench 2",           log: [] },
+  bench3:      { label: "Bench 3",           log: [] },
+  bench4:      { label: "Bench 4",           log: [] },
+  ac_cleaned:  { label: "A/C Cleaned",       log: [] },
+  ac_filters:  { label: "Filters Replaced",  log: [] },
+};
+
+const FACILITY_SECTIONS = [
+  { label: "Floor",   items: ["room2floor"] },
+  { label: "Benches", items: ["bench1", "bench2", "bench3", "bench4"] },
+  { label: "A/C",     items: ["ac_cleaned", "ac_filters"] },
 ];
 
 // ── Utilities ──────────────────────────────────────────────────────────────
@@ -384,6 +402,8 @@ export default function MotherPlantTracker() {
   // first fire (which would re-save data we just loaded from the DB).
   const saveReadyRef = useRef(false);
   const [roomSpots, setRoomSpots] = useState(new Set());
+  const [facility, setFacility] = useState(DEFAULT_FACILITY);
+  const facilityPendingRef = useRef(new Set());
 
   const [detailMother, setDetailMother] = useState(null);
   const [detailTab, setDetailTab] = useState("Overview");
@@ -432,6 +452,9 @@ export default function MotherPlantTracker() {
           } catch {}
         }
         if (spots) setRoomSpots(new Set(spots));
+
+        const fac = await loadFromDB("facility_v1");
+        if (fac) setFacility(prev => ({ ...prev, ...fac }));
       } catch (err) {
         console.error("[init] failed to load from Supabase:", err);
       } finally {
@@ -464,6 +487,15 @@ export default function MotherPlantTracker() {
       .finally(() => { setTimeout(() => pendingTimestampsRef.current.delete(ts), 3000); });
   }, [roomSpots]);
 
+  useEffect(() => {
+    if (!saveReadyRef.current) return;
+    const ts = new Date().toISOString();
+    facilityPendingRef.current.add(ts);
+    saveToDB("facility_v1", facility, ts)
+      .catch((err) => console.error("[supabase] facility save failed:", err))
+      .finally(() => { setTimeout(() => facilityPendingRef.current.delete(ts), 3000); });
+  }, [facility]);
+
   // Normalize Supabase timestamp strings before echo-filter comparison.
   // Supabase may return "2024-03-26 10:30:00+00" while we store "2024-03-26T10:30:00.000Z".
   function normTs(ts) { try { return ts ? new Date(ts).toISOString() : null; } catch { return ts; } }
@@ -489,6 +521,16 @@ export default function MotherPlantTracker() {
       if (normTs(updatedAt) && pendingTimestampsRef.current.has(normTs(updatedAt))) return;
       if (!value) return;
       setRoomSpots(new Set(value));
+    });
+    return () => sub.unsubscribe();
+  }, []);
+
+  // Real-time sync for facility log.
+  useEffect(() => {
+    const sub = subscribeToKey("facility_v1", (value, updatedAt) => {
+      if (normTs(updatedAt) && facilityPendingRef.current.has(normTs(updatedAt))) return;
+      if (!value) return;
+      setFacility(prev => ({ ...prev, ...value }));
     });
     return () => sub.unsubscribe();
   }, []);
@@ -608,6 +650,26 @@ export default function MotherPlantTracker() {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, photos: (m.photos || []).filter(p => p.id !== photoId) }
+        : m
+    ));
+  }
+
+  function logFacilityItem(key, notes = "") {
+    const ts = new Date().toISOString();
+    setFacility(prev => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        log: [{ id: uid(), ts, notes }, ...(prev[key]?.log || [])],
+      },
+    }));
+  }
+
+  function waterAll(motherIds) {
+    const entry = { date: today(), type: "Water Only", notes: "" };
+    setMothers(prev => prev.map(m =>
+      motherIds.has(m.id)
+        ? { ...m, feedingLog: [{ ...entry, id: uid() }, ...(m.feedingLog || [])] }
         : m
     ));
   }
@@ -766,6 +828,7 @@ export default function MotherPlantTracker() {
             onQuickWater={mid => addFeedingEntry(mid, { date: today(), type: "Water Only", notes: "" })}
             onQuickAmend={(mid, amendment, notes) => addAmendment(mid, { date: today(), amendment, notes })}
             onQuickClone={(mid, count, notes) => addCloneEntry(mid, { date: today(), count, notes })}
+            onWaterAll={waterAll}
           />
         )}
         {tab === "Room" && (
@@ -775,6 +838,12 @@ export default function MotherPlantTracker() {
             setRoomSpots={setRoomSpots}
             onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
             onUpdateMother={(id, patch) => updateMother(id, patch)}
+          />
+        )}
+        {tab === "Facility" && (
+          <FacilityTab
+            facility={facility}
+            onLog={logFacilityItem}
           />
         )}
         {tab === "Add" && addForm && (
@@ -1145,13 +1214,69 @@ function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onSelectMother, onQu
   );
 }
 
-function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelectMother, onQuickWater, onQuickAmend, onQuickClone }) {
+// ── Strain Group (collapsible) ──────────────────────────────────────────────
+const StrainGroup = memo(function StrainGroup({
+  group, isCollapsed, onToggle,
+  swipedId, onSwipeOpen, onSwipeClose,
+  onSelectMother, onQuickWater, onOpenAmend, onOpenClone,
+  currentContainer, currentTransplantDate,
+}) {
+  const cards = (
+    <div className="space-y-2 mb-3">
+      {group.mothers.map(m => (
+        <MotherCard
+          key={m.id}
+          m={m}
+          isOpen={swipedId === m.id}
+          onSwipeOpen={() => onSwipeOpen(m.id)}
+          onSwipeClose={onSwipeClose}
+          onSelectMother={onSelectMother}
+          onQuickWater={onQuickWater}
+          onOpenAmend={onOpenAmend}
+          onOpenClone={onOpenClone}
+          currentContainer={currentContainer}
+          currentTransplantDate={currentTransplantDate}
+        />
+      ))}
+    </div>
+  );
+
+  // Single-mother strains: skip the collapsible header — it adds noise with no benefit
+  if (group.mothers.length === 1) return cards;
+
+  return (
+    <div className="mb-1">
+      <button
+        onClick={() => onToggle(group.code)}
+        className="w-full flex items-center gap-2 py-2 px-0.5 min-h-[44px]"
+      >
+        <div className="flex-1 flex items-center gap-2 min-w-0">
+          <div className="w-0.5 h-4 rounded-full bg-zinc-700 flex-shrink-0" />
+          <span className="text-xs font-bold text-zinc-400 truncate">{group.name}</span>
+          <span className="text-[10px] font-semibold bg-emerald-950/80 text-emerald-500 border border-emerald-800/50 rounded-full px-1.5 py-0.5 flex-shrink-0">
+            {group.mothers.length}
+          </span>
+        </div>
+        <ChevronDown
+          className={`w-3.5 h-3.5 text-zinc-600 flex-shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "rotate-180"}`}
+          strokeWidth={2.5}
+        />
+      </button>
+      {!isCollapsed && cards}
+    </div>
+  );
+});
+
+function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelectMother, onQuickWater, onQuickAmend, onQuickClone, onWaterAll }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [swipedId, setSwipedId] = useState(null);
   const [quickSheet, setQuickSheet] = useState(null); // null | { type: 'amend'|'clone', motherId }
   const [amendInput, setAmendInput] = useState({ amendment: "", notes: "", search: "" });
   const [cloneInput, setCloneInput] = useState({ count: "", notes: "" });
+  const [collapsed, setCollapsed] = useState(new Set());
+  const [waterAllSheet, setWaterAllSheet] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const filtered = mothers
     .filter(m => filter === "All" || m.status === filter)
@@ -1161,6 +1286,35 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
       const q = search.toLowerCase();
       return s.name.toLowerCase().includes(q) || s.code.includes(q) || (m.location || "").toLowerCase().includes(q);
     });
+
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const m of filtered) {
+      if (!map.has(m.strainCode)) map.set(m.strainCode, []);
+      map.get(m.strainCode).push(m);
+    }
+    return [...map.entries()]
+      .map(([code, moms]) => ({ code, name: getStrain(code).name, mothers: moms }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered]);
+
+  const handleToggle = useCallback((code) => {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      next.has(code) ? next.delete(code) : next.add(code);
+      return next;
+    });
+  }, []);
+  const handleSwipeOpen = useCallback((id) => setSwipedId(id), []);
+  const handleSwipeClose = useCallback(() => setSwipedId(null), []);
+  const handleOpenAmend = useCallback((mid) => setQuickSheet({ type: "amend", motherId: mid }), []);
+  const handleOpenClone = useCallback((mid) => setQuickSheet({ type: "clone", motherId: mid }), []);
+
+  function showToast(msg) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 2000);
+  }
 
   function closeSheet() {
     setQuickSheet(null);
@@ -1183,6 +1337,11 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
 
   return (
     <div className="space-y-3">
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-sky-900 border border-sky-700 text-sky-100 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
+          {toast}
+        </div>
+      )}
       <input type="text" placeholder="Search strain, code, location..." value={search} onChange={e => setSearch(e.target.value)} className={inputCls} />
       <div className="flex gap-1.5 flex-wrap">
         {["All", "Active", "Sidelined"].map(f => (
@@ -1198,7 +1357,7 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
               <div className="text-4xl mb-2">🌿</div>
               <div className="text-white font-semibold text-base">No mother plants yet</div>
               <div className="text-zinc-500 text-sm">
-                Tap <span className="text-emerald-400 font-medium">+ Add Mother</span> to get started
+                Tap the green <span className="text-emerald-400 font-medium">Add</span> button in the top right to get started
               </div>
               <div className="text-zinc-600 text-xs mt-2">
                 Track health, containers, amendments, and clone cuts all in one place.
@@ -1209,22 +1368,63 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
           <div className="text-center py-10 text-zinc-600 text-sm">No results.</div>
         )
       ) : (
-        <div className="space-y-2">
-          {filtered.map(m => (
-            <MotherCard
-              key={m.id}
-              m={m}
-              isOpen={swipedId === m.id}
-              onSwipeOpen={() => setSwipedId(m.id)}
-              onSwipeClose={() => setSwipedId(null)}
+        <div>
+          {filtered.length > 1 && filter !== "Sidelined" && (
+            <button
+              onClick={() => setWaterAllSheet(true)}
+              className="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-zinc-700/80 text-zinc-400 text-sm font-semibold active:bg-zinc-800/50 active:text-zinc-200 transition-colors min-h-[44px]"
+            >
+              <Droplets className="w-4 h-4" strokeWidth={2} />
+              Water All ({filtered.length})
+            </button>
+          )}
+          {groups.map(group => (
+            <StrainGroup
+              key={group.code}
+              group={group}
+              isCollapsed={collapsed.has(group.code)}
+              onToggle={handleToggle}
+              swipedId={swipedId}
+              onSwipeOpen={handleSwipeOpen}
+              onSwipeClose={handleSwipeClose}
               onSelectMother={onSelectMother}
               onQuickWater={onQuickWater}
-              onOpenAmend={(mid) => setQuickSheet({ type: "amend", motherId: mid })}
-              onOpenClone={(mid) => setQuickSheet({ type: "clone", motherId: mid })}
+              onOpenAmend={handleOpenAmend}
+              onOpenClone={handleOpenClone}
               currentContainer={currentContainer}
               currentTransplantDate={currentTransplantDate}
             />
           ))}
+        </div>
+      )}
+
+      {/* Water All confirm sheet */}
+      {waterAllSheet && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setWaterAllSheet(false); }}>
+          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-zinc-700" /></div>
+            <div className="px-5 pb-6 pt-2 space-y-3">
+              <div className="flex items-center gap-2">
+                <Droplets className="w-4 h-4 text-sky-400" strokeWidth={2} />
+                <div className="text-sm font-bold text-white">Water All</div>
+              </div>
+              <div className="text-zinc-400 text-sm">Log water for all {filtered.length} visible mothers?</div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={() => setWaterAllSheet(false)} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button
+                  onClick={() => {
+                    const count = filtered.length;
+                    onWaterAll(new Set(filtered.map(m => m.id)));
+                    setWaterAllSheet(false);
+                    showToast(`Watered ${count} mother${count !== 1 ? "s" : ""}`);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-sky-700 active:bg-sky-600 text-white text-sm font-semibold transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1587,6 +1787,127 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
           onMarkUpcoming={markUpcoming}
           onClearUpcoming={clearUpcoming}
         />
+      )}
+    </div>
+  );
+}
+
+// ── Facility Tab ────────────────────────────────────────────────────────────
+function facilityDaysSince(ts) {
+  if (!ts) return null;
+  return Math.max(0, Math.floor((Date.now() - new Date(ts).getTime()) / 86400000));
+}
+function facilityBorderColor(days) {
+  if (days === null) return "border-l-zinc-700";
+  if (days <= 2) return "border-l-emerald-600";
+  if (days <= 7) return "border-l-yellow-500";
+  return "border-l-red-600";
+}
+function facilityAgeText(days) {
+  if (days === null) return "Never logged";
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+}
+function facilityAgeColor(days) {
+  if (days === null) return "text-zinc-600";
+  if (days <= 2) return "text-emerald-400";
+  if (days <= 7) return "text-yellow-400";
+  return "text-red-400";
+}
+
+const FacilityItem = memo(function FacilityItem({ itemKey, data, onLog }) {
+  const lastEntry = (Array.isArray(data?.log) ? data.log[0] : null) ?? null;
+  const days = facilityDaysSince(lastEntry?.ts ?? null);
+  return (
+    <div className={`bg-zinc-900/80 border border-zinc-800 border-l-2 ${facilityBorderColor(days)} rounded-2xl px-4 py-3.5 flex items-center gap-3`}>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-semibold text-zinc-200 truncate">{data.label}</div>
+        <div className={`text-xs font-medium mt-0.5 ${facilityAgeColor(days)}`}>
+          {facilityAgeText(days)}
+          {lastEntry && days !== 0 && (
+            <span className="text-zinc-700 ml-1.5">
+              · {new Date(lastEntry.ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+            </span>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={() => onLog(itemKey)}
+        className="flex-shrink-0 py-2 px-4 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-semibold active:bg-zinc-700 active:text-white transition-colors min-h-[44px] flex items-center justify-center"
+      >
+        Log Now
+      </button>
+    </div>
+  );
+});
+
+function FacilityTab({ facility, onLog }) {
+  const [logSheet, setLogSheet] = useState(null);
+  const [noteInput, setNoteInput] = useState("");
+  const [toast, setToast] = useState(null);
+
+  function openLog(key) { setLogSheet(key); setNoteInput(""); }
+  function closeLog() { setLogSheet(null); setNoteInput(""); }
+  function confirmLog() {
+    const label = facility[logSheet]?.label ?? logSheet;
+    onLog(logSheet, noteInput.trim());
+    closeLog();
+    setToast(`${label} logged`);
+    setTimeout(() => setToast(null), 2000);
+  }
+
+  return (
+    <div className="space-y-5 pt-1 pb-6">
+      {toast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-900 border border-emerald-700 text-emerald-100 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
+          {toast}
+        </div>
+      )}
+      {FACILITY_SECTIONS.map(section => (
+        <div key={section.label}>
+          <SectionLabel>{section.label}</SectionLabel>
+          <div className="space-y-2">
+            {section.items.map(key => (
+              <FacilityItem
+                key={key}
+                itemKey={key}
+                data={facility[key] || DEFAULT_FACILITY[key]}
+                onLog={openLog}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {logSheet && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
+          onClick={e => { if (e.target === e.currentTarget) closeLog(); }}
+        >
+          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-zinc-700" /></div>
+            <div className="px-5 pb-6 pt-2 space-y-3">
+              <div className="text-sm font-bold text-white">
+                {facility[logSheet]?.label ?? logSheet}
+              </div>
+              <input
+                type="text"
+                placeholder="Notes (optional)"
+                className={inputCls}
+                value={noteInput}
+                onChange={e => setNoteInput(e.target.value)}
+                autoFocus
+              />
+              <div className="flex gap-2 pt-1">
+                <button onClick={closeLog} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button onClick={confirmLog} className="flex-1 py-2.5 rounded-xl bg-emerald-700 active:bg-emerald-600 text-white text-sm font-semibold transition-colors">
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
