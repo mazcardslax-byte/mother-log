@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
+import ClonesTab from "./ClonesTab";
 import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, Loader2, AlertCircle,
@@ -97,6 +98,7 @@ const TAB_ITEMS = [
   { key: "Mothers",  label: "Mothers",  icon: Leaf },
   { key: "Room",     label: "Room",     icon: Grid3X3 },
   { key: "Facility", label: "Facility", icon: ClipboardList },
+  { key: "Clones",   label: "Clones",   icon: Scissors },
 ];
 
 const DETAIL_TABS = ["Overview", "History", "Photos"];
@@ -803,51 +805,54 @@ export default function MotherPlantTracker() {
         </div>
       </div>
 
-      <div className="px-4 flex-1">
-        {tab === "Summary" && (
-          <SummaryTab
-            mothers={mothers}
-            active={active}
-            sidelined={sidelined}
-            totalClones={totalClones}
-            onSelectMother={handleSelectMother}
-          />
-        )}
-        {tab === "Mothers" && (
-          <MothersTab
-            mothers={mothers}
-            onSelectMother={handleSelectMother}
-            onQuickWater={mid => addFeedingEntry(mid, { date: today(), type: "Water Only", notes: "" })}
-            onQuickFeed={(mid, type) => addFeedingEntry(mid, { date: today(), type, notes: "" })}
-            onQuickAmend={(mid, amendment, notes) => addAmendment(mid, { date: today(), amendment, notes })}
-            onQuickClone={(mid, count, notes) => addCloneEntry(mid, { date: today(), count, notes })}
-            onWaterAll={waterAll}
-          />
-        )}
-        {tab === "Room" && (
-          <RoomTab
-            mothers={mothers}
-            roomSpots={roomSpots}
-            setRoomSpots={setRoomSpots}
-            onSelectMother={handleSelectMother}
-            onUpdateMother={updateMother}
-          />
-        )}
-        {tab === "Facility" && (
-          <FacilityTab
-            facility={facility}
-            onLog={logFacilityItem}
-          />
-        )}
-        {tab === "Add" && addForm && (
-          <AddMotherTab
-            form={addForm}
-            setForm={setAddForm}
-            onSubmit={submitAddForm}
-            onCancel={() => { setAddForm(null); setTab("Mothers"); }}
-          />
-        )}
-      </div>
+      {tab !== "Clones" && (
+        <div className="px-4 flex-1">
+          {tab === "Summary" && (
+            <SummaryTab
+              mothers={mothers}
+              active={active}
+              sidelined={sidelined}
+              totalClones={totalClones}
+              onSelectMother={handleSelectMother}
+            />
+          )}
+          {tab === "Mothers" && (
+            <MothersTab
+              mothers={mothers}
+              onSelectMother={handleSelectMother}
+              onQuickWater={mid => addFeedingEntry(mid, { date: today(), type: "Water Only", notes: "" })}
+              onQuickFeed={(mid, type) => addFeedingEntry(mid, { date: today(), type, notes: "" })}
+              onQuickAmend={(mid, amendment, notes) => addAmendment(mid, { date: today(), amendment, notes })}
+              onQuickClone={(mid, count, notes) => addCloneEntry(mid, { date: today(), count, notes })}
+              onWaterAll={waterAll}
+            />
+          )}
+          {tab === "Room" && (
+            <RoomTab
+              mothers={mothers}
+              roomSpots={roomSpots}
+              setRoomSpots={setRoomSpots}
+              onSelectMother={handleSelectMother}
+              onUpdateMother={updateMother}
+            />
+          )}
+          {tab === "Facility" && (
+            <FacilityTab
+              facility={facility}
+              onLog={logFacilityItem}
+            />
+          )}
+          {tab === "Add" && addForm && (
+            <AddMotherTab
+              form={addForm}
+              setForm={setAddForm}
+              onSubmit={submitAddForm}
+              onCancel={() => { setAddForm(null); setTab("Mothers"); }}
+            />
+          )}
+        </div>
+      )}
+      {tab === "Clones" && <ClonesTab />}
 
       {detailMotherId && (() => {
         const detailMother = mothers.find(m => m.id === detailMotherId) ?? null;
