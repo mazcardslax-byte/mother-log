@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
-import QRCode from "qrcode";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
-  Wifi, WifiOff, Loader2, AlertCircle,
+  Wifi, Loader2, AlertCircle,
   ChevronDown, Droplets, ClipboardList,
 } from "lucide-react";
 
@@ -99,6 +98,16 @@ const TAB_ITEMS = [
   { key: "Facility", label: "Facility", icon: ClipboardList },
 ];
 
+const DETAIL_TABS = ["Overview", "History", "Photos"];
+
+const TYPE_META = {
+  transplant: { label: "Transplant", text: "text-sky-400",    border: "border-sky-700" },
+  amendment:  { label: "Amendment",  text: "text-violet-400", border: "border-violet-700" },
+  feeding:    { label: "Feeding",     text: "text-emerald-400", border: "border-emerald-700" },
+  clone:      { label: "Clone",       text: "text-stone-300",  border: "border-stone-600" },
+  reduction:  { label: "Reduction",  text: "text-red-400",    border: "border-red-700" },
+};
+
 // ── Facility Data ───────────────────────────────────────────────────────────
 const DEFAULT_FACILITY = {
   room2floor:  { label: "Room 2 Floor",      log: [] },
@@ -136,17 +145,39 @@ function getStrain(code) {
   return STRAINS.find(s => s.code === code) || { code, name: "Unknown" };
 }
 
+// Normalize Supabase timestamp strings before echo-filter comparison.
+// Supabase may return "2024-03-26 10:30:00+00" while we store "2024-03-26T10:30:00.000Z".
+function normTs(ts) { try { return ts ? new Date(ts).toISOString() : null; } catch { return ts; } }
+
+function currentContainer(mother) {
+  if (!mother.transplantHistory.length) return null;
+  return mother.transplantHistory[mother.transplantHistory.length - 1].container;
+}
+function currentTransplantDate(mother) {
+  if (!mother.transplantHistory.length) return null;
+  return mother.transplantHistory[mother.transplantHistory.length - 1].date;
+}
+
+// ── Threshold color helper ─────────────────────────────────────────────────
+// thresholds: [{ max, cls }, ...] sorted ascending by max. Returns cls for
+// first entry where value <= max, or last entry's cls as the fallback.
+function thresholdColor(value, thresholds) {
+  return (thresholds.find(t => value <= t.max) ?? thresholds.at(-1)).cls;
+}
+
 // ── Health helpers ─────────────────────────────────────────────────────────
-function healthColor(level) {
-  if (level <= 2) return "text-red-400";
-  if (level === 3) return "text-yellow-400";
-  return "text-emerald-400";
-}
-function healthBg(level) {
-  if (level <= 2) return "bg-red-900/40 border-red-700/40 text-red-300";
-  if (level === 3) return "bg-yellow-900/40 border-yellow-700/40 text-yellow-300";
-  return "bg-emerald-900/40 border-emerald-700/40 text-emerald-300";
-}
+const HEALTH_COLOR_THRESHOLDS = [
+  { max: 2, cls: "text-red-400" },
+  { max: 3, cls: "text-yellow-400" },
+  { max: 5, cls: "text-emerald-400" },
+];
+const HEALTH_BG_THRESHOLDS = [
+  { max: 2, cls: "bg-red-900/40 border-red-700/40 text-red-300" },
+  { max: 3, cls: "bg-yellow-900/40 border-yellow-700/40 text-yellow-300" },
+  { max: 5, cls: "bg-emerald-900/40 border-emerald-700/40 text-emerald-300" },
+];
+function healthColor(level) { return thresholdColor(level, HEALTH_COLOR_THRESHOLDS); }
+function healthBg(level) { return thresholdColor(level, HEALTH_BG_THRESHOLDS); }
 function healthLabel(level) {
   return ["", "Poor", "Fair", "Moderate", "Good", "Excellent"][level] || "—";
 }
@@ -159,11 +190,14 @@ function lastFeedingDate(feedingLog) {
   }, null);
 }
 
+const FEEDING_DAYS_THRESHOLDS = [
+  { max: 2, cls: "text-emerald-400" },
+  { max: 4, cls: "text-yellow-400" },
+  { max: Infinity, cls: "text-red-400" },
+];
 function feedingDaysColor(days) {
   if (days === null) return "text-zinc-500";
-  if (days <= 2) return "text-emerald-400";
-  if (days <= 4) return "text-yellow-400";
-  return "text-red-400";
+  return thresholdColor(days, FEEDING_DAYS_THRESHOLDS);
 }
 
 function daysInVeg(mother) {
@@ -175,11 +209,14 @@ function daysInVeg(mother) {
   return daysSince(latest ?? mother.createdAt);
 }
 
+const VEG_DAYS_THRESHOLDS = [
+  { max: 24, cls: "text-zinc-500" },
+  { max: 29, cls: "text-yellow-400" },
+  { max: Infinity, cls: "text-red-400" },
+];
 function vegDaysColor(days) {
   if (days === null) return "text-zinc-500";
-  if (days < 25) return "text-zinc-500";
-  if (days < 30) return "text-yellow-400";
-  return "text-red-400";
+  return thresholdColor(days, VEG_DAYS_THRESHOLDS);
 }
 
 function statusBadgeColor(status) {
@@ -311,6 +348,7 @@ async function printMotherLabel(mother, container, healthLvl) {
     status: mother.status,
     location: mother.location || "",
   });
+  const QRCode = (await import("qrcode")).default;
   const dataUrl = await QRCode.toDataURL(payload, { width: 150, margin: 1 });
   const printed = new Date().toLocaleDateString("en-US");
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Label – ${s.code}</title>
@@ -405,21 +443,9 @@ export default function MotherPlantTracker() {
   const [facility, setFacility] = useState(DEFAULT_FACILITY);
   const facilityPendingRef = useRef(new Set());
 
-  const [detailMother, setDetailMother] = useState(null);
+  const [detailMotherId, setDetailMotherId] = useState(null);
   const [detailTab, setDetailTab] = useState("Overview");
   const [addForm, setAddForm] = useState(null);
-
-  const [showTransplantModal, setShowTransplantModal] = useState(false);
-  const [transplantForm, setTransplantForm] = useState({ container: "Black Pot", date: today(), dateUnknown: false });
-  const [showAmendModal, setShowAmendModal] = useState(false);
-  const [amendForm, setAmendForm] = useState({ date: today(), amendment: "", notes: "" });
-  const [amendSearch, setAmendSearch] = useState("");
-  const [showCloneModal, setShowCloneModal] = useState(false);
-  const [cloneForm, setCloneForm] = useState({ date: today(), count: "", notes: "" });
-  const [showFeedingModal, setShowFeedingModal] = useState(false);
-  const [feedingForm, setFeedingForm] = useState({ date: today(), type: "Water Only", notes: "" });
-  const [showReductionModal, setShowReductionModal] = useState(false);
-  const [reductionForm, setReductionForm] = useState({ date: today(), reason: "Space", notes: "" });
 
   useEffect(() => {
     async function init() {
@@ -496,10 +522,6 @@ export default function MotherPlantTracker() {
       .finally(() => { setTimeout(() => facilityPendingRef.current.delete(ts), 3000); });
   }, [facility]);
 
-  // Normalize Supabase timestamp strings before echo-filter comparison.
-  // Supabase may return "2024-03-26 10:30:00+00" while we store "2024-03-26T10:30:00.000Z".
-  function normTs(ts) { try { return ts ? new Date(ts).toISOString() : null; } catch { return ts; } }
-
   // Real-time sync: when another device saves, update our state.
   // Filters echoes of our own saves by checking the pendingTimestamps Set.
   useEffect(() => {
@@ -535,126 +557,102 @@ export default function MotherPlantTracker() {
     return () => sub.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (detailMother) {
-      const updated = mothers.find(m => m.id === detailMother.id);
-      if (updated) setDetailMother(updated);
-      else setDetailMother(null);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mothers, detailMother?.id]);
-
-  useEffect(() => {
-    // Reset all modal forms when switching to a different mother
-    setShowTransplantModal(false);
-    setShowAmendModal(false);
-    setShowCloneModal(false);
-    setShowFeedingModal(false);
-    setShowReductionModal(false);
-    setTransplantForm({ container: "Black Pot", date: today(), dateUnknown: false });
-    setAmendForm({ date: today(), amendment: "", notes: "" });
-    setAmendSearch("");
-    setCloneForm({ date: today(), count: "", notes: "" });
-    setFeedingForm({ date: today(), type: "Water Only", notes: "" });
-    setReductionForm({ date: today(), reason: "Space", notes: "" });
-  }, [detailMother?.id]);
-
   function addMother(data) {
     setMothers(prev => [{ ...defaultMother(), ...data, id: uid(), createdAt: today() }, ...prev]);
   }
-  function updateMother(id, patch) {
+  const updateMother = useCallback((id, patch) => {
     setMothers(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
-  }
-  function deleteMother(id) {
+  }, []);
+  const deleteMother = useCallback((id) => {
     setMothers(prev => prev.filter(m => m.id !== id));
-    setDetailMother(null);
-  }
-  function addTransplant(motherId, entry) {
+    setDetailMotherId(null);
+  }, []);
+  const addTransplant = useCallback((motherId, entry) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, transplantHistory: [...m.transplantHistory, { ...entry, id: uid() }].sort((a, b) => (a.date || "").localeCompare(b.date || "")) }
         : m
     ));
-  }
-  function removeTransplant(motherId, entryId) {
+  }, []);
+  const removeTransplant = useCallback((motherId, entryId) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, transplantHistory: m.transplantHistory.filter(t => t.id !== entryId) }
         : m
     ));
-  }
-  function addAmendment(motherId, entry) {
+  }, []);
+  const addAmendment = useCallback((motherId, entry) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, amendmentLog: [{ ...entry, id: uid() }, ...m.amendmentLog] }
         : m
     ));
-  }
-  function removeAmendment(motherId, entryId) {
+  }, []);
+  const removeAmendment = useCallback((motherId, entryId) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, amendmentLog: m.amendmentLog.filter(a => a.id !== entryId) }
         : m
     ));
-  }
-  function addCloneEntry(motherId, entry) {
+  }, []);
+  const addCloneEntry = useCallback((motherId, entry) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, cloneLog: [{ ...entry, id: uid() }, ...m.cloneLog] }
         : m
     ));
-  }
-  function removeCloneEntry(motherId, entryId) {
+  }, []);
+  const removeCloneEntry = useCallback((motherId, entryId) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, cloneLog: m.cloneLog.filter(c => c.id !== entryId) }
         : m
     ));
-  }
-  function addFeedingEntry(motherId, entry) {
+  }, []);
+  const addFeedingEntry = useCallback((motherId, entry) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, feedingLog: [{ ...entry, id: uid() }, ...(m.feedingLog || [])] }
         : m
     ));
-  }
-  function removeFeedingEntry(motherId, entryId) {
+  }, []);
+  const removeFeedingEntry = useCallback((motherId, entryId) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, feedingLog: (m.feedingLog || []).filter(f => f.id !== entryId) }
         : m
     ));
-  }
-  function addReductionEntry(motherId, entry) {
+  }, []);
+  const addReductionEntry = useCallback((motherId, entry) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, reductionLog: [{ ...entry, id: uid() }, ...(m.reductionLog || [])] }
         : m
     ));
-  }
-  function removeReductionEntry(motherId, entryId) {
+  }, []);
+  const removeReductionEntry = useCallback((motherId, entryId) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, reductionLog: (m.reductionLog || []).filter(r => r.id !== entryId) }
         : m
     ));
-  }
-  function addPhoto(motherId, photo) {
+  }, []);
+  const addPhoto = useCallback((motherId, photo) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, photos: [{ ...photo, id: uid() }, ...(m.photos || [])] }
         : m
     ));
-  }
-  function removePhoto(motherId, photoId) {
+  }, []);
+  const removePhoto = useCallback((motherId, photoId) => {
     setMothers(prev => prev.map(m =>
       m.id === motherId
         ? { ...m, photos: (m.photos || []).filter(p => p.id !== photoId) }
         : m
     ));
-  }
+  }, []);
 
-  function logFacilityItem(key, notes = "") {
+  const logFacilityItem = useCallback((key, notes = "") => {
     const ts = new Date().toISOString();
     setFacility(prev => ({
       ...prev,
@@ -663,29 +661,24 @@ export default function MotherPlantTracker() {
         log: [{ id: uid(), ts, notes }, ...(prev[key]?.log || [])],
       },
     }));
-  }
+  }, []);
 
-  function waterAll(motherIds) {
+  const waterAll = useCallback((motherIds) => {
     const entry = { date: today(), type: "Water Only", notes: "" };
     setMothers(prev => prev.map(m =>
       motherIds.has(m.id)
         ? { ...m, feedingLog: [{ ...entry, id: uid() }, ...(m.feedingLog || [])] }
         : m
     ));
-  }
+  }, []);
 
-  const active = mothers.filter(m => m.status === "Active");
-  const sidelined = mothers.filter(m => m.status === "Sidelined");
-  const totalClones = mothers.reduce((s, m) => s + (m.cloneLog || []).reduce((a, c) => a + (parseInt(c.count) || 0), 0), 0);
+  const active = useMemo(() => mothers.filter(m => m.status === "Active"), [mothers]);
+  const sidelined = useMemo(() => mothers.filter(m => m.status === "Sidelined"), [mothers]);
+  const totalClones = useMemo(() => mothers.reduce((s, m) => s + (m.cloneLog || []).reduce((a, c) => a + (parseInt(c.count) || 0), 0), 0), [mothers]);
 
-  function currentContainer(mother) {
-    if (!mother.transplantHistory.length) return null;
-    return mother.transplantHistory[mother.transplantHistory.length - 1].container;
-  }
-  function currentTransplantDate(mother) {
-    if (!mother.transplantHistory.length) return null;
-    return mother.transplantHistory[mother.transplantHistory.length - 1].date;
-  }
+  // Stable callbacks for onSelectMother — deps [] because they only call stable setters
+  const handleSelectMother = useCallback((m) => { setDetailMotherId(m.id); setDetailTab("Overview"); }, []);
+  const handleCloseDetail = useCallback(() => setDetailMotherId(null), []);
 
   function openAddForm() {
     setAddForm({
@@ -816,15 +809,13 @@ export default function MotherPlantTracker() {
             active={active}
             sidelined={sidelined}
             totalClones={totalClones}
-            onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
+            onSelectMother={handleSelectMother}
           />
         )}
         {tab === "Mothers" && (
           <MothersTab
             mothers={mothers}
-            currentContainer={currentContainer}
-            currentTransplantDate={currentTransplantDate}
-            onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
+            onSelectMother={handleSelectMother}
             onQuickWater={mid => addFeedingEntry(mid, { date: today(), type: "Water Only", notes: "" })}
             onQuickAmend={(mid, amendment, notes) => addAmendment(mid, { date: today(), amendment, notes })}
             onQuickClone={(mid, count, notes) => addCloneEntry(mid, { date: today(), count, notes })}
@@ -836,8 +827,8 @@ export default function MotherPlantTracker() {
             mothers={mothers}
             roomSpots={roomSpots}
             setRoomSpots={setRoomSpots}
-            onSelectMother={m => { setDetailMother(m); setDetailTab("Overview"); }}
-            onUpdateMother={(id, patch) => updateMother(id, patch)}
+            onSelectMother={handleSelectMother}
+            onUpdateMother={updateMother}
           />
         )}
         {tab === "Facility" && (
@@ -856,63 +847,40 @@ export default function MotherPlantTracker() {
         )}
       </div>
 
-      {detailMother && (
-        <MotherDetailModal
-          key={detailMother.id}
-          mother={detailMother}
-          detailTab={detailTab}
-          setDetailTab={setDetailTab}
-          onClose={() => setDetailMother(null)}
-          onUpdate={(patch) => updateMother(detailMother.id, patch)}
-          onDelete={() => deleteMother(detailMother.id)}
-          onPrintLabel={() => {
-            const cont = currentContainer(detailMother);
-            printMotherLabel(detailMother, cont, detailMother.healthLevel);
-          }}
-          currentContainer={currentContainer}
-          currentTransplantDate={currentTransplantDate}
-          showTransplantModal={showTransplantModal}
-          setShowTransplantModal={setShowTransplantModal}
-          transplantForm={transplantForm}
-          setTransplantForm={setTransplantForm}
-          onAddTransplant={(entry) => { addTransplant(detailMother.id, entry); setShowTransplantModal(false); }}
-          onRemoveTransplant={(eid) => removeTransplant(detailMother.id, eid)}
-          showAmendModal={showAmendModal}
-          setShowAmendModal={setShowAmendModal}
-          amendForm={amendForm}
-          setAmendForm={setAmendForm}
-          amendSearch={amendSearch}
-          setAmendSearch={setAmendSearch}
-          onAddAmendment={(entry) => { addAmendment(detailMother.id, entry); setShowAmendModal(false); setAmendSearch(""); }}
-          onRemoveAmendment={(eid) => removeAmendment(detailMother.id, eid)}
-          showCloneModal={showCloneModal}
-          setShowCloneModal={setShowCloneModal}
-          cloneForm={cloneForm}
-          setCloneForm={setCloneForm}
-          onAddCloneEntry={(entry) => { addCloneEntry(detailMother.id, entry); setShowCloneModal(false); }}
-          onRemoveCloneEntry={(eid) => removeCloneEntry(detailMother.id, eid)}
-          showFeedingModal={showFeedingModal}
-          setShowFeedingModal={setShowFeedingModal}
-          feedingForm={feedingForm}
-          setFeedingForm={setFeedingForm}
-          onAddFeedingEntry={(entry) => { addFeedingEntry(detailMother.id, entry); setShowFeedingModal(false); }}
-          onRemoveFeedingEntry={(eid) => removeFeedingEntry(detailMother.id, eid)}
-          showReductionModal={showReductionModal}
-          setShowReductionModal={setShowReductionModal}
-          reductionForm={reductionForm}
-          setReductionForm={setReductionForm}
-          onAddReductionEntry={(entry) => { addReductionEntry(detailMother.id, entry); setShowReductionModal(false); }}
-          onRemoveReductionEntry={(eid) => removeReductionEntry(detailMother.id, eid)}
-          onAddPhoto={(photo) => addPhoto(detailMother.id, photo)}
-          onRemovePhoto={(photoId) => removePhoto(detailMother.id, photoId)}
-        />
-      )}
+      {detailMotherId && (() => {
+        const detailMother = mothers.find(m => m.id === detailMotherId) ?? null;
+        if (!detailMother) return null;
+        return (
+          <MotherDetailModal
+            key={detailMother.id}
+            mother={detailMother}
+            detailTab={detailTab}
+            setDetailTab={setDetailTab}
+            onClose={handleCloseDetail}
+            onUpdate={(patch) => updateMother(detailMother.id, patch)}
+            onDelete={() => deleteMother(detailMother.id)}
+            onPrintLabel={() => printMotherLabel(detailMother, currentContainer(detailMother), detailMother.healthLevel)}
+            onAddTransplant={(entry) => addTransplant(detailMother.id, entry)}
+            onRemoveTransplant={(eid) => removeTransplant(detailMother.id, eid)}
+            onAddAmendment={(entry) => addAmendment(detailMother.id, entry)}
+            onRemoveAmendment={(eid) => removeAmendment(detailMother.id, eid)}
+            onAddCloneEntry={(entry) => addCloneEntry(detailMother.id, entry)}
+            onRemoveCloneEntry={(eid) => removeCloneEntry(detailMother.id, eid)}
+            onAddFeedingEntry={(entry) => addFeedingEntry(detailMother.id, entry)}
+            onRemoveFeedingEntry={(eid) => removeFeedingEntry(detailMother.id, eid)}
+            onAddReductionEntry={(entry) => addReductionEntry(detailMother.id, entry)}
+            onRemoveReductionEntry={(eid) => removeReductionEntry(detailMother.id, eid)}
+            onAddPhoto={(photo) => addPhoto(detailMother.id, photo)}
+            onRemovePhoto={(photoId) => removePhoto(detailMother.id, photoId)}
+          />
+        );
+      })()}
     </div>
   );
 }
 
 // ── Summary Tab ────────────────────────────────────────────────────────────
-function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother }) {
+const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother }) {
   const todayDay = new Date().getDay(); // 0=Sun, 6=Sat
   const isSaturday = todayDay === 6;
 
@@ -1112,10 +1080,10 @@ function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother })
       )}
     </div>
   );
-}
+});
 
 // ── Mothers Tab ────────────────────────────────────────────────────────────
-function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onSelectMother, onQuickWater, onOpenAmend, onOpenClone, currentContainer, currentTransplantDate }) {
+const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onSelectMother, onQuickWater, onOpenAmend, onOpenClone }) {
   const showClone = m.status !== "Sidelined";
   const ACTION_W = showClone ? 144 : 96;
   const touchStartX = useRef(null);
@@ -1212,14 +1180,13 @@ function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onSelectMother, onQu
       </div>
     </div>
   );
-}
+});
 
 // ── Strain Group (collapsible) ──────────────────────────────────────────────
 const StrainGroup = memo(function StrainGroup({
   group, isCollapsed, onToggle,
   swipedId, onSwipeOpen, onSwipeClose,
   onSelectMother, onQuickWater, onOpenAmend, onOpenClone,
-  currentContainer, currentTransplantDate,
 }) {
   const cards = (
     <div className="space-y-2 mb-3">
@@ -1234,8 +1201,6 @@ const StrainGroup = memo(function StrainGroup({
           onQuickWater={onQuickWater}
           onOpenAmend={onOpenAmend}
           onOpenClone={onOpenClone}
-          currentContainer={currentContainer}
-          currentTransplantDate={currentTransplantDate}
         />
       ))}
     </div>
@@ -1267,7 +1232,7 @@ const StrainGroup = memo(function StrainGroup({
   );
 });
 
-function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelectMother, onQuickWater, onQuickAmend, onQuickClone, onWaterAll }) {
+function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickAmend, onQuickClone, onWaterAll }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [swipedId, setSwipedId] = useState(null);
@@ -1278,14 +1243,14 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
   const [waterAllSheet, setWaterAllSheet] = useState(false);
   const [toast, setToast] = useState(null);
 
-  const filtered = mothers
+  const filtered = useMemo(() => mothers
     .filter(m => filter === "All" || m.status === filter)
     .filter(m => {
       if (!search.trim()) return true;
       const s = getStrain(m.strainCode);
       const q = search.toLowerCase();
       return s.name.toLowerCase().includes(q) || s.code.includes(q) || (m.location || "").toLowerCase().includes(q);
-    });
+    }), [mothers, filter, search]);
 
   const groups = useMemo(() => {
     const map = new Map();
@@ -1391,8 +1356,6 @@ function MothersTab({ mothers, currentContainer, currentTransplantDate, onSelect
               onQuickWater={onQuickWater}
               onOpenAmend={handleOpenAmend}
               onOpenClone={handleOpenClone}
-              currentContainer={currentContainer}
-              currentTransplantDate={currentTransplantDate}
             />
           ))}
         </div>
@@ -2084,18 +2047,12 @@ function SendToCloneLogModal({ cloneEntry, strainName, strainCode, motherLocatio
 }
 
 // ── Mother Detail Modal ────────────────────────────────────────────────────
-function MotherDetailModal({
+const MotherDetailModal = memo(function MotherDetailModal({
   mother, detailTab, setDetailTab, onClose, onUpdate, onDelete, onPrintLabel,
-  currentContainer, currentTransplantDate,
-  showTransplantModal, setShowTransplantModal, transplantForm, setTransplantForm,
   onAddTransplant, onRemoveTransplant,
-  showAmendModal, setShowAmendModal, amendForm, setAmendForm, amendSearch, setAmendSearch,
   onAddAmendment, onRemoveAmendment,
-  showCloneModal, setShowCloneModal, cloneForm, setCloneForm,
   onAddCloneEntry, onRemoveCloneEntry,
-  showFeedingModal, setShowFeedingModal, feedingForm, setFeedingForm,
   onAddFeedingEntry, onRemoveFeedingEntry,
-  showReductionModal, setShowReductionModal, reductionForm, setReductionForm,
   onAddReductionEntry, onRemoveReductionEntry,
   onAddPhoto, onRemovePhoto,
 }) {
@@ -2113,12 +2070,38 @@ function MotherDetailModal({
   const [locationVal, setLocationVal] = useState(mother.location || "");
   const [sendToCloneEntry, setSendToCloneEntry] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const DETAIL_TABS = ["Overview", "History", "Photos"];
   const [activeSheet, setActiveSheet] = useState(null); // null | 'picker'
+
+  // Modal form state — lives here so typing never re-renders the rest of the app
+  const [showTransplantModal, setShowTransplantModal] = useState(false);
+  const [transplantForm, setTransplantForm] = useState({ container: "Black Pot", date: today(), dateUnknown: false });
+  const [showAmendModal, setShowAmendModal] = useState(false);
+  const [amendForm, setAmendForm] = useState({ date: today(), amendment: "", notes: "" });
+  const [amendSearch, setAmendSearch] = useState("");
+  const [showCloneModal, setShowCloneModal] = useState(false);
+  const [cloneForm, setCloneForm] = useState({ date: today(), count: "", notes: "" });
+  const [showFeedingModal, setShowFeedingModal] = useState(false);
+  const [feedingForm, setFeedingForm] = useState({ date: today(), type: "Water Only", notes: "" });
+  const [showReductionModal, setShowReductionModal] = useState(false);
+  const [reductionForm, setReductionForm] = useState({ date: today(), reason: "Space", notes: "" });
 
   const feedingLog = mother.feedingLog || [];
   const lastFed = lastFeedingDate(feedingLog);
   const daysSinceFed = daysSince(lastFed);
+
+  // Build history timeline once — avoids rebuilding on every render
+  const timeline = useMemo(() => [
+    ...[...mother.transplantHistory].map(e => ({ ...e, _type: "transplant" })),
+    ...(mother.amendmentLog || []).map(e => ({ ...e, _type: "amendment" })),
+    ...(mother.feedingLog || []).map(e => ({ ...e, _type: "feeding" })),
+    ...(mother.cloneLog || []).map(e => ({ ...e, _type: "clone" })),
+    ...(mother.reductionLog || []).map(e => ({ ...e, _type: "reduction" })),
+  ].sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date.localeCompare(a.date);
+  }), [mother.transplantHistory, mother.amendmentLog, mother.feedingLog, mother.cloneLog, mother.reductionLog]);
 
   return (
     <>
@@ -2237,26 +2220,7 @@ function MotherDetailModal({
         )}
 
         {detailTab === "History" && (() => {
-          const timeline = [
-            ...[...mother.transplantHistory].map(e => ({ ...e, _type: "transplant" })),
-            ...(mother.amendmentLog || []).map(e => ({ ...e, _type: "amendment" })),
-            ...(mother.feedingLog || []).map(e => ({ ...e, _type: "feeding" })),
-            ...(mother.cloneLog || []).map(e => ({ ...e, _type: "clone" })),
-            ...(mother.reductionLog || []).map(e => ({ ...e, _type: "reduction" })),
-          ].sort((a, b) => {
-            if (!a.date && !b.date) return 0;
-            if (!a.date) return 1;
-            if (!b.date) return -1;
-            return b.date.localeCompare(a.date);
-          });
           const latestTxId = mother.transplantHistory.length ? mother.transplantHistory[mother.transplantHistory.length - 1].id : null;
-          const TYPE_META = {
-            transplant: { label: "Transplant", text: "text-sky-400", border: "border-sky-700" },
-            amendment:  { label: "Amendment",  text: "text-violet-400", border: "border-violet-700" },
-            feeding:    { label: "Feeding",     text: "text-emerald-400", border: "border-emerald-700" },
-            clone:      { label: "Clone",       text: "text-stone-300", border: "border-stone-600" },
-            reduction:  { label: "Reduction",   text: "text-red-400", border: "border-red-700" },
-          };
           function entrySummary(e) {
             if (e._type === "transplant") return `→ ${e.container}`;
             if (e._type === "amendment") return e.amendment;
@@ -2371,7 +2335,7 @@ function MotherDetailModal({
                 )}
               </div>
             </FormField>
-            <button onClick={() => onAddTransplant({ ...transplantForm, date: transplantForm.dateUnknown ? null : transplantForm.date })} className={btnPrimary}>Save Transplant</button>
+            <button onClick={() => { onAddTransplant({ ...transplantForm, date: transplantForm.dateUnknown ? null : transplantForm.date }); setShowTransplantModal(false); }} className={btnPrimary}>Save Transplant</button>
           </div>
         </Modal>
       )}
@@ -2404,7 +2368,7 @@ function MotherDetailModal({
             <FormField label="Notes (optional)">
               <input type="text" placeholder="Amount, method, etc." className={inputCls} value={amendForm.notes} onChange={e => setAmendForm(p => ({ ...p, notes: e.target.value }))} />
             </FormField>
-            <button onClick={() => { if (amendForm.amendment.trim()) onAddAmendment(amendForm); }} className={btnPrimary} disabled={!amendForm.amendment.trim()}>
+            <button onClick={() => { if (amendForm.amendment.trim()) { onAddAmendment(amendForm); setShowAmendModal(false); setAmendSearch(""); } }} className={btnPrimary} disabled={!amendForm.amendment.trim()}>
               Save Amendment
             </button>
           </div>
@@ -2423,7 +2387,7 @@ function MotherDetailModal({
             <FormField label="Notes (optional)">
               <input type="text" placeholder="Tray ID, destination, etc." className={inputCls} value={cloneForm.notes} onChange={e => setCloneForm(p => ({ ...p, notes: e.target.value }))} />
             </FormField>
-            <button onClick={() => { if (cloneForm.count) onAddCloneEntry(cloneForm); }} className={btnPrimary} disabled={!cloneForm.count}>
+            <button onClick={() => { if (cloneForm.count) { onAddCloneEntry(cloneForm); setShowCloneModal(false); } }} className={btnPrimary} disabled={!cloneForm.count}>
               Save Clone Log
             </button>
           </div>
@@ -2444,7 +2408,7 @@ function MotherDetailModal({
             <FormField label="Notes (optional)">
               <input type="text" placeholder="pH, EC, volume, observations..." className={inputCls} value={feedingForm.notes} onChange={e => setFeedingForm(p => ({ ...p, notes: e.target.value }))} />
             </FormField>
-            <button onClick={() => onAddFeedingEntry(feedingForm)} className={btnPrimary}>
+            <button onClick={() => { onAddFeedingEntry(feedingForm); setShowFeedingModal(false); }} className={btnPrimary}>
               Save Feeding
             </button>
           </div>
@@ -2470,7 +2434,7 @@ function MotherDetailModal({
             <FormField label="Notes (optional)">
               <input type="text" placeholder="What was cut, how much, etc." className={inputCls} value={reductionForm.notes} onChange={e => setReductionForm(p => ({ ...p, notes: e.target.value }))} />
             </FormField>
-            <button onClick={() => onAddReductionEntry(reductionForm)} className={btnPrimary}>
+            <button onClick={() => { onAddReductionEntry(reductionForm); setShowReductionModal(false); }} className={btnPrimary}>
               Save Reduction
             </button>
           </div>
@@ -2488,7 +2452,7 @@ function MotherDetailModal({
       )}
     </>
   );
-}
+});
 
 // ── Photos Tab ──────────────────────────────────────────────────────────────
 function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
