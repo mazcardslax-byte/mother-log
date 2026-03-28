@@ -254,7 +254,7 @@ function Modal({ title, onClose, children }) {
         </div>
         <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/80 flex-shrink-0">
           <span className="text-white font-semibold text-sm">{title}</span>
-          <button onClick={onClose} className="w-11 h-11 flex items-center justify-center rounded-xl text-zinc-500 active:text-white active:bg-zinc-800 transition-colors">✕</button>
+          <button onClick={onClose} aria-label="Close" className="w-11 h-11 flex items-center justify-center rounded-xl text-zinc-500 active:text-white active:bg-zinc-800 transition-colors">✕</button>
         </div>
         <div className="p-5 overflow-y-auto flex-1">{children}</div>
       </div>
@@ -267,7 +267,7 @@ function StatBox({ label, value, colorClass, sub }) {
     <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3.5 text-center">
       <div className={`text-2xl font-bold tracking-tight ${colorClass}`}>{value}</div>
       <div className="text-[10px] text-zinc-500 mt-1 leading-tight font-medium uppercase tracking-wide">{label}</div>
-      {sub && <div className="text-[10px] text-zinc-600 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[10px] text-zinc-500 mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -285,10 +285,10 @@ function FormField({ label, children }) {
   );
 }
 
-const inputCls = "w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500";
-const selectCls = "w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-zinc-500";
-const btnPrimary = "w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-semibold text-sm rounded-xl py-3 transition-colors";
-const btnSecondary = "w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-900 text-zinc-300 font-medium text-sm rounded-xl py-2.5 transition-colors border border-zinc-700";
+const inputCls = "w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500/40";
+const selectCls = "w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500/40";
+const btnPrimary = "w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-semibold text-sm rounded-xl py-3 transition-colors min-h-[44px]";
+const btnSecondary = "w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-900 text-zinc-300 font-medium text-sm rounded-xl py-2.5 transition-colors border border-zinc-700 min-h-[44px]";
 
 function HealthDots({ level }) {
   return (
@@ -666,6 +666,14 @@ export default function MotherPlantTracker() {
     }));
   }, []);
 
+  const updateCloneOutcome = useCallback((motherId, entryId, outcome) => {
+    setMothers(prev => prev.map(m =>
+      m.id === motherId
+        ? { ...m, cloneLog: m.cloneLog.map(c => c.id === entryId ? { ...c, outcome } : c) }
+        : m
+    ));
+  }, []);
+
   const waterAll = useCallback((motherIds) => {
     const entry = { date: today(), type: "Water Only", notes: "" };
     setMothers(prev => prev.map(m =>
@@ -767,6 +775,7 @@ export default function MotherPlantTracker() {
             <button
               onClick={() => exportMotherCSV(mothers)}
               title="Export CSV"
+              aria-label="Export CSV"
               className="w-11 h-11 flex items-center justify-center rounded-xl border border-zinc-800 text-zinc-500 active:text-zinc-200 active:bg-zinc-800 transition-colors"
             >
               <Download className="w-4 h-4" strokeWidth={2} />
@@ -834,6 +843,8 @@ export default function MotherPlantTracker() {
               setRoomSpots={setRoomSpots}
               onSelectMother={handleSelectMother}
               onUpdateMother={updateMother}
+              onQuickWater={waterAll}
+              onAddAmendment={addAmendment}
             />
           )}
           {tab === "Facility" && (
@@ -879,6 +890,7 @@ export default function MotherPlantTracker() {
             onRemoveReductionEntry={(eid) => removeReductionEntry(detailMother.id, eid)}
             onAddPhoto={(photo) => addPhoto(detailMother.id, photo)}
             onRemovePhoto={(photoId) => removePhoto(detailMother.id, photoId)}
+            onUpdateCloneOutcome={(entryId, outcome) => updateCloneOutcome(detailMother.id, entryId, outcome)}
           />
         );
       })()}
@@ -888,6 +900,7 @@ export default function MotherPlantTracker() {
 
 // ── Summary Tab ────────────────────────────────────────────────────────────
 const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother }) {
+  const [strainExpanded, setStrainExpanded] = useState(false);
   const todayDay = new Date().getDay(); // 0=Sun, 6=Sat
   const isSaturday = todayDay === 6;
 
@@ -1085,6 +1098,69 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
           </div>
         </div>
       )}
+
+      {/* ── Strain Analytics (Feature F) ── */}
+      {mothers.length > 0 && (() => {
+        const strainMap = new Map();
+        for (const m of mothers) {
+          const code = m.strainCode;
+          if (!strainMap.has(code)) strainMap.set(code, []);
+          strainMap.get(code).push(m);
+        }
+        const strainStats = [...strainMap.entries()].map(([code, moms]) => {
+          const s = getStrain(code);
+          const totalMothers = moms.length;
+          const avgHealth = moms.length ? (moms.reduce((a, m) => a + (m.healthLevel || 0), 0) / moms.length).toFixed(1) : "—";
+          const avgHealthNum = moms.length ? moms.reduce((a, m) => a + (m.healthLevel || 0), 0) / moms.length : 0;
+          const totalCloneCount = moms.reduce((a, m) => a + (m.cloneLog || []).reduce((x, c) => x + (parseInt(c.count) || 0), 0), 0);
+          const allClones = moms.flatMap(m => m.cloneLog || []);
+          const rootedClones = allClones.filter(c => c.outcome === "rooted").reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+          const totalResolvedClones = allClones.filter(c => c.outcome === "rooted" || c.outcome === "failed").reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+          const rootRate = totalResolvedClones > 0 ? Math.round((rootedClones / totalResolvedClones) * 100) : null;
+          const allFeedings = moms.flatMap(m => m.feedingLog || []);
+          const lastFedDates = allFeedings.map(f => f.date).filter(Boolean);
+          const lastFed = lastFedDates.length ? lastFedDates.sort().at(-1) : null;
+          return { code, name: s.name, totalMothers, avgHealth, avgHealthNum, totalCloneCount, rootRate, lastFed };
+        }).sort((a, b) => b.totalMothers - a.totalMothers);
+
+        return (
+          <div>
+            <button
+              onClick={() => setStrainExpanded(p => !p)}
+              className="w-full flex items-center justify-between py-2 min-h-[44px]"
+            >
+              <SectionLabel>Strain Analytics</SectionLabel>
+              <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform duration-200 mb-2 ${strainExpanded ? "rotate-180" : ""}`} strokeWidth={2} />
+            </button>
+            {strainExpanded && (
+              <div className="space-y-2">
+                {strainStats.map(st => {
+                  const healthCls = st.avgHealthNum > 3 ? "text-emerald-400" : st.avgHealthNum === 3 ? "text-yellow-400" : "text-red-400";
+                  return (
+                    <div key={st.code} className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl px-4 py-3 space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{st.code}</span>
+                        <span className="text-xs text-zinc-400 truncate">{st.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="text-[10px] text-zinc-500">{st.totalMothers} mother{st.totalMothers !== 1 ? "s" : ""}</span>
+                        <span className={`text-[10px] font-semibold ${healthCls}`}>health {st.avgHealth}</span>
+                        <span className="text-[10px] text-zinc-500">{st.totalCloneCount} clones</span>
+                        {st.rootRate !== null && (
+                          <span className={`text-[10px] font-semibold ${st.rootRate >= 70 ? "text-emerald-400" : st.rootRate >= 40 ? "text-yellow-400" : "text-red-400"}`}>
+                            {st.rootRate}% root rate
+                          </span>
+                        )}
+                        {st.lastFed && <span className="text-[10px] text-zinc-600">fed {fmtDate(st.lastFed)}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 });
@@ -1100,7 +1176,7 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
   const container = currentContainer(m);
   const txDate = currentTransplantDate(m);
   const days = daysSince(txDate);
-  const totalClones = m.cloneLog.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+  const totalClones = (m.cloneLog || []).reduce((a, c) => a + (parseInt(c.count) || 0), 0);
   const lastFed = lastFeedingDate(m.feedingLog || []);
   const fedDays = daysSince(lastFed);
   const vegDays = daysInVeg(m);
@@ -1132,26 +1208,29 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
       {/* Action buttons revealed on swipe */}
       <div className="absolute right-0 top-0 bottom-0 flex" style={{ width: ACTION_W }}>
         <button
+          aria-label="Log water"
           onClick={() => { onSwipeClose(); onQuickWater(m.id); }}
           className="flex-1 flex flex-col items-center justify-center gap-1 bg-sky-900 active:bg-sky-800 transition-colors"
         >
           <span className="text-base leading-none">💧</span>
-          <span className="text-[9px] font-semibold text-sky-300 leading-none">Water</span>
+          <span className="text-[11px] font-semibold text-sky-300 leading-none">Water</span>
         </button>
         <button
+          aria-label="Log amendment"
           onClick={() => { onSwipeClose(); onOpenAmend(m.id); }}
           className="flex-1 flex flex-col items-center justify-center gap-1 bg-violet-900 active:bg-violet-800 transition-colors"
         >
           <span className="text-base leading-none">🌿</span>
-          <span className="text-[9px] font-semibold text-violet-300 leading-none">Amend</span>
+          <span className="text-[11px] font-semibold text-violet-300 leading-none">Amend</span>
         </button>
         {showClone && (
           <button
+            aria-label="Log clone cut"
             onClick={() => { onSwipeClose(); onOpenClone(m.id); }}
             className="flex-1 flex flex-col items-center justify-center gap-1 bg-emerald-900 active:bg-emerald-800 transition-colors"
           >
             <span className="text-base leading-none">✂️</span>
-            <span className="text-[9px] font-semibold text-emerald-300 leading-none">Clone</span>
+            <span className="text-[11px] font-semibold text-emerald-300 leading-none">Clone</span>
           </button>
         )}
       </div>
@@ -1252,7 +1331,17 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
   const [toast, setToast] = useState(null);
 
   const filtered = useMemo(() => mothers
-    .filter(m => filter === "All" || m.status === filter)
+    .filter(m => {
+      if (filter === "All") return true;
+      if (filter === "Active" || filter === "Sidelined") return m.status === filter;
+      if (filter === "Needs Water") {
+        if (m.status !== "Active") return false;
+        const days = daysSince(lastFeedingDate(m.feedingLog));
+        return days === null || days >= 3;
+      }
+      if (filter === "Veg Overdue") return m.status === "Active" && daysInVeg(m) >= 30;
+      return true;
+    })
     .filter(m => {
       if (!search.trim()) return true;
       const s = getStrain(m.strainCode);
@@ -1319,8 +1408,8 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
       )}
       <input type="text" placeholder="Search strain, code, location..." value={search} onChange={e => setSearch(e.target.value)} className={inputCls} />
       <div className="flex gap-1.5 flex-wrap">
-        {["All", "Active", "Sidelined"].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`text-xs px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[36px] flex items-center ${filter === f ? "bg-zinc-700 text-white" : "bg-zinc-900/80 border border-zinc-800 text-zinc-500 active:text-zinc-200"}`}>
+        {["All", "Active", "Sidelined", "Needs Water", "Veg Overdue"].map(f => (
+          <button key={f} onClick={() => setFilter(f)} className={`${f.length > 10 ? "text-[10px]" : "text-xs"} px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[44px] flex items-center ${filter === f ? "bg-zinc-700 text-white" : "bg-zinc-900/80 border border-zinc-800 text-zinc-500 active:text-zinc-200"}`}>
             {f}
           </button>
         ))}
@@ -1443,7 +1532,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
               </div>
               <div className="text-zinc-400 text-sm">Log water for all {filtered.length} visible mothers?</div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setWaterAllSheet(false)} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button onClick={() => setWaterAllSheet(false)} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
                 <button
                   onClick={() => {
                     const count = filtered.length;
@@ -1483,7 +1572,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 {amendInput.search && (
                   <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden max-h-36 overflow-y-auto">
                     {COMMON_AMENDMENTS.filter(a => a.toLowerCase().includes(amendInput.search.toLowerCase())).map(a => (
-                      <button key={a} className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors" onClick={() => setAmendInput(p => ({ ...p, amendment: a, search: "" }))}>
+                      <button key={a} className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 active:bg-zinc-700 transition-colors" onClick={() => setAmendInput(p => ({ ...p, amendment: a, search: "" }))}>
                         {a}
                       </button>
                     ))}
@@ -1498,7 +1587,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 onChange={e => setAmendInput(p => ({ ...p, notes: e.target.value }))}
               />
               <div className="flex gap-2 pt-1">
-                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
                 <button
                   onClick={handleAmendConfirm}
                   disabled={!amendInput.amendment.trim()}
@@ -1537,7 +1626,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 onChange={e => setCloneInput(p => ({ ...p, notes: e.target.value }))}
               />
               <div className="flex gap-2 pt-1">
-                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
                 <button
                   onClick={handleCloneConfirm}
                   disabled={!cloneInput.count || parseInt(cloneInput.count) < 1}
@@ -1593,7 +1682,7 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
       >
         {multi ? (
           <>
-            <span className={`text-[8px] font-bold leading-none ${textCls}`}>{spotMothers.length}x</span>
+            <span className={`text-[10px] font-bold leading-none ${textCls}`}>{spotMothers.length}x</span>
             <div className="flex flex-wrap gap-[2px] justify-center">
               {spotMothers.map(m => (
                 <div
@@ -1605,7 +1694,7 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
           </>
         ) : (
           <>
-            <span className={`text-[8px] font-bold leading-none truncate max-w-full px-0.5 ${textCls}`}>{getStrain(spotMothers[0].strainCode).code}</span>
+            <span className={`text-[10px] font-bold leading-none truncate max-w-full px-0.5 ${textCls}`}>{getStrain(spotMothers[0].strainCode).code}</span>
             <div className="flex gap-[2px] justify-center">
               {[1,2,3,4,5].map(i => (
                 <div key={i} className={`w-1 h-1 rounded-full ${i <= spotMothers[0].healthLevel ? dotCls : "bg-zinc-700"}`} />
@@ -1623,8 +1712,8 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
         onClick={handleClick}
         className="aspect-square rounded-lg border border-indigo-700/50 bg-indigo-900/20 flex flex-col items-center justify-center gap-0.5 w-full"
       >
-        <span className="text-[8px] font-bold text-indigo-300 leading-none">RND</span>
-        <span className="text-[7px] text-indigo-500 leading-none">upcoming</span>
+        <span className="text-[10px] font-bold text-indigo-300 leading-none">RND</span>
+        <span className="text-[9px] text-indigo-500 leading-none">upcoming</span>
       </button>
     );
   }
@@ -1632,30 +1721,113 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
   return (
     <button
       onClick={handleClick}
-      className="aspect-square rounded-lg border border-dashed border-zinc-800 flex items-center justify-center w-full hover:border-zinc-600 transition-colors"
+      className="aspect-square rounded-lg border border-dashed border-zinc-800 flex items-center justify-center w-full active:border-zinc-500 active:bg-zinc-900/40 transition-colors"
     >
       <span className="text-zinc-700 text-sm leading-none">+</span>
     </button>
   );
 });
 
-function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onSelectMother, onUpdateMother, onMarkUpcoming, onClearUpcoming }) {
+function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onSelectMother, onUpdateMother, onMarkUpcoming, onClearUpcoming, onQuickWater, onAddAmendment }) {
   const key = locationKey(bench, spot);
   const [selectedMotherId, setSelectedMotherId] = useState("");
+  const [showAmend, setShowAmend] = useState(false);
+  const [amendSearch, setAmendSearch] = useState("");
+  const [amendValue, setAmendValue] = useState("");
+  const [amendNote, setAmendNote] = useState("");
+  const [spotToast, setSpotToast] = useState(null);
   const unassigned = mothers.filter(m => !parseLocation(m.location) || m.location === key);
+
+  function showSpotToast(msg) { setSpotToast(msg); setTimeout(() => setSpotToast(null), 2000); }
 
   function assignMother() {
     if (!selectedMotherId) return;
     onUpdateMother(selectedMotherId, { location: key });
-    onClose();
+    showSpotToast("Assigned to spot");
+    setTimeout(onClose, 1200);
   }
 
   return (
     <Modal title={`Bench ${bench} · Spot ${spot}`} onClose={onClose}>
+      {spotToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] bg-emerald-900 border border-emerald-700 text-emerald-100 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
+          {spotToast}
+        </div>
+      )}
       <div className="space-y-4">
         {spotMothers.length > 0 && (
           <div>
             <SectionLabel>Plants in this spot</SectionLabel>
+            {/* Quick action buttons */}
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => {
+                  showSpotToast(`Watered ${spotMothers.length} plant${spotMothers.length !== 1 ? "s" : ""}`);
+                  onQuickWater(new Set(spotMothers.map(m => m.id)));
+                  setTimeout(onClose, 1200);
+                }}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-sky-900/60 border border-sky-800/50 text-sky-300 text-xs font-semibold active:bg-sky-800 transition-colors min-h-[44px]"
+              >
+                <Droplets className="w-4 h-4" strokeWidth={2} />
+                Water All
+              </button>
+              <button
+                onClick={() => setShowAmend(p => !p)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-violet-900/60 border border-violet-800/50 text-violet-300 text-xs font-semibold active:bg-violet-800 transition-colors min-h-[44px]"
+              >
+                <FlaskConical className="w-4 h-4" strokeWidth={2} />
+                Amend
+              </button>
+            </div>
+            {/* Inline amend form */}
+            {showAmend && (
+              <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-3 space-y-2 mb-3">
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Search or type amendment..."
+                    className={inputCls}
+                    value={amendValue || amendSearch}
+                    onChange={e => { setAmendSearch(e.target.value); setAmendValue(e.target.value); }}
+                    autoFocus
+                  />
+                  {amendSearch && (
+                    <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden max-h-32 overflow-y-auto">
+                      {COMMON_AMENDMENTS.filter(a => a.toLowerCase().includes(amendSearch.toLowerCase())).map(a => (
+                        <button key={a} className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 active:bg-zinc-700 transition-colors" onClick={() => { setAmendValue(a); setAmendSearch(""); }}>
+                          {a}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Notes (optional)"
+                  className={inputCls}
+                  value={amendNote}
+                  onChange={e => setAmendNote(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => { setShowAmend(false); setAmendSearch(""); setAmendValue(""); setAmendNote(""); }} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-xs font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
+                  <button
+                    onClick={() => {
+                      if (!amendValue.trim()) return;
+                      spotMothers.forEach(m => onAddAmendment(m.id, { date: today(), amendment: amendValue.trim(), notes: amendNote.trim() }));
+                      setShowAmend(false);
+                      setAmendSearch("");
+                      setAmendValue("");
+                      setAmendNote("");
+                      showSpotToast("Amendment logged");
+                    }}
+                    disabled={!amendValue.trim()}
+                    className="flex-1 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-semibold disabled:opacity-40 active:bg-violet-600 transition-colors min-h-[44px]"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               {spotMothers.map(m => {
                 const s = getStrain(m.strainCode);
@@ -1667,8 +1839,8 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
                       <HealthDots level={m.healthLevel} />
                     </button>
                     <button
-                      onClick={() => { onUpdateMother(m.id, { location: "" }); onClose(); }}
-                      className="text-zinc-600 hover:text-red-400 text-xs ml-3 border border-zinc-700 hover:border-red-700/50 rounded-lg px-2 py-1 transition-colors flex-shrink-0"
+                      onClick={() => { onUpdateMother(m.id, { location: "" }); showSpotToast("Removed from spot"); }}
+                      className="text-zinc-600 active:text-red-400 text-xs ml-3 border border-zinc-700 active:border-red-700/50 rounded-lg px-3 min-h-[44px] flex items-center transition-colors flex-shrink-0"
                     >
                       Remove
                     </button>
@@ -1687,13 +1859,13 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
         )}
 
         {isUpcoming && (
-          <button onClick={() => { onClearUpcoming(key); onClose(); }} className="w-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors">
+          <button onClick={() => { onClearUpcoming(key); onClose(); }} className="w-full border border-zinc-700 text-zinc-400 active:text-white active:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors min-h-[44px]">
             Clear Upcoming Slot
           </button>
         )}
 
         {!isUpcoming && spotMothers.length === 0 && (
-          <button onClick={() => { onMarkUpcoming(key); onClose(); }} className="w-full bg-indigo-900/30 border border-indigo-700/50 text-indigo-300 hover:bg-indigo-900/50 text-xs font-semibold rounded-xl py-2.5 transition-colors">
+          <button onClick={() => { onMarkUpcoming(key); onClose(); }} className="w-full bg-indigo-900/30 border border-indigo-700/50 text-indigo-300 hover:bg-indigo-900/50 active:bg-indigo-900/50 text-xs font-semibold rounded-xl py-2.5 transition-colors min-h-[44px]">
             Mark as Upcoming Round
           </button>
         )}
@@ -1715,7 +1887,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
             <button
               onClick={assignMother}
               disabled={!selectedMotherId}
-              className="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-40 text-white text-xs font-semibold px-3 rounded-xl transition-colors flex-shrink-0"
+              className="bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-600 disabled:opacity-40 text-white text-xs font-semibold px-3 rounded-xl transition-colors flex-shrink-0 min-h-[44px]"
             >
               Assign
             </button>
@@ -1726,7 +1898,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
   );
 }
 
-function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMother }) {
+function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMother, onQuickWater, onAddAmendment }) {
   const [activeSpot, setActiveSpot] = useState(null); // { bench, spot }
 
   const handleCellClick = useCallback((bench, spot) => {
@@ -1819,6 +1991,8 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
           onUpdateMother={onUpdateMother}
           onMarkUpcoming={markUpcoming}
           onClearUpcoming={clearUpcoming}
+          onQuickWater={onQuickWater}
+          onAddAmendment={onAddAmendment}
         />
       )}
     </div>
@@ -1933,7 +2107,7 @@ function FacilityTab({ facility, onLog }) {
                 autoFocus
               />
               <div className="flex gap-2 pt-1">
-                <button onClick={closeLog} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold">Cancel</button>
+                <button onClick={closeLog} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
                 <button onClick={confirmLog} className="flex-1 py-2.5 rounded-xl bg-emerald-700 active:bg-emerald-600 text-white text-sm font-semibold transition-colors">
                   Confirm
                 </button>
@@ -1963,7 +2137,7 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
       <FormField label="Status">
         <div className="flex gap-2">
           {MOTHER_STATUSES.map(s => (
-            <button key={s} onClick={() => f("status", s)} className={`flex-1 text-xs py-2 rounded-xl font-bold border transition-colors ${
+            <button key={s} onClick={() => f("status", s)} className={`flex-1 text-xs py-2 rounded-xl font-bold border transition-colors min-h-[44px] flex items-center justify-center ${
               form.status === s
                 ? s === "Active"
                   ? "bg-emerald-800/60 text-emerald-200 border-emerald-600"
@@ -1978,7 +2152,7 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
       <FormField label={`Health Level — ${healthLabel(form.healthLevel)}`}>
         <div className="flex gap-2 items-center">
           {[1, 2, 3, 4, 5].map(i => (
-            <button key={i} onClick={() => f("healthLevel", i)} className={`flex-1 h-8 rounded-xl border font-bold text-sm transition-colors ${form.healthLevel === i ? i <= 2 ? "bg-red-900/60 border-red-700 text-red-300" : i === 3 ? "bg-yellow-900/60 border-yellow-700 text-yellow-300" : "bg-emerald-900/60 border-emerald-700 text-emerald-300" : "bg-zinc-800 border-zinc-700 text-zinc-600"}`}>
+            <button key={i} onClick={() => f("healthLevel", i)} className={`flex-1 h-11 rounded-xl border font-bold text-sm transition-colors ${form.healthLevel === i ? i <= 2 ? "bg-red-900/60 border-red-700 text-red-300" : i === 3 ? "bg-yellow-900/60 border-yellow-700 text-yellow-300" : "bg-emerald-900/60 border-emerald-700 text-emerald-300" : "bg-zinc-800 border-zinc-700 text-zinc-600"}`}>
               {i}
             </button>
           ))}
@@ -2125,6 +2299,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
   onAddFeedingEntry, onRemoveFeedingEntry,
   onAddReductionEntry, onRemoveReductionEntry,
   onAddPhoto, onRemovePhoto,
+  onUpdateCloneOutcome,
 }) {
   const s = getStrain(mother.strainCode);
   const container = currentContainer(mother);
@@ -2184,21 +2359,29 @@ const MotherDetailModal = memo(function MotherDetailModal({
 
         <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 mb-4 overflow-x-auto">
           {DETAIL_TABS.map(t => (
-            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-bold py-1.5 px-2.5 rounded-lg transition-colors ${detailTab === t ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40" : "text-zinc-500 hover:text-zinc-300"}`}>
+            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-bold py-2 px-3 min-h-[44px] flex items-center rounded-lg transition-colors ${detailTab === t ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40" : "text-zinc-500 hover:text-zinc-300 active:text-zinc-300"}`}>
               {t}
             </button>
           ))}
         </div>
 
-        {detailTab === "Overview" && (
+        {detailTab === "Overview" && (() => {
+          const cloneEntries = mother.cloneLog || [];
+          const resolved = cloneEntries.filter(c => c.outcome === "rooted" || c.outcome === "failed");
+          const rooted = resolved.filter(c => c.outcome === "rooted").reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+          const totalResolved = resolved.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
+          const rootRate = totalResolved > 0 ? Math.round((rooted / totalResolved) * 100) : null;
+          const rootRateCls = rootRate === null ? "text-zinc-500" : rootRate >= 70 ? "text-emerald-400" : rootRate >= 40 ? "text-yellow-400" : "text-red-400";
+          return (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
               <StatBox label="Days in Container" value={txDate ? (daysInContainer ?? "—") : "Unknown"} colorClass={txDate ? "text-sky-400" : "text-zinc-600"} />
               <StatBox label="Days in Veg" value={vegDays ?? "—"} colorClass={vegDaysColor(vegDays)} />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <StatBox label="Total Clones" value={totalClones} colorClass="text-emerald-400" />
-              <StatBox label="Amendments" value={mother.amendmentLog.length} colorClass="text-violet-400" />
+              <StatBox label="Amendments" value={(mother.amendmentLog || []).length} colorClass="text-violet-400" />
+              <StatBox label="Root Rate" value={rootRate !== null ? rootRate + "%" : "—"} colorClass={rootRateCls} />
             </div>
             <div className="bg-zinc-800/50 rounded-xl p-3">
               <SectionLabel>Current Container</SectionLabel>
@@ -2208,7 +2391,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
             <div className="bg-zinc-800/50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <SectionLabel>Health Level</SectionLabel>
-                <button onClick={() => setEditingHealth(!editingHealth)} className="text-[10px] text-zinc-500 hover:text-zinc-300">Edit</button>
+                <button onClick={() => setEditingHealth(!editingHealth)} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingHealth ? (
                 <div className="flex gap-2">
@@ -2228,12 +2411,12 @@ const MotherDetailModal = memo(function MotherDetailModal({
             <div className="bg-zinc-800/50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <SectionLabel>Status</SectionLabel>
-                <button onClick={() => setEditingStatus(!editingStatus)} className="text-[10px] text-zinc-500 hover:text-zinc-300">Edit</button>
+                <button onClick={() => setEditingStatus(!editingStatus)} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingStatus ? (
                 <div className="flex gap-2">
                   {MOTHER_STATUSES.map(st => (
-                    <button key={st} onClick={() => { onUpdate({ status: st }); setEditingStatus(false); }} className={`flex-1 text-xs py-1.5 rounded-xl border font-medium transition-colors ${statusBadgeColor(st)}`}>
+                    <button key={st} onClick={() => { onUpdate({ status: st }); setEditingStatus(false); }} className={`flex-1 text-xs py-1.5 rounded-xl border font-medium transition-colors min-h-[44px] ${statusBadgeColor(st)}`}>
                       {st}
                     </button>
                   ))}
@@ -2245,12 +2428,12 @@ const MotherDetailModal = memo(function MotherDetailModal({
             <div className="bg-zinc-800/50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
                 <SectionLabel>VEG Room Location</SectionLabel>
-                <button onClick={() => { setEditingLocation(!editingLocation); setLocationVal(mother.location || ""); }} className="text-[10px] text-zinc-500 hover:text-zinc-300">Edit</button>
+                <button onClick={() => { setEditingLocation(!editingLocation); setLocationVal(mother.location || ""); }} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingLocation ? (
                 <div className="flex gap-2">
                   <input type="text" className={inputCls + " flex-1"} placeholder="e.g. Row 2, Spot 4" value={locationVal} onChange={e => setLocationVal(e.target.value)} />
-                  <button onClick={() => { onUpdate({ location: locationVal }); setEditingLocation(false); }} className="bg-emerald-700 text-white text-xs px-3 rounded-xl">Save</button>
+                  <button onClick={() => { onUpdate({ location: locationVal }); setEditingLocation(false); }} className="bg-emerald-700 text-white text-xs px-3 rounded-xl min-h-[44px]">Save</button>
                 </div>
               ) : (
                 <span className="text-sm text-zinc-300">{mother.location || <span className="text-zinc-600">Not set</span>}</span>
@@ -2259,7 +2442,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
             <div className="bg-zinc-800/50 rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
                 <SectionLabel>Notes / Observations</SectionLabel>
-                <button onClick={() => { setEditingNotes(!editingNotes); setNotesVal(mother.notes || ""); }} className="text-[10px] text-zinc-500 hover:text-zinc-300">Edit</button>
+                <button onClick={() => { setEditingNotes(!editingNotes); setNotesVal(mother.notes || ""); }} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingNotes ? (
                 <div className="space-y-2">
@@ -2270,7 +2453,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
                 <p className="text-sm text-zinc-300 whitespace-pre-wrap">{mother.notes || <span className="text-zinc-600">No notes yet.</span>}</p>
               )}
             </div>
-            <button onClick={onPrintLabel} className="w-full border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1.5">
+            <button onClick={onPrintLabel} className="w-full border border-zinc-700 text-zinc-400 active:text-white active:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1.5 min-h-[44px]">
               Print Label
             </button>
             {confirmDelete ? (
@@ -2278,16 +2461,17 @@ const MotherDetailModal = memo(function MotherDetailModal({
                 <div className="text-xs text-red-400 text-center font-medium">Delete this mother plant? This cannot be undone.</div>
                 <div className="flex gap-2">
                   <button onClick={() => setConfirmDelete(false)} className={btnSecondary}>Cancel</button>
-                  <button onClick={onDelete} className="flex-1 bg-red-800 hover:bg-red-700 text-white font-semibold text-sm rounded-xl py-2.5 transition-colors">Delete</button>
+                  <button onClick={onDelete} className="flex-1 bg-red-800 hover:bg-red-700 active:bg-red-700 text-white font-semibold text-sm rounded-xl py-2.5 transition-colors min-h-[44px]">Delete</button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setConfirmDelete(true)} className="w-full border border-red-900/50 text-red-500 hover:text-red-400 hover:border-red-800 text-xs rounded-xl py-2.5 transition-colors">
+              <button onClick={() => setConfirmDelete(true)} className="w-full border border-red-900/50 text-red-500 active:text-red-400 active:border-red-800 text-xs rounded-xl py-2.5 transition-colors min-h-[44px]">
                 Delete Mother Plant
               </button>
             )}
           </div>
-        )}
+          );
+        })()}
 
         {detailTab === "History" && (() => {
           const latestTxId = mother.transplantHistory.length ? mother.transplantHistory[mother.transplantHistory.length - 1].id : null;
@@ -2325,15 +2509,44 @@ const MotherDetailModal = memo(function MotherDetailModal({
                           {e.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{e.notes}</div>}
                           <div className="text-xs text-zinc-600 mt-0.5">{e.date ? fmtDate(e.date) : "Date unknown"}</div>
                           {e._type === "clone" && (
-                            <button
-                              onClick={() => setSendToCloneEntry(e)}
-                              className="text-[10px] text-sky-400 hover:text-sky-300 border border-sky-800/50 hover:border-sky-700 rounded-lg px-2 py-1 mt-1.5 transition-colors"
-                            >
-                              Send to Clone Log
-                            </button>
+                            <div className="mt-1.5 space-y-1.5">
+                              <button
+                                onClick={() => setSendToCloneEntry(e)}
+                                className="text-xs text-sky-400 active:text-sky-300 border border-sky-800/50 active:border-sky-700 rounded-lg px-3 min-h-[44px] flex items-center transition-colors"
+                              >
+                                Send to Clone Log
+                              </button>
+                              {/* Clone outcome toggle */}
+                              {e.outcome == null ? (
+                                <div className="flex gap-1.5">
+                                  <button
+                                    onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, "rooted")}
+                                    className="text-[10px] px-2 py-1 rounded-lg bg-emerald-900/50 border border-emerald-700/50 text-emerald-300 font-semibold active:bg-emerald-800 transition-colors min-h-[44px] flex items-center"
+                                  >
+                                    Rooted
+                                  </button>
+                                  <button
+                                    onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, "failed")}
+                                    className="text-[10px] px-2 py-1 rounded-lg bg-red-900/50 border border-red-700/50 text-red-300 font-semibold active:bg-red-800 transition-colors min-h-[44px] flex items-center"
+                                  >
+                                    Failed
+                                  </button>
+                                </div>
+                              ) : e.outcome === "rooted" ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] px-2 py-0.5 rounded-lg bg-emerald-900/50 border border-emerald-700/50 text-emerald-300 font-semibold">Rooted</span>
+                                  <button onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, null)} className="text-[10px] text-zinc-500 active:text-zinc-300 underline transition-colors min-h-[44px] px-2 flex items-center">Undo</button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] px-2 py-0.5 rounded-lg bg-red-900/50 border border-red-700/50 text-red-300 font-semibold">Failed</span>
+                                  <button onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, null)} className="text-[10px] text-zinc-500 active:text-zinc-300 underline transition-colors min-h-[44px] px-2 flex items-center">Undo</button>
+                                </div>
+                              )}
+                            </div>
                           )}
                         </div>
-                        <button onClick={() => removeEntry(e)} className="text-zinc-700 hover:text-red-500 text-sm w-7 h-7 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
+                        <button onClick={() => removeEntry(e)} aria-label="Remove entry" className="text-zinc-700 hover:text-red-500 text-sm w-11 h-11 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
                       </div>
                     );
                   })}
@@ -2354,11 +2567,11 @@ const MotherDetailModal = memo(function MotherDetailModal({
                         { label: "Feeding",    action: () => { setActiveSheet(null); setFeedingForm({ date: today(), type: "Water Only", notes: "" }); setShowFeedingModal(true); } },
                         { label: "Reduction",  action: () => { setActiveSheet(null); setReductionForm({ date: today(), reason: "Space", notes: "" }); setShowReductionModal(true); } },
                       ].map(({ label, action }) => (
-                        <button key={label} onClick={action} className="w-full text-left px-4 py-3 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 rounded-xl text-sm text-zinc-200 font-medium transition-colors">
+                        <button key={label} onClick={action} className="w-full text-left px-4 py-3 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 rounded-xl text-sm text-zinc-200 font-medium transition-colors min-h-[44px]">
                           {label}
                         </button>
                       ))}
-                      <button onClick={() => setActiveSheet(null)} className="w-full py-2.5 mt-1 rounded-xl border border-zinc-700 text-zinc-500 text-sm font-semibold">Cancel</button>
+                      <button onClick={() => setActiveSheet(null)} className="w-full py-2.5 mt-1 rounded-xl border border-zinc-700 text-zinc-500 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
                     </div>
                   </div>
                 </div>
@@ -2526,7 +2739,9 @@ const MotherDetailModal = memo(function MotherDetailModal({
 
 // ── Photos Tab ──────────────────────────────────────────────────────────────
 function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
-  const photos = mother.photos || [];
+  const rawPhotos = mother.photos || [];
+  // Sort photos by id descending (id starts with timestamp via uid())
+  const photos = useMemo(() => [...rawPhotos].sort((a, b) => b.id.localeCompare(a.id)), [rawPhotos]);
   const fileInputRef = useRef(null);
   const [adding, setAdding] = useState(false);
   const [caption, setCaption] = useState("");
@@ -2536,6 +2751,8 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
   const [fullscreen, setFullscreen] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [storageWarning, setStorageWarning] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState(new Set());
 
   function handleFileChange(e) {
     const file = e.target.files[0];
@@ -2574,6 +2791,14 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  function togglePhotoSelect(id) {
+    setSelectedPhotos(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) { next.delete(id); } else if (next.size < 2) { next.add(id); }
+      return next;
+    });
+  }
+
   return (
     <div className="space-y-3">
       {storageWarning && (
@@ -2582,6 +2807,41 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
           <div className="text-xs text-red-400/80 mt-0.5">Could not save photo. Delete some existing photos to free up space.</div>
         </div>
       )}
+
+      {/* Compare mode toggle */}
+      {photos.length >= 2 && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => { setCompareMode(p => !p); setSelectedPhotos(new Set()); }}
+            className={`text-xs px-3 py-1.5 rounded-xl font-semibold border transition-colors min-h-[44px] ${compareMode ? "bg-zinc-700 text-white border-zinc-600" : "bg-zinc-900/80 border-zinc-800 text-zinc-500"}`}
+          >
+            Compare
+          </button>
+        </div>
+      )}
+
+      {/* Compare split view */}
+      {compareMode && selectedPhotos.size === 2 && (() => {
+        const [idA, idB] = [...selectedPhotos];
+        const pA = photos.find(p => p.id === idA);
+        const pB = photos.find(p => p.id === idB);
+        if (!pA || !pB) return null;
+        return (
+          <div className="grid grid-cols-2 gap-2">
+            {[pA, pB].map(p => (
+              <div key={p.id} className="rounded-xl overflow-hidden bg-zinc-900 border border-emerald-700/60">
+                <div className="w-full aspect-square">
+                  <img src={p.dataUrl} alt={p.caption || "Photo"} className="w-full h-full object-cover" />
+                </div>
+                <div className="px-2 py-1.5">
+                  {p.caption && <div className="text-[10px] text-zinc-300 truncate">{p.caption}</div>}
+                  {p.date && <div className="text-[10px] text-zinc-500">{fmtDate(p.date)}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {!adding ? (
         <button
@@ -2602,7 +2862,7 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
           />
           <button
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
-            className="w-full border border-dashed border-zinc-600 hover:border-zinc-400 rounded-xl py-4 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="w-full border border-dashed border-zinc-600 active:border-zinc-400 rounded-xl py-4 text-xs text-zinc-500 active:text-zinc-300 transition-colors"
           >
             {previewUrl ? "Change Photo" : "Tap to Select Photo"}
           </button>
@@ -2641,23 +2901,34 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
         <div className="text-center py-8 text-zinc-600 text-sm">No photos yet.</div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-          {photos.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setFullscreen(p)}
-              className="rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors text-left"
-            >
-              <div className="w-full aspect-square">
-                <img src={p.dataUrl} alt={p.caption || "Photo"} className="w-full h-full object-cover" />
-              </div>
-              {(p.caption || p.date) && (
-                <div className="px-2 py-1.5">
-                  {p.caption && <div className="text-[10px] text-zinc-300 truncate">{p.caption}</div>}
-                  {p.date && <div className="text-[10px] text-zinc-600">{fmtDate(p.date)}</div>}
+          {photos.map(p => {
+            const isSelected = selectedPhotos.has(p.id);
+            return (
+              <button
+                key={p.id}
+                aria-label={p.caption || "View photo"}
+                onClick={() => compareMode ? togglePhotoSelect(p.id) : setFullscreen(p)}
+                className={`rounded-xl overflow-hidden bg-zinc-900 border transition-colors text-left ${
+                  compareMode && isSelected ? "border-emerald-500 ring-1 ring-emerald-500" :
+                  compareMode ? "border-zinc-700 active:border-zinc-500" :
+                  "border-zinc-800 active:border-zinc-600"
+                }`}
+              >
+                <div className="w-full aspect-square relative">
+                  <img src={p.dataUrl} alt={p.caption || "Photo"} className="w-full h-full object-cover" />
+                  {compareMode && isSelected && (
+                    <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                      <span className="text-white text-[10px] font-bold">{[...selectedPhotos].indexOf(p.id) + 1}</span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </button>
-          ))}
+                <div className="px-2 py-1.5">
+                  {p.date && <div className="text-[10px] text-zinc-500">{fmtDate(p.date)}</div>}
+                  {p.caption && <div className="text-[10px] text-zinc-300 truncate">{p.caption}</div>}
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -2679,7 +2950,7 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
               </button>
               <button
                 onClick={() => { onRemovePhoto(fullscreen.id); setFullscreen(null); }}
-                className="flex-1 bg-red-900/40 hover:bg-red-900/60 border border-red-800/50 text-red-400 font-medium text-sm rounded-xl py-2.5 transition-colors"
+                className="flex-1 bg-red-900/40 hover:bg-red-900/60 active:bg-red-900/70 border border-red-800/50 text-red-400 font-medium text-sm rounded-xl py-2.5 transition-colors"
               >
                 Delete
               </button>
