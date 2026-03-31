@@ -56,12 +56,12 @@ function CloneRatesSection({ mothers, getStrain }) {
       {/* Summary row */}
       <div className="flex gap-2 mb-4">
         {[
-          { label: "Overall", value: overall.taken === 0 ? "—" : `${overall.rate}%`, color: overall.taken === 0 ? "text-zinc-400" : rateColor(overall.rate) },
-          { label: "Total cuts", value: overall.taken, color: "text-zinc-200" },
-          { label: "Rooted", value: overall.rooted, color: "text-zinc-200" },
-        ].map(({ label, value, color }) => (
+          { label: "Overall", value: overall.taken === 0 ? "—" : `${overall.rate}%`, style: { color: overall.taken === 0 ? "#71717a" : rateColor(overall.rate) } },
+          { label: "Total cuts", value: overall.taken, style: { color: "#e4e4e7" } },
+          { label: "Rooted", value: overall.rooted, style: { color: "#e4e4e7" } },
+        ].map(({ label, value, style }) => (
           <div key={label} className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
-            <div className={`text-xl font-bold ${color}`}>{value}</div>
+            <div className="text-xl font-bold" style={style}>{value}</div>
             <div className="text-[10px] text-zinc-500 mt-0.5">{label}</div>
           </div>
         ))}
@@ -101,13 +101,13 @@ function CloneRatesSection({ mothers, getStrain }) {
 
 // ─── Section B: Health Trends ─────────────────────────────────────────────────
 
-function HealthTrendsSection({ mothers }) {
+function HealthTrendsSection({ mothers, getStrain }) {
   const activeMothers = useMemo(() => mothers.filter(m => m.status === "Active"), [mothers]);
   const [selectedId, setSelectedId] = useState(null);
 
   const mother = useMemo(() => {
     const id = selectedId ?? activeMothers[0]?.id ?? null;
-    return activeMothers.find(m => m.id === id) ?? activeMothers[0] ?? null;
+    return activeMothers.find(m => String(m.id) === String(id)) ?? activeMothers[0] ?? null;
   }, [selectedId, activeMothers]);
 
   const chartData = useMemo(() => {
@@ -133,13 +133,13 @@ function HealthTrendsSection({ mothers }) {
 
       {/* Plant picker */}
       <select
-        value={mother?.id ?? ""}
+        value={mother ? String(mother.id) : ""}
         onChange={e => setSelectedId(e.target.value)}
         className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 mb-3 appearance-none"
       >
         {activeMothers.map(m => (
-          <option key={m.id} value={m.id}>
-            {m.strainCode} — {m.location || "No location"}
+          <option key={m.id} value={String(m.id)}>
+            {getStrain(m.strainCode)?.name ?? m.strainCode} — {m.location || "No location"}
           </option>
         ))}
       </select>
@@ -284,7 +284,7 @@ export default function StatsTab({ mothers, getStrain }) {
   return (
     <div className="px-4 py-4 pb-8 overflow-y-auto flex-1">
       <CloneRatesSection mothers={mothers} getStrain={getStrain} />
-      <HealthTrendsSection mothers={mothers} />
+      <HealthTrendsSection mothers={mothers} getStrain={getStrain} />
       <StrainComparisonSection mothers={mothers} getStrain={getStrain} />
       <CareGapsSection mothers={mothers} getStrain={getStrain} />
     </div>
