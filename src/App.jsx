@@ -327,6 +327,7 @@ function defaultMother() {
     status: "Active",
     location: "",
     healthLevel: 4,
+    healthLog: [],
     notes: "",
     transplantHistory: [],
     amendmentLog: [],
@@ -564,7 +565,17 @@ export default function MotherPlantTracker() {
     setMothers(prev => [{ ...defaultMother(), ...data, id: uid(), createdAt: today() }, ...prev]);
   }
   const updateMother = useCallback((id, patch) => {
-    setMothers(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
+    setMothers(prev => prev.map(m => {
+      if (m.id !== id) return m;
+      let finalPatch = patch;
+      if (patch.healthLevel !== undefined && patch.healthLevel !== m.healthLevel) {
+        finalPatch = {
+          ...patch,
+          healthLog: [...(m.healthLog ?? []), { date: today(), level: patch.healthLevel }],
+        };
+      }
+      return { ...m, ...finalPatch };
+    }));
   }, []);
   const deleteMother = useCallback((id) => {
     setMothers(prev => prev.filter(m => m.id !== id));
