@@ -417,6 +417,203 @@ function ArchivePanel({ archive }) {
   );
 }
 
+function BurpDots({ fillDate, burps }) {
+  const now = new Date();
+  const todayStr = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  ).toISOString().split("T")[0];
+
+  return (
+    <div className="flex gap-0.5 mt-1.5">
+      {Array.from({ length: 14 }, (_, i) => {
+        const d = new Date(fillDate + "T00:00:00Z");
+        d.setUTCDate(d.getUTCDate() + i + 1);
+        const dateStr = d.toISOString().split("T")[0];
+        const burped = burps.includes(dateStr);
+        const isPast = dateStr < todayStr;
+        return (
+          <div
+            key={i}
+            title={`Day ${i + 1}: ${dateStr}${burped ? " ✓" : isPast ? " missed" : ""}`}
+            className={`w-2.5 h-2.5 rounded-full ${
+              burped ? "bg-emerald-500" : isPast ? "bg-red-800/70" : "bg-zinc-700"
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function BinCard({ bin, onBurp, onSend }) {
+  const status = getBinStatus(bin);
+  const days = getDaysCured(bin);
+  const t = new Date().toISOString().split("T")[0];
+  const alreadyBurpedToday = bin.burps.includes(t);
+
+  const missed = (() => {
+    if (status !== "burping") return false;
+    const now = new Date();
+    const yStr = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1)
+    ).toISOString().split("T")[0];
+    return yStr > bin.fillDate && !bin.burps.includes(yStr);
+  })();
+
+  const qualityBadge = bin.quality === "tops"
+    ? <span className="text-[10px] px-2 py-0.5 rounded-full border bg-emerald-900/50 text-emerald-300 border-emerald-700/40 font-medium">TOPS</span>
+    : bin.quality === "lowers"
+    ? <span className="text-[10px] px-2 py-0.5 rounded-full border bg-amber-900/50 text-amber-300 border-amber-700/40 font-medium">LOWERS</span>
+    : <span className="text-[10px] px-2 py-0.5 rounded-full border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">MID</span>;
+
+  return (
+    <div className={`bg-zinc-900 border rounded-2xl p-4 ${missed ? "border-red-900/60" : "border-zinc-800"}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="text-white font-semibold text-sm leading-tight truncate">
+            {getStrainName(bin.strainCode)}
+          </div>
+          <div className="text-zinc-600 text-[10px] mt-0.5">{bin.strainCode}</div>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
+          {qualityBadge}
+          <span className="text-[10px] px-2 py-0.5 rounded-full border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">
+            {bin.size === "half" ? "HALF" : "FULL"}
+          </span>
+          {missed && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full border bg-red-900/40 text-red-400 border-red-800/40 font-medium">MISSED</span>
+          )}
+        </div>
+      </div>
+
+      <div className="text-zinc-500 text-[10px] mt-2">
+        Filled {fmtDate(bin.fillDate)} · {days}d cured
+      </div>
+
+      {status === "burping" && (
+        <>
+          <BurpDots fillDate={bin.fillDate} burps={bin.burps} />
+          <div className="flex items-center justify-between mt-3 gap-2">
+            {alreadyBurpedToday ? (
+              <span className="flex items-center gap-1 text-emerald-400 text-xs font-medium">
+                <Check size={12} /> Burped today
+              </span>
+            ) : (
+              <button
+                onClick={() => onBurp(bin.id)}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-800 text-emerald-200 border border-emerald-700 hover:bg-emerald-700 transition-colors">
+                Burp Today
+              </button>
+            )}
+            <button
+              onClick={onSend}
+              className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-500 border border-zinc-800 hover:text-zinc-300 hover:border-zinc-600 transition-colors">
+              Send Downstairs
+            </button>
+          </div>
+        </>
+      )}
+
+      {status === "curing" && (
+        <div className="flex justify-end mt-3">
+          <button
+            onClick={onSend}
+            className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-500 border border-zinc-800 hover:text-zinc-300 hover:border-zinc-600 transition-colors">
+            Send Downstairs
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AddBinModal({ archive, onClose, onSave }) {
+  const [selectedRackId, setSelectedRackId] = useState(archive[0]?.id ?? "");
+  const [size, setSize] = useState("full");
+  const [fillDate, setFillDate] = useState(today());
+
+  const selectedRack = archive.find(r => r.id === selectedRackId);
+
+  function handleSave() {
+    if (!selectedRack) return;
+    onSave({
+      strainCode: selectedRack.strainCode,
+      quality: selectedRack.quality,
+      dateHung: selectedRack.dateHung,
+      fillDate,
+      size,
+    });
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-zinc-950 border border-zinc-800 rounded-t-3xl w-full max-w-sm p-6 pb-10 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-white font-semibold">Add Bin</h2>
+          <button onClick={onClose} aria-label="Close"><X size={20} className="text-zinc-500" /></button>
+        </div>
+
+        <div>
+          <label className="text-xs text-zinc-400 mb-1 block">Source Rack</label>
+          {archive.length === 0 ? (
+            <div className="text-zinc-600 text-xs py-2">No archived racks yet — bin a rack in the Hanging tab first.</div>
+          ) : (
+            <select
+              value={selectedRackId}
+              onChange={e => setSelectedRackId(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600">
+              {archive.map(r => (
+                <option key={r.id} value={r.id}>
+                  {getStrainName(r.strainCode)} · {r.quality} · {fmtDate(r.dateHung)}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {selectedRack && (
+          <div className="bg-zinc-900 rounded-xl px-3 py-2 text-[11px] text-zinc-500 space-y-0.5">
+            <div>Strain: <span className="text-zinc-300">{getStrainName(selectedRack.strainCode)}</span></div>
+            <div>Quality: <span className="text-zinc-300 capitalize">{selectedRack.quality}</span></div>
+            <div>Hung: <span className="text-zinc-300">{fmtDate(selectedRack.dateHung)}</span></div>
+          </div>
+        )}
+
+        <div>
+          <label className="text-xs text-zinc-400 mb-1 block">Size</label>
+          <div className="flex gap-2">
+            {["full", "half"].map(s => (
+              <button key={s} onClick={() => setSize(s)}
+                className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
+                  size === s
+                    ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
+                    : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-600"
+                }`}>
+                {s === "full" ? "Full Tote" : "Half Tote"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="text-xs text-zinc-400 mb-1 block">Fill Date</label>
+          <input type="date" value={fillDate} onChange={e => setFillDate(e.target.value)}
+            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600" />
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={!selectedRack}
+          className="w-full bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
+          Add Bin
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BinsPanel({ data, persist }) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center mt-2">
