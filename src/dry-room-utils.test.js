@@ -1,6 +1,7 @@
 // src/dry-room-utils.test.js
 import { describe, it, expect } from 'vitest';
 import { daysHanging, daysRemaining, countdownColor, sortByUrgency, DRY_DAYS } from './dry-room-utils';
+import { getDaysCured, getBinStatus, BURP_DAYS } from './dry-room-utils';
 
 describe('daysHanging', () => {
   it('returns 0 when dateHung is today', () => {
@@ -92,5 +93,67 @@ describe('sortByUrgency', () => {
     const batches = [{ id: 'x', dateHung: today }];
     sortByUrgency(batches);
     expect(batches[0].id).toBe('x');
+  });
+});
+
+// helper: ISO date string N days offset from today
+function daysAgo(n) {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().split("T")[0];
+}
+
+describe('getDaysCured', () => {
+  it('returns 0 when fillDate is today', () => {
+    const bin = { fillDate: daysAgo(0), dateSent: null };
+    expect(getDaysCured(bin)).toBe(0);
+  });
+
+  it('returns 5 when fillDate was 5 days ago', () => {
+    const bin = { fillDate: daysAgo(5), dateSent: null };
+    expect(getDaysCured(bin)).toBe(5);
+  });
+
+  it('uses dateSent as end date when set', () => {
+    const bin = { fillDate: daysAgo(10), dateSent: daysAgo(3) };
+    expect(getDaysCured(bin)).toBe(7);
+  });
+
+  it('returns 0 for missing fillDate', () => {
+    const bin = { fillDate: null, dateSent: null };
+    expect(getDaysCured(bin)).toBe(0);
+  });
+});
+
+describe('getBinStatus', () => {
+  it('returns "archived" when harvestId is set regardless of days', () => {
+    const bin = { fillDate: daysAgo(20), dateSent: daysAgo(1), harvestId: 'h1', burps: [] };
+    expect(getBinStatus(bin)).toBe('archived');
+  });
+
+  it('returns "burping" on fill day (day 0)', () => {
+    const bin = { fillDate: daysAgo(0), dateSent: null, harvestId: null, burps: [] };
+    expect(getBinStatus(bin)).toBe('burping');
+  });
+
+  it('returns "burping" on day 14', () => {
+    const bin = { fillDate: daysAgo(14), dateSent: null, harvestId: null, burps: [] };
+    expect(getBinStatus(bin)).toBe('burping');
+  });
+
+  it('returns "curing" on day 15', () => {
+    const bin = { fillDate: daysAgo(15), dateSent: null, harvestId: null, burps: [] };
+    expect(getBinStatus(bin)).toBe('curing');
+  });
+
+  it('returns "curing" on day 30', () => {
+    const bin = { fillDate: daysAgo(30), dateSent: null, harvestId: null, burps: [] };
+    expect(getBinStatus(bin)).toBe('curing');
+  });
+});
+
+describe('BURP_DAYS', () => {
+  it('equals 14', () => {
+    expect(BURP_DAYS).toBe(14);
   });
 });
