@@ -1,5 +1,5 @@
 // src/DryRoomTab.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import Wifi from "lucide-react/dist/esm/icons/wifi";
 import WifiOff from "lucide-react/dist/esm/icons/wifi-off";
@@ -54,7 +54,18 @@ export default function DryRoomTab() {
   const [synced, setSynced]       = useState(false);
   const [syncing, setSyncing]     = useState(false);
   const [syncError, setSyncError] = useState(null);
-  const [lastTs, setLastTs]       = useState(null);
+  const lastTsRef = useRef(null);
+  useEffect(() => {
+    const unsub = subscribeToKey(DB_KEY, (remote, ts) => {
+      const normalized = normTs(ts);
+      if (normalized && normalized === lastTsRef.current) return;
+      lastTsRef.current = normalized;
+      const merged = { ...DEFAULT_DATA, ...remote };
+      setData(merged);
+      save(CACHE_KEY, merged);
+    });
+    return unsub;
+  }, []);
 
   useEffect(() => {
     setSyncing(true);
@@ -69,38 +80,32 @@ export default function DryRoomTab() {
     }).catch(() => { setSyncError("Load failed"); setSyncing(false); });
   }, []);
 
-  useEffect(() => {
-    const unsub = subscribeToKey(DB_KEY, (remote, ts) => {
-      if (normTs(ts) === normTs(lastTs)) return;
-      setLastTs(ts);
-      const merged = { ...DEFAULT_DATA, ...remote };
-      setData(merged);
-      save(CACHE_KEY, merged);
+  const persist = useCallback((updater) => {
+    setData(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      save(CACHE_KEY, next);
+      saveToDB(DB_KEY, next).then(() => setSyncError(null)).catch(() => setSyncError("Save failed"));
+      return next;
     });
-    return unsub;
-  }, [lastTs]);
-
-  const persist = useCallback((next) => {
-    setData(next);
-    save(CACHE_KEY, next);
-    saveToDB(DB_KEY, next).catch(() => setSyncError("Save failed"));
   }, []);
 
   const addBatch = useCallback((fields) => {
     const batch = { id: uid(), ...fields };
-    persist({ ...data, active: [...data.active, batch] });
-  }, [data, persist]);
+    persist(prev => ({ ...prev, active: [...prev.active, batch] }));
+  }, [persist]);
 
   const binBatch = useCallback((id) => {
-    const batch = data.active.find(b => b.id === id);
-    if (!batch) return;
-    const archived = { ...batch, dateBinned: today() };
-    persist({
-      ...data,
-      active: data.active.filter(b => b.id !== id),
-      archive: [archived, ...data.archive],
+    persist(prev => {
+      const batch = prev.active.find(b => b.id === id);
+      if (!batch) return prev;
+      const archived = { ...batch, dateBinned: today() };
+      return {
+        ...prev,
+        active: prev.active.filter(b => b.id !== id),
+        archive: [archived, ...prev.archive],
+      };
     });
-  }, [data, persist]);
+  }, [persist]);
 
   const mainCount    = data.active.filter(b => b.rackType === "main").length;
   const sideCount    = data.active.filter(b => b.rackType === "side").length;
