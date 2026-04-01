@@ -418,10 +418,7 @@ function ArchivePanel({ archive }) {
 }
 
 function BurpDots({ fillDate, burps }) {
-  const now = new Date();
-  const todayStr = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  ).toISOString().split("T")[0];
+  const todayStr = today();
 
   return (
     <div className="flex gap-0.5 mt-1.5">
@@ -448,7 +445,7 @@ function BurpDots({ fillDate, burps }) {
 function BinCard({ bin, onBurp, onSend }) {
   const status = getBinStatus(bin);
   const days = getDaysCured(bin);
-  const t = new Date().toISOString().split("T")[0];
+  const t = today();
   const alreadyBurpedToday = bin.burps.includes(t);
 
   const missed = (() => {
