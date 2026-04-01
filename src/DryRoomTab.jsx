@@ -32,7 +32,6 @@ const STRAINS = [
 ];
 
 const DB_KEY = "dryroom";
-const CACHE_KEY = "dryroom";
 const DRY_ROOM_SUB_TABS = ["Hanging", "Archive", "Bins"];
 const DEFAULT_DATA = { active: [], archive: [], bins: [] };
 
@@ -49,7 +48,7 @@ function getStrainName(code) { return STRAINS.find(s => s.code === code)?.name ?
 function normTs(ts) { try { return ts ? new Date(ts).toISOString() : null; } catch { return ts; } }
 
 export default function DryRoomTab() {
-  const [data, setData]           = useState(() => load(CACHE_KEY) ?? DEFAULT_DATA);
+  const [data, setData]           = useState(() => load(DB_KEY) ?? DEFAULT_DATA);
   const [subTab, setSubTab]       = useState("Hanging");
   const [synced, setSynced]       = useState(false);
   const [syncing, setSyncing]     = useState(false);
@@ -62,9 +61,9 @@ export default function DryRoomTab() {
       lastTsRef.current = normalized;
       const merged = { ...DEFAULT_DATA, ...remote };
       setData(merged);
-      save(CACHE_KEY, merged);
+      save(DB_KEY, merged);
     });
-    return unsub;
+    return () => unsub.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -73,7 +72,7 @@ export default function DryRoomTab() {
       if (remote) {
         const merged = { ...DEFAULT_DATA, ...remote };
         setData(merged);
-        save(CACHE_KEY, merged);
+        save(DB_KEY, merged);
       }
       setSynced(true);
       setSyncing(false);
@@ -83,8 +82,9 @@ export default function DryRoomTab() {
   const persist = useCallback((updater) => {
     setData(prev => {
       const next = typeof updater === "function" ? updater(prev) : updater;
-      save(CACHE_KEY, next);
-      saveToDB(DB_KEY, next).then(() => setSyncError(null)).catch(() => setSyncError("Save failed"));
+      save(DB_KEY, next);
+      const ts = new Date().toISOString();
+      saveToDB(DB_KEY, next, ts).then(() => setSyncError(null)).catch(() => setSyncError("Save failed"));
       return next;
     });
   }, []);
