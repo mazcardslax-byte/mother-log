@@ -612,10 +612,137 @@ function AddBinModal({ archive, onClose, onSave }) {
 }
 
 function BinsPanel({ data, persist }) {
+  const [view, setView] = useState("active");
+  const [showAdd, setShowAdd] = useState(false);
+  const [sendingBin, setSendingBin] = useState(null);
+
+  const bins = data.bins ?? [];
+  const harvests = data.harvests ?? [];
+  const rackArchive = data.archive ?? [];
+
+  const activeBins = bins.filter(b => !b.harvestId);
+  const burpingBins = activeBins.filter(b => getBinStatus(b) === "burping");
+  const curingBins  = activeBins.filter(b => getBinStatus(b) === "curing");
+  const archivedBins = bins.filter(b => b.harvestId);
+
+  function handleAddBin(fields) {
+    persist(prev => ({
+      ...prev,
+      bins: [...(prev.bins ?? []), {
+        id: uid(),
+        ...fields,
+        burps: [],
+        harvestId: null,
+        dateSent: null,
+      }],
+    }));
+  }
+
+  function handleBurp(binId) {
+    const t = today();
+    persist(prev => ({
+      ...prev,
+      bins: (prev.bins ?? []).map(b =>
+        b.id === binId && !b.burps.includes(t)
+          ? { ...b, burps: [...b.burps, t] }
+          : b
+      ),
+    }));
+  }
+
+  function handleSend(binId, harvestOrId) {
+    const t = today();
+    persist(prev => {
+      let nextHarvests = prev.harvests ?? [];
+      let harvestId;
+      if (typeof harvestOrId === "string") {
+        harvestId = harvestOrId;
+      } else {
+        nextHarvests = [...nextHarvests, harvestOrId];
+        harvestId = harvestOrId.id;
+      }
+      return {
+        ...prev,
+        harvests: nextHarvests,
+        bins: (prev.bins ?? []).map(b =>
+          b.id === binId ? { ...b, harvestId, dateSent: t } : b
+        ),
+      };
+    });
+  }
+
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center mt-2">
-      <div className="text-zinc-400 text-sm font-medium mb-1">Bins</div>
-      <div className="text-zinc-600 text-xs">Wiring complete — UI coming next.</div>
+    <div>
+      {/* Sub-tab toggle */}
+      <div className="flex gap-1 mb-4">
+        {["active", "archive"].map(v => (
+          <button key={v} onClick={() => setView(v)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
+              view === v
+                ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700/50"
+                : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+            }`}>
+            {v}
+          </button>
+        ))}
+      </div>
+
+      {view === "active" && (
+        <>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-zinc-300 text-xs font-medium">
+              {activeBins.length} bin{activeBins.length !== 1 ? "s" : ""} active
+            </span>
+            <button onClick={() => setShowAdd(true)}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-800 text-emerald-200 border border-emerald-700 hover:bg-emerald-700 transition-colors">
+              + Add Bin
+            </button>
+          </div>
+
+          {burpingBins.length > 0 && (
+            <>
+              <div className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wide mb-2">Burping</div>
+              <div className="space-y-3 mb-4">
+                {burpingBins.map(b => (
+                  <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {curingBins.length > 0 && (
+            <>
+              <div className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wide mb-2">Curing</div>
+              <div className="space-y-3 mb-4">
+                {curingBins.map(b => (
+                  <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {activeBins.length === 0 && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+              <div className="text-zinc-400 text-sm font-medium mb-1">No bins active</div>
+              <div className="text-zinc-600 text-xs">Tap + Add Bin to log a tote.</div>
+            </div>
+          )}
+        </>
+      )}
+
+      {view === "archive" && (
+        <div className="text-zinc-600 text-xs text-center py-8">Archive view — coming in next task.</div>
+      )}
+
+      {showAdd && (
+        <AddBinModal archive={rackArchive} onClose={() => setShowAdd(false)} onSave={handleAddBin} />
+      )}
+      {sendingBin && (
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center fixed inset-x-4 bottom-10 z-50">
+          <div className="text-zinc-400 text-xs">SendDownstairsModal coming next.</div>
+          <button onClick={() => setSendingBin(null)} className="text-zinc-600 text-xs mt-2 block mx-auto">Cancel</button>
+        </div>
+      )}
     </div>
   );
 }
