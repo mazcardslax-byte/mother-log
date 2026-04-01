@@ -103,8 +103,9 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 function today() { return new Date().toISOString().split("T")[0]; }
 function daysSince(dateStr) {
   if (!dateStr) return null;
-  const diff = Date.now() - new Date(dateStr).getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const local = new Date(y, m - 1, d);
+  return Math.max(0, Math.floor((Date.now() - local.getTime()) / 86400000));
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -669,6 +670,7 @@ export default function ClonesTab() {
   const [quickPot, setQuickPot] = useState("Black Pot");
   const [quickRound, setQuickRound] = useState("Upcoming");
   const [quickFeedback, setQuickFeedback] = useState(null);
+  const quickFeedbackTimerRef = useRef(null);
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -803,8 +805,8 @@ export default function ClonesTab() {
     const qty2 = parseInt(quickQty);
     setQuickFeedback(`✓ ${qty2} ${strain.name}${suffix ? " " + suffix : ""} logged`);
     setQuickQty("");
-    if (window._qft) clearTimeout(window._qft);
-    window._qft = setTimeout(() => setQuickFeedback(null), 2500);
+    if (quickFeedbackTimerRef.current) clearTimeout(quickFeedbackTimerRef.current);
+    quickFeedbackTimerRef.current = setTimeout(() => setQuickFeedback(null), 2500);
   }
 
   function handleAddEntry() {
