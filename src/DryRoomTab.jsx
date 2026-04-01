@@ -611,6 +611,158 @@ function AddBinModal({ archive, onClose, onSave }) {
   );
 }
 
+function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
+  const [mode, setMode] = useState(harvests.length > 0 ? "existing" : "new");
+  const [selectedHarvestId, setSelectedHarvestId] = useState(harvests[0]?.id ?? "");
+  const [name, setName] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const canSend = mode === "existing" ? !!selectedHarvestId : (!!startDate && !!endDate);
+
+  function harvestLabel(h) {
+    return h.name
+      ? `${h.name} (${fmtDate(h.startDate)} – ${fmtDate(h.endDate)})`
+      : `${fmtDate(h.startDate)} – ${fmtDate(h.endDate)}`;
+  }
+
+  function handleSend() {
+    if (!canSend) return;
+    if (mode === "existing") {
+      onSend(bin.id, selectedHarvestId);
+    } else {
+      onSend(bin.id, { id: uid(), name: name.trim(), startDate, endDate });
+    }
+    onClose();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-zinc-950 border border-zinc-800 rounded-t-3xl w-full max-w-sm p-6 pb-10 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-white font-semibold">Send Downstairs</h2>
+          <button onClick={onClose} aria-label="Close"><X size={20} className="text-zinc-500" /></button>
+        </div>
+
+        <div className="text-zinc-500 text-xs">
+          {getStrainName(bin.strainCode)} · {bin.quality} · filled {fmtDate(bin.fillDate)}
+        </div>
+
+        {harvests.length > 0 && (
+          <div className="flex gap-2">
+            {[["existing", "Existing Harvest"], ["new", "New Harvest"]].map(([v, label]) => (
+              <button key={v} onClick={() => setMode(v)}
+                className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
+                  mode === v
+                    ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
+                    : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-600"
+                }`}>
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mode === "existing" && (
+          <div>
+            <label className="text-xs text-zinc-400 mb-1 block">Harvest</label>
+            <select
+              value={selectedHarvestId}
+              onChange={e => setSelectedHarvestId(e.target.value)}
+              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600">
+              {harvests.map(h => (
+                <option key={h.id} value={h.id}>{harvestLabel(h)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {mode === "new" && (
+          <>
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Harvest Name (optional)</label>
+              <input type="text" value={name} onChange={e => setName(e.target.value)}
+                placeholder="e.g. Spring Run"
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-600" />
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-xs text-zinc-400 mb-1 block">Start Date</label>
+                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600" />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs text-zinc-400 mb-1 block">End Date</label>
+                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600" />
+              </div>
+            </div>
+          </>
+        )}
+
+        <button
+          onClick={handleSend}
+          disabled={!canSend}
+          className="w-full bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
+          Send Downstairs
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HarvestCard({ harvest, bins }) {
+  const [open, setOpen] = useState(false);
+  const label = harvest.name
+    ? `${harvest.name} · ${fmtDate(harvest.startDate)} – ${fmtDate(harvest.endDate)}`
+    : `${fmtDate(harvest.startDate)} – ${fmtDate(harvest.endDate)}`;
+  const strainSummary = [...new Set(bins.map(b => getStrainName(b.strainCode)))].join(", ");
+
+  const qualityBadge = (q) => q === "tops"
+    ? <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-emerald-900/50 text-emerald-300 border-emerald-700/40 font-medium">TOPS</span>
+    : q === "lowers"
+    ? <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-amber-900/50 text-amber-300 border-amber-700/40 font-medium">LOWERS</span>
+    : <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">MID</span>;
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between p-4 text-left">
+        <div>
+          <div className="text-white text-sm font-medium">{label}</div>
+          <div className="text-zinc-500 text-[10px] mt-0.5">
+            {bins.length} bin{bins.length !== 1 ? "s" : ""}
+            {strainSummary && ` · ${strainSummary}`}
+          </div>
+        </div>
+        <ChevronDown
+          size={16}
+          className={`text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="border-t border-zinc-800 divide-y divide-zinc-800">
+          {bins.map(b => (
+            <div key={b.id} className="px-4 py-3 flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="text-zinc-200 text-xs font-medium truncate">{getStrainName(b.strainCode)}</div>
+                <div className="text-zinc-600 text-[10px] mt-0.5">
+                  Filled {fmtDate(b.fillDate)} · {getDaysCured(b)}d cured · {b.size === "half" ? "Half" : "Full"} tote
+                </div>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {qualityBadge(b.quality)}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BinsPanel({ data, persist }) {
   const [view, setView] = useState("active");
   const [showAdd, setShowAdd] = useState(false);
@@ -731,17 +883,34 @@ function BinsPanel({ data, persist }) {
       )}
 
       {view === "archive" && (
-        <div className="text-zinc-600 text-xs text-center py-8">Archive view — coming in next task.</div>
+        harvests.length === 0 ? (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+            <div className="text-zinc-400 text-sm font-medium mb-1">No archived harvests</div>
+            <div className="text-zinc-600 text-xs">Bins sent downstairs will appear here.</div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {[...harvests].reverse().map(h => (
+              <HarvestCard
+                key={h.id}
+                harvest={h}
+                bins={archivedBins.filter(b => b.harvestId === h.id)}
+              />
+            ))}
+          </div>
+        )
       )}
 
       {showAdd && (
         <AddBinModal archive={rackArchive} onClose={() => setShowAdd(false)} onSave={handleAddBin} />
       )}
       {sendingBin && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center fixed inset-x-4 bottom-10 z-50">
-          <div className="text-zinc-400 text-xs">SendDownstairsModal coming next.</div>
-          <button onClick={() => setSendingBin(null)} className="text-zinc-600 text-xs mt-2 block mx-auto">Cancel</button>
-        </div>
+        <SendDownstairsModal
+          bin={sendingBin}
+          harvests={harvests}
+          onClose={() => setSendingBin(null)}
+          onSend={handleSend}
+        />
       )}
     </div>
   );
