@@ -150,10 +150,12 @@ function AddBatchModal({ onClose, onSave }) {
   const [rackType, setRackType]     = useState("main");
   const [dateHung, setDateHung]     = useState(today());
   const [note, setNote]             = useState("");
+  const [count, setCount]           = useState(1);
 
   function handleSave() {
     if (!strainCode || !dateHung) return;
-    onSave({ strainCode, quality, rackType, dateHung, note: note.trim() });
+    const fields = { strainCode, quality, rackType, dateHung, note: note.trim() };
+    for (let i = 0; i < count; i++) onSave(fields);
     onClose();
   }
 
@@ -227,9 +229,24 @@ function AddBatchModal({ onClose, onSave }) {
               placeholder="e.g. top shelf"
               className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-600" />
           </div>
+          {/* Number of racks */}
+          <div>
+            <label className="text-xs text-zinc-400 mb-1 block">Number of Racks</label>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setCount(c => Math.max(1, c - 1))}
+                className="w-10 h-10 rounded-xl border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors text-lg font-medium flex items-center justify-center">
+                −
+              </button>
+              <span className="text-white font-semibold text-lg w-6 text-center">{count}</span>
+              <button onClick={() => setCount(c => Math.min(22, c + 1))}
+                className="w-10 h-10 rounded-xl border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors text-lg font-medium flex items-center justify-center">
+                +
+              </button>
+            </div>
+          </div>
           <button onClick={handleSave}
             className="w-full bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
-            Add Batch
+            {count === 1 ? "Add Batch" : `Add ${count} Batches`}
           </button>
         </div>
       </div>
