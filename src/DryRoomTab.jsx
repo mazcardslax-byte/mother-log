@@ -448,13 +448,15 @@ function BinCard({ bin, onBurp, onSend }) {
   const t = today();
   const alreadyBurpedToday = bin.burps.includes(t);
 
-  const missed = (() => {
-    if (status !== "burping") return false;
-    const now = new Date();
-    const yStr = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1)
-    ).toISOString().split("T")[0];
-    return yStr > bin.fillDate && !bin.burps.includes(yStr);
+  const missed = status === "burping" && (() => {
+    const daysCured = getDaysCured(bin);
+    for (let i = 1; i < daysCured; i++) {
+      const d = new Date(bin.fillDate + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + i);
+      const ds = d.toISOString().split("T")[0];
+      if (!bin.burps.includes(ds)) return true;
+    }
+    return false;
   })();
 
   const qualityBadge = bin.quality === "tops"
