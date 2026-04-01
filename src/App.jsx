@@ -2,11 +2,12 @@ import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import ClonesTab from "./ClonesTab";
 import StatsTab from "./StatsTab";
+import DryRoomTab from "./DryRoomTab";
 import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, Loader2, AlertCircle,
   ChevronDown, Droplets, ClipboardList,
-  Scissors, FlaskConical, ChevronRight, BarChart2,
+  Scissors, FlaskConical, ChevronRight, BarChart2, Wind,
 } from "lucide-react";
 
 // ── Image Compression ───────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ const TAB_ITEMS = [
   { key: "Room",     label: "Room",     icon: Grid3X3 },
   { key: "Facility", label: "Facility", icon: ClipboardList },
   { key: "Stats",    label: "Stats",    icon: BarChart2 },
+  { key: "DryRoom",  label: "Dry Room", icon: Wind },
   { key: "Clones",   label: "Clones",   icon: Scissors },
 ];
 
@@ -827,7 +829,7 @@ export default function MotherPlantTracker() {
         </div>
       </div>
 
-      {tab !== "Clones" && tab !== "Stats" && (
+      {tab !== "Clones" && tab !== "Stats" && tab !== "DryRoom" && (
         <div className="px-4 flex-1">
           {tab === "Summary" && (
             <SummaryTab
@@ -876,8 +878,9 @@ export default function MotherPlantTracker() {
           )}
         </div>
       )}
-      {tab === "Stats" && <StatsTab mothers={mothers} getStrain={getStrain} />}
-      {tab === "Clones" && <ClonesTab />}
+      {tab === "Stats"   && <StatsTab mothers={mothers} getStrain={getStrain} />}
+      {tab === "DryRoom" && <DryRoomTab />}
+      {tab === "Clones"  && <ClonesTab />}
 
       {detailMotherId && (() => {
         const detailMother = mothers.find(m => m.id === detailMotherId) ?? null;
