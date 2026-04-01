@@ -5,7 +5,9 @@ import Wifi from "lucide-react/dist/esm/icons/wifi";
 import WifiOff from "lucide-react/dist/esm/icons/wifi-off";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import X from "lucide-react/dist/esm/icons/x";
-import { daysHanging, daysRemaining, countdownColor, sortByUrgency } from "./dry-room-utils";
+import Check from "lucide-react/dist/esm/icons/check";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import { daysHanging, daysRemaining, countdownColor, sortByUrgency, getDaysCured, getBinStatus } from "./dry-room-utils";
 
 const STRAINS = [
   { code: "2000", name: "Electric PB Cookie #33" },
@@ -33,7 +35,7 @@ const STRAINS = [
 
 const DB_KEY = "dryroom";
 const DRY_ROOM_SUB_TABS = ["Hanging", "Archive", "Bins"];
-const DEFAULT_DATA = { active: [], archive: [], bins: [] };
+const DEFAULT_DATA = { active: [], archive: [], bins: [], harvests: [] };
 
 function load(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } }
 function save(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch {} }
@@ -138,7 +140,7 @@ export default function DryRoomTab() {
             overdueCount={overdueCount} onAdd={addBatch} onBin={binBatch} />
         )}
         {subTab === "Archive" && <ArchivePanel archive={data.archive} />}
-        {subTab === "Bins"    && <BinsPanel />}
+        {subTab === "Bins"    && <BinsPanel data={data} persist={persist} />}
       </div>
     </div>
   );
@@ -415,11 +417,11 @@ function ArchivePanel({ archive }) {
   );
 }
 
-function BinsPanel() {
+function BinsPanel({ data, persist }) {
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 text-center mt-2">
-      <div className="text-zinc-400 text-sm font-medium mb-1">Bin Tracking</div>
-      <div className="text-zinc-600 text-xs">Coming soon — tote inventory will live here.</div>
+      <div className="text-zinc-400 text-sm font-medium mb-1">Bins</div>
+      <div className="text-zinc-600 text-xs">Wiring complete — UI coming next.</div>
     </div>
   );
 }
