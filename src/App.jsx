@@ -251,14 +251,14 @@ function Badge({ label, colorClass }) {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
+      <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
         {/* drag handle */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-zinc-700 rounded-full" />
+          <div className="w-10 h-1 bg-[#2a2418] rounded-full" />
         </div>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-800/80 flex-shrink-0">
-          <span className="text-white font-semibold text-sm">{title}</span>
-          <button onClick={onClose} aria-label="Close" className="w-11 h-11 flex items-center justify-center rounded-xl text-zinc-500 active:text-white active:bg-zinc-800 transition-colors">✕</button>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[#2a2418] flex-shrink-0">
+          <span className="text-[#f5f5f0] font-semibold text-sm">{title}</span>
+          <button onClick={onClose} aria-label="Close" className="w-11 h-11 flex items-center justify-center rounded-xl text-[#6a5a3a] active:text-[#f5f5f0] active:bg-[#1a1a1a] transition-colors">✕</button>
         </div>
         <div className="p-5 overflow-y-auto flex-1">{children}</div>
       </div>
@@ -268,31 +268,31 @@ function Modal({ title, onClose, children }) {
 
 function StatBox({ label, value, colorClass, sub }) {
   return (
-    <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-3.5 text-center">
+    <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-3.5 text-center">
       <div className={`text-2xl font-bold tracking-tight ${colorClass}`}>{value}</div>
-      <div className="text-[10px] text-zinc-500 mt-1 leading-tight font-medium uppercase tracking-wide">{label}</div>
-      {sub && <div className="text-[10px] text-zinc-500 mt-0.5">{sub}</div>}
+      <div className="text-[10px] text-[#6a5a3a] mt-1 leading-tight font-medium uppercase tracking-wide">{label}</div>
+      {sub && <div className="text-[10px] text-[#6a5a3a] mt-0.5">{sub}</div>}
     </div>
   );
 }
 
 function SectionLabel({ children }) {
-  return <div className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold mb-2 px-0.5">{children}</div>;
+  return <div className="text-[10px] text-[#6a5a3a] uppercase tracking-widest font-bold mb-2 px-0.5">{children}</div>;
 }
 
 function FormField({ label, children }) {
   return (
     <div className="mb-4">
-      <label className="block text-xs text-zinc-400 mb-1.5 font-medium">{label}</label>
+      <label className="block text-xs text-[#c5b08a] mb-1.5 font-medium">{label}</label>
       {children}
     </div>
   );
 }
 
-const inputCls = "w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500/40";
-const selectCls = "w-full bg-zinc-800 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-500/40";
-const btnPrimary = "w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white font-semibold text-sm rounded-xl py-3 transition-colors min-h-[44px]";
-const btnSecondary = "w-full bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-900 text-zinc-300 font-medium text-sm rounded-xl py-2.5 transition-colors border border-zinc-700 min-h-[44px]";
+const inputCls = "w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/40";
+const selectCls = "w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500 focus-visible:ring-2 focus-visible:ring-amber-500/40";
+const btnPrimary = "w-full bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-[#0a0a0a] font-semibold text-sm rounded-xl py-3 transition-colors min-h-[44px]";
+const btnSecondary = "w-full bg-[#1a1a1a] hover:bg-[#222] active:bg-[#111] text-[#c5b08a] font-medium text-sm rounded-xl py-2.5 transition-colors border border-[#2a2418] min-h-[44px]";
 
 function HealthDots({ level }) {
   return (
@@ -744,15 +744,15 @@ export default function MotherPlantTracker() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#080c09] flex flex-col items-center justify-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-900/40 border border-emerald-800/60 flex items-center justify-center shadow-lg shadow-emerald-950/50">
-          <Leaf className="w-8 h-8 text-emerald-400" strokeWidth={1.5} />
+      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-[#2a1f00] border border-[#3a2e00] flex items-center justify-center shadow-lg shadow-amber-950/50">
+          <Leaf className="w-8 h-8 text-amber-400" strokeWidth={1.5} />
         </div>
         <div>
-          <div className="text-white font-bold text-xl tracking-tight text-center">Mother Log</div>
-          <div className="text-emerald-700 text-[11px] font-semibold tracking-widest uppercase text-center mt-0.5">Stacks Family Farms</div>
+          <div className="text-[#f5f5f0] font-bold text-xl tracking-tight text-center">Mother Log</div>
+          <div className="text-amber-700 text-[11px] font-semibold tracking-widest uppercase text-center mt-0.5">Stacks Family Farms</div>
         </div>
-        <Loader2 className="w-4 h-4 text-emerald-700 animate-spin mt-2" />
+        <Loader2 className="w-4 h-4 text-amber-700 animate-spin mt-2" />
       </div>
     );
   }
@@ -762,24 +762,24 @@ export default function MotherPlantTracker() {
     : Wifi;
 
   return (
-    <div className="min-h-screen bg-[#080c09] text-zinc-300 max-w-md mx-auto flex flex-col pb-4">
+    <div className="min-h-screen bg-[#0a0a0a] text-[#c5b08a] max-w-md mx-auto flex flex-col pb-4">
       {/* ── Header ── */}
-      <div className="px-4 pt-safe pb-3 border-b border-zinc-800/50">
+      <div className="px-4 pt-safe pb-3 border-b border-[#2a2418]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-900/50 border border-emerald-800/50 flex items-center justify-center flex-shrink-0">
-              <Leaf className="w-[18px] h-[18px] text-emerald-400" strokeWidth={1.75} />
+            <div className="w-9 h-9 rounded-xl bg-[#2a1f00] border border-[#3a2e00] flex items-center justify-center flex-shrink-0">
+              <Leaf className="w-[18px] h-[18px] text-amber-400" strokeWidth={1.75} />
             </div>
             <div>
-              <h1 className="text-white font-bold text-base leading-tight tracking-tight">Mother Log</h1>
+              <h1 className="text-[#f5f5f0] font-bold text-base leading-tight tracking-tight">Mother Log</h1>
               <div className="flex items-center gap-1.5">
-                <p className="text-emerald-700 text-[10px] font-semibold tracking-widest uppercase">Stacks Family Farms</p>
+                <p className="text-amber-700 text-[10px] font-semibold tracking-widest uppercase">Stacks Family Farms</p>
                 <SyncIcon
                   title={syncStatus === "syncing" ? "Saving…" : syncStatus === "error" ? "Sync error" : "Live"}
                   className={`w-2.5 h-2.5 flex-shrink-0 ${
                     syncStatus === "syncing" ? "text-yellow-400 animate-spin" :
                     syncStatus === "error"   ? "text-red-500" :
-                                              "text-emerald-600"
+                                              "text-amber-600"
                   }`}
                   strokeWidth={2.5}
                 />
@@ -791,13 +791,13 @@ export default function MotherPlantTracker() {
               onClick={() => exportMotherCSV(mothers)}
               title="Export CSV"
               aria-label="Export CSV"
-              className="w-11 h-11 flex items-center justify-center rounded-xl border border-zinc-800 text-zinc-500 active:text-zinc-200 active:bg-zinc-800 transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-xl border border-[#2a2418] text-[#6a5a3a] active:text-[#f5f5f0] active:bg-[#1a1a1a] transition-colors"
             >
               <Download className="w-4 h-4" strokeWidth={2} />
             </button>
             <button
               onClick={openAddForm}
-              className="h-11 px-4 flex items-center gap-1.5 bg-emerald-700 active:bg-emerald-800 text-white text-sm font-semibold rounded-xl transition-colors shadow-md shadow-emerald-950/60"
+              className="h-11 px-4 flex items-center gap-1.5 bg-amber-600 active:bg-amber-700 text-[#0a0a0a] text-sm font-semibold rounded-xl transition-colors shadow-md shadow-amber-950/60"
             >
               <Plus className="w-4 h-4" strokeWidth={2.5} />
               Add
@@ -808,7 +808,7 @@ export default function MotherPlantTracker() {
 
       {/* ── Tab Bar ── */}
       <div className="px-3 pt-2.5 pb-1">
-        <div className="flex gap-0.5 bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-1">
+        <div className="flex gap-0.5 bg-[#111111] border border-[#2a2418] rounded-2xl p-1">
           {TAB_ITEMS.map(({ key, label, icon: Icon }) => {
             const active = tab === key;
             return (
@@ -817,12 +817,12 @@ export default function MotherPlantTracker() {
                 onClick={() => { if (key === "Add") { openAddForm(); } else { setTab(key); } }}
                 className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all duration-150 min-h-[52px] justify-center ${
                   active
-                    ? "bg-emerald-800/50 text-emerald-200 border border-emerald-700/30 shadow-sm"
-                    : "text-zinc-600 active:text-zinc-300 active:bg-zinc-800/50"
+                    ? "bg-[#2a1f00] text-amber-300 border border-[#3a2e00] shadow-sm"
+                    : "text-[#6a5a3a] active:text-[#c5b08a] active:bg-[#1a1a1a]"
                 }`}
               >
-                <Icon className={`w-[18px] h-[18px] ${active ? "text-emerald-300" : "text-zinc-500"}`} strokeWidth={active ? 2 : 1.75} />
-                <span className={`text-[10px] font-semibold tracking-wide ${active ? "text-emerald-200" : "text-zinc-600"}`}>{label}</span>
+                <Icon className={`w-[18px] h-[18px] ${active ? "text-amber-400" : "text-[#6a5a3a]"}`} strokeWidth={active ? 2 : 1.75} />
+                <span className={`text-[10px] font-semibold tracking-wide ${active ? "text-amber-300" : "text-[#6a5a3a]"}`}>{label}</span>
               </button>
             );
           })}
