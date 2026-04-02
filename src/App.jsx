@@ -1244,7 +1244,7 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
           <button
             aria-label="Log clone cut"
             onClick={() => { onSwipeClose(); onOpenClone(m.id); }}
-            className="flex-1 flex flex-col items-center justify-center gap-1 bg-emerald-900 active:bg-emerald-800 transition-colors"
+            className="flex-1 flex flex-col items-center justify-center gap-1 bg-amber-900 active:bg-amber-800 transition-colors"
           >
             <span className="text-base leading-none">✂️</span>
             <span className="text-[11px] font-semibold text-emerald-300 leading-none">Clone</span>
@@ -1520,7 +1520,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                     <span className="text-[10px] font-semibold text-violet-300 leading-none">Amendment</span>
                   </button>
                   {showClone && (
-                    <button onClick={() => { setQuickLogSheet(null); handleOpenClone(quickLogSheet.motherId); }} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-emerald-900/60 border border-emerald-800/50 active:bg-emerald-800 transition-colors min-h-[72px]">
+                    <button onClick={() => { setQuickLogSheet(null); handleOpenClone(quickLogSheet.motherId); }} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-amber-900/60 border border-amber-800/50 active:bg-amber-800 transition-colors min-h-[72px]">
                       <Scissors className="w-5 h-5 text-emerald-400" strokeWidth={2} />
                       <span className="text-[10px] font-semibold text-emerald-300 leading-none">Clone Cut</span>
                     </button>
@@ -1557,7 +1557,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                     setWaterAllSheet(false);
                     showToast(`Watered ${count} mother${count !== 1 ? "s" : ""}`);
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-sky-700 active:bg-sky-600 text-white text-sm font-semibold transition-colors"
+                  className="flex-1 py-2.5 rounded-xl bg-sky-700 active:bg-sky-600 text-[#f5f5f0] text-sm font-semibold transition-colors"
                 >
                   Confirm
                 </button>
@@ -1608,7 +1608,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 <button
                   onClick={handleAmendConfirm}
                   disabled={!amendInput.amendment.trim()}
-                  className="flex-1 py-2.5 rounded-xl bg-violet-700 text-white text-sm font-semibold disabled:opacity-40 active:bg-violet-600 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl bg-violet-700 text-[#f5f5f0] text-sm font-semibold disabled:opacity-40 active:bg-violet-600 transition-colors"
                 >
                   Confirm
                 </button>
@@ -1714,7 +1714,7 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
             <span className={`text-[10px] font-bold leading-none truncate max-w-full px-0.5 ${textCls}`}>{getStrain(spotMothers[0].strainCode).code}</span>
             <div className="flex gap-[2px] justify-center">
               {[1,2,3,4,5].map(i => (
-                <div key={i} className={`w-1 h-1 rounded-full ${i <= spotMothers[0].healthLevel ? dotCls : "bg-zinc-700"}`} />
+                <div key={i} className={`w-1 h-1 rounded-full ${i <= spotMothers[0].healthLevel ? dotCls : "bg-[#2a2418]"}`} />
               ))}
             </div>
           </>
@@ -1738,9 +1738,9 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
   return (
     <button
       onClick={handleClick}
-      className="aspect-square rounded-lg border border-dashed border-zinc-800 flex items-center justify-center w-full active:border-zinc-500 active:bg-zinc-900/40 transition-colors"
+      className="aspect-square rounded-lg border border-dashed border-[#2a2418] flex items-center justify-center w-full active:border-[#6a5a3a] active:bg-[#111111]/40 transition-colors"
     >
-      <span className="text-zinc-700 text-sm leading-none">+</span>
+      <span className="text-[#6a5a3a] text-sm leading-none">+</span>
     </button>
   );
 });
@@ -1798,7 +1798,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
             </div>
             {/* Inline amend form */}
             {showAmend && (
-              <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-3 space-y-2 mb-3">
+              <div className="bg-[#1a1a1a] border border-[#2a2418] rounded-xl p-3 space-y-2 mb-3">
                 <div>
                   <input
                     type="text"
@@ -1809,9 +1809,9 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
                     autoFocus
                   />
                   {amendSearch && (
-                    <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden max-h-32 overflow-y-auto">
+                    <div className="mt-1 bg-[#1a1a1a] border border-[#2a2418] rounded-xl overflow-hidden max-h-32 overflow-y-auto">
                       {COMMON_AMENDMENTS.filter(a => a.toLowerCase().includes(amendSearch.toLowerCase())).map(a => (
-                        <button key={a} className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 active:bg-zinc-700 transition-colors" onClick={() => { setAmendValue(a); setAmendSearch(""); }}>
+                        <button key={a} className="w-full text-left px-3 py-2 text-xs text-[#c5b08a] hover:bg-[#222] active:bg-[#222] transition-colors" onClick={() => { setAmendValue(a); setAmendSearch(""); }}>
                           {a}
                         </button>
                       ))}
@@ -1826,7 +1826,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
                   onChange={e => setAmendNote(e.target.value)}
                 />
                 <div className="flex gap-2">
-                  <button onClick={() => { setShowAmend(false); setAmendSearch(""); setAmendValue(""); setAmendNote(""); }} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-xs font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
+                  <button onClick={() => { setShowAmend(false); setAmendSearch(""); setAmendValue(""); setAmendNote(""); }} className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#c5b08a] text-xs font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors">Cancel</button>
                   <button
                     onClick={() => {
                       if (!amendValue.trim()) return;
@@ -1838,7 +1838,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
                       showSpotToast("Amendment logged");
                     }}
                     disabled={!amendValue.trim()}
-                    className="flex-1 py-2.5 rounded-xl bg-violet-700 text-white text-xs font-semibold disabled:opacity-40 active:bg-violet-600 transition-colors min-h-[44px]"
+                    className="flex-1 py-2.5 rounded-xl bg-violet-700 text-[#f5f5f0] text-xs font-semibold disabled:opacity-40 active:bg-violet-600 transition-colors min-h-[44px]"
                   >
                     Confirm
                   </button>
@@ -1849,15 +1849,15 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
               {spotMothers.map(m => {
                 const s = getStrain(m.strainCode);
                 return (
-                  <div key={m.id} className="flex items-center justify-between bg-zinc-800/60 border border-zinc-700/60 rounded-xl px-3 py-2.5">
+                  <div key={m.id} className="flex items-center justify-between bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5">
                     <button onClick={() => { onSelectMother(m); onClose(); }} className="flex-1 text-left">
                       <div className="text-sm font-bold text-emerald-300">{s.code}</div>
-                      <div className="text-[10px] text-zinc-400 mt-0.5">{s.name}</div>
+                      <div className="text-[10px] text-[#c5b08a] mt-0.5">{s.name}</div>
                       <HealthDots level={m.healthLevel} />
                     </button>
                     <button
                       onClick={() => { onUpdateMother(m.id, { location: "" }); showSpotToast("Removed from spot"); }}
-                      className="text-zinc-600 active:text-red-400 text-xs ml-3 border border-zinc-700 active:border-red-700/50 rounded-lg px-3 min-h-[44px] flex items-center transition-colors flex-shrink-0"
+                      className="text-[#6a5a3a] active:text-red-400 text-xs ml-3 border border-[#2a2418] active:border-red-700/50 rounded-lg px-3 min-h-[44px] flex items-center transition-colors flex-shrink-0"
                     >
                       Remove
                     </button>
@@ -1871,12 +1871,12 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
         {isUpcoming && spotMothers.length === 0 && (
           <div className="bg-indigo-900/20 border border-indigo-700/40 rounded-xl px-4 py-3 text-center">
             <div className="text-sm font-bold text-indigo-300 mb-1">Upcoming Round</div>
-            <div className="text-xs text-zinc-400">This spot is reserved for the next round.</div>
+            <div className="text-xs text-[#c5b08a]">This spot is reserved for the next round.</div>
           </div>
         )}
 
         {isUpcoming && (
-          <button onClick={() => { onClearUpcoming(key); onClose(); }} className="w-full border border-zinc-700 text-zinc-400 active:text-white active:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors min-h-[44px]">
+          <button onClick={() => { onClearUpcoming(key); onClose(); }} className="w-full border border-[#2a2418] text-[#c5b08a] active:text-[#f5f5f0] active:border-[#6a5a3a] text-xs rounded-xl py-2.5 transition-colors min-h-[44px]">
             Clear Upcoming Slot
           </button>
         )}
@@ -1904,7 +1904,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
             <button
               onClick={assignMother}
               disabled={!selectedMotherId}
-              className="bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-600 disabled:opacity-40 text-white text-xs font-semibold px-3 rounded-xl transition-colors flex-shrink-0 min-h-[44px]"
+              className="bg-amber-600 hover:bg-amber-500 active:bg-amber-500 disabled:opacity-40 text-[#f5f5f0] text-xs font-semibold px-3 rounded-xl transition-colors flex-shrink-0 min-h-[44px]"
             >
               Assign
             </button>
@@ -1933,7 +1933,7 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
     <div className="space-y-5 pb-4">
       <div className="flex items-center gap-2">
         <span className="text-base">🚪</span>
-        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-semibold">Entrance</span>
+        <span className="text-[10px] text-[#6a5a3a] uppercase tracking-widest font-semibold">Entrance</span>
       </div>
 
       {BENCHES.map(bench => {
@@ -1943,13 +1943,13 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
           violet: "text-violet-400 border-violet-800/40",
           indigo: "text-indigo-400 border-indigo-800/40",
         };
-        const accentCls = accentMap[bench.accent] || "text-zinc-400 border-zinc-800";
+        const accentCls = accentMap[bench.accent] || "text-[#c5b08a] border-[#2a2418]";
 
         return (
           <div key={bench.id} className={bench.lower ? "mt-2 ml-2" : ""}>
             <div className="flex items-center gap-2 mb-2">
               <span className={`text-xs font-bold ${accentCls.split(" ")[0]}`}>{bench.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${accentCls} bg-zinc-900`}>{bench.desc}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded border ${accentCls} bg-[#111111]`}>{bench.desc}</span>
             </div>
             <div className="grid grid-cols-7 gap-1">
               {Array.from({ length: SPOTS_PER_BENCH }, (_, i) => {
@@ -1973,26 +1973,26 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
         );
       })}
 
-      <div className="flex items-center gap-3 pt-2 border-t border-zinc-800/60 flex-wrap">
+      <div className="flex items-center gap-3 pt-2 border-t border-[#2a2418]/60 flex-wrap">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-green-600 bg-emerald-950" />
-          <span className="text-[10px] text-zinc-500">Excellent/Good</span>
+          <span className="text-[10px] text-[#6a5a3a]">Excellent/Good</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-yellow-600 bg-amber-950" />
-          <span className="text-[10px] text-zinc-500">Moderate</span>
+          <span className="text-[10px] text-[#6a5a3a]">Moderate</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-red-600 bg-red-950" />
-          <span className="text-[10px] text-zinc-500">Poor/Fair</span>
+          <span className="text-[10px] text-[#6a5a3a]">Poor/Fair</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded border border-indigo-700/50 bg-indigo-900/20" />
-          <span className="text-[10px] text-zinc-500">Upcoming</span>
+          <span className="text-[10px] text-[#6a5a3a]">Upcoming</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded border-dashed border border-zinc-800" />
-          <span className="text-[10px] text-zinc-500">Empty</span>
+          <div className="w-3 h-3 rounded border-dashed border border-[#2a2418]" />
+          <span className="text-[10px] text-[#6a5a3a]">Empty</span>
         </div>
       </div>
 
@@ -2034,7 +2034,7 @@ function facilityAgeText(days) {
   return `${days} days ago`;
 }
 function facilityAgeColor(days) {
-  if (days === null) return "text-zinc-600";
+  if (days === null) return "text-[#6a5a3a]";
   if (days <= 2) return "text-emerald-400";
   if (days <= 7) return "text-yellow-400";
   return "text-red-400";
@@ -2044,13 +2044,13 @@ const FacilityItem = memo(function FacilityItem({ itemKey, data, onLog }) {
   const lastEntry = (Array.isArray(data?.log) ? data.log[0] : null) ?? null;
   const days = facilityDaysSince(lastEntry?.ts ?? null);
   return (
-    <div className={`bg-zinc-900/80 border border-zinc-800 border-l-2 ${facilityBorderColor(days)} rounded-2xl px-4 py-3.5 flex items-center gap-3`}>
+    <div className={`bg-[#111111] border border-[#2a2418] border-l-2 ${facilityBorderColor(days)} rounded-2xl px-4 py-3.5 flex items-center gap-3`}>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-zinc-200 truncate">{data.label}</div>
+        <div className="text-sm font-semibold text-[#f5f5f0] truncate">{data.label}</div>
         <div className={`text-xs font-medium mt-0.5 ${facilityAgeColor(days)}`}>
           {facilityAgeText(days)}
           {lastEntry && days !== 0 && (
-            <span className="text-zinc-700 ml-1.5">
+            <span className="text-[#6a5a3a] ml-1.5">
               · {new Date(lastEntry.ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           )}
@@ -2058,7 +2058,7 @@ const FacilityItem = memo(function FacilityItem({ itemKey, data, onLog }) {
       </div>
       <button
         onClick={() => onLog(itemKey)}
-        className="flex-shrink-0 py-2 px-4 rounded-xl bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-semibold active:bg-zinc-700 active:text-white transition-colors min-h-[44px] flex items-center justify-center"
+        className="flex-shrink-0 py-2 px-4 rounded-xl bg-[#1a1a1a] border border-[#2a2418] text-[#c5b08a] text-xs font-semibold active:bg-[#2a2418] active:text-[#f5f5f0] transition-colors min-h-[44px] flex items-center justify-center"
       >
         Log Now
       </button>
@@ -2109,10 +2109,10 @@ function FacilityTab({ facility, onLog }) {
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
           onClick={e => { if (e.target === e.currentTarget) closeLog(); }}
         >
-          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
-            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-zinc-700" /></div>
+          <div className="bg-[#0f0f0f] border border-[#2a2418]/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
             <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="text-sm font-bold text-white">
+              <div className="text-sm font-bold text-[#f5f5f0]">
                 {facility[logSheet]?.label ?? logSheet}
               </div>
               <input
@@ -2124,8 +2124,8 @@ function FacilityTab({ facility, onLog }) {
                 autoFocus
               />
               <div className="flex gap-2 pt-1">
-                <button onClick={closeLog} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
-                <button onClick={confirmLog} className="flex-1 py-2.5 rounded-xl bg-emerald-700 active:bg-emerald-600 text-white text-sm font-semibold transition-colors">
+                <button onClick={closeLog} className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors">Cancel</button>
+                <button onClick={confirmLog} className="flex-1 py-2.5 rounded-xl bg-amber-600 active:bg-amber-700 text-[#f5f5f0] text-sm font-semibold transition-colors">
                   Confirm
                 </button>
               </div>
@@ -2143,8 +2143,8 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
   return (
     <div className="space-y-1">
       <div className="mb-4">
-        <h2 className="text-white font-semibold text-sm">Add Mother Plant</h2>
-        <p className="text-zinc-600 text-xs mt-0.5">Fill in the details below</p>
+        <h2 className="text-[#f5f5f0] font-semibold text-sm">Add Mother Plant</h2>
+        <p className="text-[#6a5a3a] text-xs mt-0.5">Fill in the details below</p>
       </div>
       <FormField label="Strain">
         <select className={selectCls} value={form.strainCode} onChange={e => f("strainCode", e.target.value)}>
@@ -2158,8 +2158,8 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
               form.status === s
                 ? s === "Active"
                   ? "bg-emerald-800/60 text-emerald-200 border-emerald-600"
-                  : "bg-zinc-600 text-white border-zinc-400"
-                : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                  : "bg-[#2a2418] text-[#f5f5f0] border-[#6a5a3a]"
+                : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"
             }`}>
               {s}
             </button>
@@ -2169,7 +2169,7 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
       <FormField label={`Health Level — ${healthLabel(form.healthLevel)}`}>
         <div className="flex gap-2 items-center">
           {[1, 2, 3, 4, 5].map(i => (
-            <button key={i} onClick={() => f("healthLevel", i)} className={`flex-1 h-11 rounded-xl border font-bold text-sm transition-colors ${form.healthLevel === i ? i <= 2 ? "bg-red-900/60 border-red-700 text-red-300" : i === 3 ? "bg-yellow-900/60 border-yellow-700 text-yellow-300" : "bg-emerald-900/60 border-emerald-700 text-emerald-300" : "bg-zinc-800 border-zinc-700 text-zinc-600"}`}>
+            <button key={i} onClick={() => f("healthLevel", i)} className={`flex-1 h-11 rounded-xl border font-bold text-sm transition-colors ${form.healthLevel === i ? i <= 2 ? "bg-red-900/60 border-red-700 text-red-300" : i === 3 ? "bg-yellow-900/60 border-yellow-700 text-yellow-300" : "bg-emerald-900/60 border-emerald-700 text-emerald-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}>
               {i}
             </button>
           ))}
@@ -2190,12 +2190,12 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
             onClick={() => f("initialDateUnknown", !form.initialDateUnknown)}
             className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl border transition-colors w-full ${
               form.initialDateUnknown
-                ? "bg-zinc-700 border-zinc-600 text-zinc-200"
-                : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                ? "bg-[#2a2418] border-[#6a5a3a] text-[#f5f5f0]"
+                : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"
             }`}
           >
-            <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${form.initialDateUnknown ? "bg-emerald-600 border-emerald-500" : "border-zinc-600"}`}>
-              {form.initialDateUnknown && <span className="text-white text-[10px]">✓</span>}
+            <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${form.initialDateUnknown ? "bg-amber-600 border-amber-500" : "border-[#2a2418]"}`}>
+              {form.initialDateUnknown && <span className="text-[#f5f5f0] text-[10px]">✓</span>}
             </span>
             Date unknown — existing plant with no record
           </button>
@@ -2262,14 +2262,14 @@ function SendToCloneLogModal({ cloneEntry, strainName, strainCode, motherLocatio
       <div className="space-y-4">
         <div className="bg-emerald-900/20 border border-emerald-700/40 rounded-xl px-4 py-3">
           <div className="text-xs text-emerald-300 font-semibold mb-1">Export Summary</div>
-          <div className="text-sm text-white font-bold">{exportData.qty} clones of {strainName}</div>
-          <div className="text-xs text-zinc-400 mt-0.5">Dated {fmtDate(cloneEntry.date)}</div>
-          {motherLocation && <div className="text-xs text-zinc-500 mt-0.5">Location: {motherLocation}</div>}
+          <div className="text-sm text-[#f5f5f0] font-bold">{exportData.qty} clones of {strainName}</div>
+          <div className="text-xs text-[#c5b08a] mt-0.5">Dated {fmtDate(cloneEntry.date)}</div>
+          {motherLocation && <div className="text-xs text-[#6a5a3a] mt-0.5">Location: {motherLocation}</div>}
         </div>
 
         <div>
-          <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-2">JSON Package</div>
-          <pre className="bg-zinc-800 border border-zinc-700 rounded-xl p-3 text-[10px] text-zinc-400 overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
+          <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">JSON Package</div>
+          <pre className="bg-[#1a1a1a] border border-[#2a2418] rounded-xl p-3 text-[10px] text-[#c5b08a] overflow-x-auto whitespace-pre-wrap break-all leading-relaxed">
             {jsonString}
           </pre>
         </div>
@@ -2279,25 +2279,25 @@ function SendToCloneLogModal({ cloneEntry, strainName, strainCode, motherLocatio
           className={`w-full font-semibold text-sm rounded-xl py-3 transition-colors ${
             copied
               ? "bg-emerald-800 text-emerald-200 border border-emerald-700"
-              : "bg-emerald-700 hover:bg-emerald-600 text-white"
+              : "bg-amber-600 hover:bg-amber-500 text-[#f5f5f0]"
           }`}
         >
           {copied ? "Copied!" : "Copy to Clipboard"}
         </button>
 
-        <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-xl px-4 py-3 space-y-1.5">
-          <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">How to import</div>
-          <div className="flex items-start gap-2 text-xs text-zinc-400">
+        <div className="bg-[#1a1a1a] border border-[#2a2418]/50 rounded-xl px-4 py-3 space-y-1.5">
+          <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider font-semibold">How to import</div>
+          <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
             <span className="text-sky-400 font-bold flex-shrink-0">1.</span>
-            <span>Open the <span className="text-white font-medium">Clone Log</span> app</span>
+            <span>Open the <span className="text-[#f5f5f0] font-medium">Clone Log</span> app</span>
           </div>
-          <div className="flex items-start gap-2 text-xs text-zinc-400">
+          <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
             <span className="text-sky-400 font-bold flex-shrink-0">2.</span>
-            <span>Go to the <span className="text-white font-medium">Add Entry</span> tab</span>
+            <span>Go to the <span className="text-[#f5f5f0] font-medium">Add Entry</span> tab</span>
           </div>
-          <div className="flex items-start gap-2 text-xs text-zinc-400">
+          <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
             <span className="text-sky-400 font-bold flex-shrink-0">3.</span>
-            <span>Tap <span className="text-white font-medium">Import from Mother Log</span> and paste</span>
+            <span>Tap <span className="text-[#f5f5f0] font-medium">Import from Mother Log</span> and paste</span>
           </div>
         </div>
 
@@ -2478,7 +2478,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
                 <div className="text-xs text-red-400 text-center font-medium">Delete this mother plant? This cannot be undone.</div>
                 <div className="flex gap-2">
                   <button onClick={() => setConfirmDelete(false)} className={btnSecondary}>Cancel</button>
-                  <button onClick={onDelete} className="flex-1 bg-red-800 hover:bg-red-700 active:bg-red-700 text-white font-semibold text-sm rounded-xl py-2.5 transition-colors min-h-[44px]">Delete</button>
+                  <button onClick={onDelete} className="flex-1 bg-red-800 hover:bg-red-700 active:bg-red-700 text-[#f5f5f0] font-semibold text-sm rounded-xl py-2.5 transition-colors min-h-[44px]">Delete</button>
                 </div>
               </div>
             ) : (
@@ -2626,7 +2626,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
                   }`}
                 >
                   <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${transplantForm.dateUnknown ? "bg-amber-600 border-amber-500" : "border-[#2a2418]"}`}>
-                    {transplantForm.dateUnknown && <span className="text-white text-[10px]">✓</span>}
+                    {transplantForm.dateUnknown && <span className="text-[#f5f5f0] text-[10px]">✓</span>}
                   </span>
                   Date unknown
                 </button>
