@@ -228,7 +228,7 @@ function vegDaysColor(days) {
 
 function statusBadgeColor(status) {
   if (status === "Active") return "bg-emerald-900/50 text-emerald-300 border-emerald-700/40";
-  if (status === "Sidelined") return "bg-zinc-800 text-zinc-500 border-zinc-700";
+  if (status === "Sidelined") return "bg-[#1a1a1a] text-[#6a5a3a] border-[#2a2418]";
   return "bg-zinc-800 text-zinc-500 border-zinc-700";
 }
 
@@ -1278,7 +1278,7 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
           {container && <span className="text-[10px] text-[#6a5a3a]">{txDate ? `${days}d in container` : "Date unknown"}</span>}
           {totalClones > 0 && <span className="text-[10px] text-[#6a5a3a]">{totalClones} clones</span>}
           {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
-          <span className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-zinc-600"}`}>{vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}</span>
+          <span className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-[#6a5a3a]"}`}>{vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}</span>
         </div>
       </div>
     </div>
@@ -1321,7 +1321,7 @@ const StrainGroup = memo(function StrainGroup({
         <div className="flex-1 flex items-center gap-2 min-w-0">
           <div className="w-0.5 h-4 rounded-full bg-[#2a2418] flex-shrink-0" />
           <span className="text-xs font-bold text-[#c5b08a] truncate">{group.name}</span>
-          <span className="text-[10px] font-semibold bg-emerald-950/80 text-emerald-500 border border-emerald-800/50 rounded-full px-1.5 py-0.5 flex-shrink-0">
+          <span className="text-[10px] font-semibold bg-[#2a1f00] text-amber-500 border border-[#3a2e00] rounded-full px-1.5 py-0.5 flex-shrink-0">
             {group.mothers.length}
           </span>
         </div>
@@ -1490,7 +1490,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
         }
         return (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setQuickLogSheet(null); }}>
-            <div className="bg-[#0e1512] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
               <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
               <div className="px-5 pb-6 pt-2 space-y-4">
                 {/* Header */}
@@ -1540,7 +1540,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
       {/* Water All confirm sheet */}
       {waterAllSheet && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setWaterAllSheet(false); }}>
-          <div className="bg-[#0e1512] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
             <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
             <div className="px-5 pb-6 pt-2 space-y-3">
               <div className="flex items-center gap-2">
@@ -2376,7 +2376,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
 
         <div className="flex gap-1 bg-[#111111] border border-[#2a2418] rounded-xl p-1 mb-4 overflow-x-auto">
           {DETAIL_TABS.map(t => (
-            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-bold py-2 px-3 min-h-[44px] flex items-center rounded-lg transition-colors ${detailTab === t ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40" : "text-[#6a5a3a] hover:text-[#c5b08a] active:text-[#c5b08a]"}`}>
+            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-bold py-2 px-3 min-h-[44px] flex items-center rounded-lg transition-colors ${detailTab === t ? "bg-[#2a1f00] text-amber-300 border border-[#3a2e00]" : "text-[#6a5a3a] hover:text-[#c5b08a] active:text-[#c5b08a]"}`}>
               {t}
             </button>
           ))}
@@ -2388,11 +2388,11 @@ const MotherDetailModal = memo(function MotherDetailModal({
           const rooted = resolved.filter(c => c.outcome === "rooted").reduce((a, c) => a + (parseInt(c.count) || 0), 0);
           const totalResolved = resolved.reduce((a, c) => a + (parseInt(c.count) || 0), 0);
           const rootRate = totalResolved > 0 ? Math.round((rooted / totalResolved) * 100) : null;
-          const rootRateCls = rootRate === null ? "text-zinc-500" : rootRate >= 70 ? "text-emerald-400" : rootRate >= 40 ? "text-yellow-400" : "text-red-400";
+          const rootRateCls = rootRate === null ? "text-[#6a5a3a]" : rootRate >= 70 ? "text-emerald-400" : rootRate >= 40 ? "text-yellow-400" : "text-red-400";
           return (
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-2">
-              <StatBox label="Days in Container" value={txDate ? (daysInContainer ?? "—") : "Unknown"} colorClass={txDate ? "text-sky-400" : "text-zinc-600"} />
+              <StatBox label="Days in Container" value={txDate ? (daysInContainer ?? "—") : "Unknown"} colorClass={txDate ? "text-sky-400" : "text-[#6a5a3a]"} />
               <StatBox label="Days in Veg" value={vegDays ?? "—"} colorClass={vegDaysColor(vegDays)} />
             </div>
             <div className="grid grid-cols-3 gap-2">
@@ -2552,12 +2552,12 @@ const MotherDetailModal = memo(function MotherDetailModal({
                               ) : e.outcome === "rooted" ? (
                                 <div className="flex items-center gap-2">
                                   <span className="text-[10px] px-2 py-0.5 rounded-lg bg-emerald-900/50 border border-emerald-700/50 text-emerald-300 font-semibold">Rooted</span>
-                                  <button onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, null)} className="text-[10px] text-zinc-500 active:text-zinc-300 underline transition-colors min-h-[44px] px-2 flex items-center">Undo</button>
+                                  <button onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, null)} className="text-[10px] text-[#6a5a3a] active:text-[#c5b08a] underline transition-colors min-h-[44px] px-2 flex items-center">Undo</button>
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2">
                                   <span className="text-[10px] px-2 py-0.5 rounded-lg bg-red-900/50 border border-red-700/50 text-red-300 font-semibold">Failed</span>
-                                  <button onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, null)} className="text-[10px] text-zinc-500 active:text-zinc-300 underline transition-colors min-h-[44px] px-2 flex items-center">Undo</button>
+                                  <button onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, null)} className="text-[10px] text-[#6a5a3a] active:text-[#c5b08a] underline transition-colors min-h-[44px] px-2 flex items-center">Undo</button>
                                 </div>
                               )}
                             </div>
@@ -2571,7 +2571,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
               )}
               {activeSheet === "picker" && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setActiveSheet(null); }}>
-                  <div className="bg-[#0e1512] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+                  <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
                     <div className="flex justify-center pt-3 pb-1">
                       <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
                     </div>
