@@ -1570,12 +1570,12 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
       {/* Quick-log bottom sheets */}
       {quickSheet?.type === "amend" && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeSheet(); }}>
-          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-9 h-1 rounded-full bg-zinc-700" />
+              <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
             </div>
             <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="text-sm font-bold text-white">Quick Amend</div>
+              <div className="text-sm font-bold text-[#f5f5f0]">Quick Amend</div>
               <div>
                 <input
                   type="text"
@@ -1587,9 +1587,9 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                   autoFocus
                 />
                 {amendInput.search && (
-                  <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden max-h-36 overflow-y-auto">
+                  <div className="mt-1 bg-[#1a1a1a] border border-[#2a2418] rounded-xl overflow-hidden max-h-36 overflow-y-auto">
                     {COMMON_AMENDMENTS.filter(a => a.toLowerCase().includes(amendInput.search.toLowerCase())).map(a => (
-                      <button key={a} className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 active:bg-zinc-700 transition-colors" onClick={() => setAmendInput(p => ({ ...p, amendment: a, search: "" }))}>
+                      <button key={a} className="w-full text-left px-3 py-2 text-xs text-[#c5b08a] hover:bg-[#1a1a1a] active:bg-[#1a1a1a] transition-colors" onClick={() => setAmendInput(p => ({ ...p, amendment: a, search: "" }))}>
                         {a}
                       </button>
                     ))}
@@ -1604,7 +1604,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 onChange={e => setAmendInput(p => ({ ...p, notes: e.target.value }))}
               />
               <div className="flex gap-2 pt-1">
-                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
+                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors">Cancel</button>
                 <button
                   onClick={handleAmendConfirm}
                   disabled={!amendInput.amendment.trim()}
@@ -1620,12 +1620,12 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
 
       {quickSheet?.type === "clone" && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeSheet(); }}>
-          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-9 h-1 rounded-full bg-zinc-700" />
+              <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
             </div>
             <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="text-sm font-bold text-white">Quick Clone</div>
+              <div className="text-sm font-bold text-[#f5f5f0]">Quick Clone</div>
               <input
                 type="number"
                 min="1"
@@ -1643,11 +1643,11 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 onChange={e => setCloneInput(p => ({ ...p, notes: e.target.value }))}
               />
               <div className="flex gap-2 pt-1">
-                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
+                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors">Cancel</button>
                 <button
                   onClick={handleCloneConfirm}
                   disabled={!cloneInput.count || parseInt(cloneInput.count) < 1}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-700 text-white text-sm font-semibold disabled:opacity-40 active:bg-emerald-600 transition-colors"
+                  className="flex-1 py-2.5 rounded-xl bg-[#1a1a1a] text-[#f5f5f0] text-sm font-semibold disabled:opacity-40 active:bg-[#2a2418] transition-colors"
                 >
                   Confirm
                 </button>
