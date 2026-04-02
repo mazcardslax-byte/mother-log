@@ -116,7 +116,7 @@ export default function DryRoomTab() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1.5 px-4 pt-2 pb-1">
-        {syncing && <Loader2 size={12} className="text-zinc-500 animate-spin" />}
+        {syncing && <Loader2 size={12} className="text-[#6a5a3a] animate-spin" />}
         {!syncing && synced && !syncError && <Wifi size={12} className="text-emerald-500" />}
         {syncError && <><WifiOff size={12} className="text-red-400" /><span className="text-[10px] text-red-400">{syncError}</span></>}
       </div>
@@ -126,8 +126,8 @@ export default function DryRoomTab() {
           <button key={t} onClick={() => setSubTab(t)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               subTab === t
-                ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700/50"
-                : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+                ? "bg-[#2a1f00] text-amber-300 border border-[#3a2e00]"
+                : "text-[#6a5a3a] hover:text-[#c5b08a] border border-transparent"
             }`}>
             {t}
           </button>
@@ -164,29 +164,29 @@ function AddBatchModal({ onClose, onSave }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
+      <div className="bg-[#0f0f0f] border border-[#2a2418]/50 rounded-t-3xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-zinc-700" />
+          <div className="w-10 h-1 rounded-full bg-[#2a2418]" />
         </div>
         <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
-          <span className="text-white font-semibold text-sm">Add Batch</span>
+          <span className="text-[#f5f5f0] font-semibold text-sm">Add Batch</span>
           <button onClick={onClose} aria-label="Close"
-            className="text-zinc-500 hover:text-white w-11 h-11 flex items-center justify-center rounded-full hover:bg-zinc-700/50 transition-colors">
+            className="text-[#6a5a3a] hover:text-[#f5f5f0] w-11 h-11 flex items-center justify-center rounded-full hover:bg-[#1a1a1a] transition-colors">
             <X size={16} />
           </button>
         </div>
         <div className="px-5 pb-8 overflow-y-auto space-y-4">
           {/* Strain */}
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Strain</label>
+            <label className="text-xs text-[#c5b08a] mb-1 block">Strain</label>
             <select value={strainCode} onChange={e => setStrainCode(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600">
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600">
               {STRAINS.map(s => <option key={s.code} value={s.code}>{s.name} ({s.code})</option>)}
             </select>
           </div>
           {/* Quality */}
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Quality</label>
+            <label className="text-xs text-[#c5b08a] mb-1 block">Quality</label>
             <div className="flex gap-2">
               {["tops", "mid", "lowers"].map(q => (
                 <button key={q} onClick={() => setQuality(q)}
@@ -194,8 +194,8 @@ function AddBatchModal({ onClose, onSave }) {
                     quality === q
                       ? q === "tops"   ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
                       : q === "lowers" ? "bg-amber-900/60 text-amber-300 border-amber-700"
-                      :                  "bg-zinc-700 text-zinc-200 border-zinc-600"
-                      : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-600"
+                      :                  "bg-[#2a2418] text-[#f5f5f0] border-[#2a2418]"
+                      : "bg-[#111111] text-[#6a5a3a] border-[#1a1a1a] hover:border-[#2a2418]"
                   }`}>
                   {q}
                 </button>
@@ -204,14 +204,14 @@ function AddBatchModal({ onClose, onSave }) {
           </div>
           {/* Rack type */}
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Rack Type</label>
+            <label className="text-xs text-[#c5b08a] mb-1 block">Rack Type</label>
             <div className="flex gap-2">
               {["main", "side"].map(r => (
                 <button key={r} onClick={() => setRackType(r)}
                   className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors capitalize ${
                     rackType === r
                       ? "bg-sky-900/60 text-sky-300 border-sky-700"
-                      : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-600"
+                      : "bg-[#111111] text-[#6a5a3a] border-[#1a1a1a] hover:border-[#2a2418]"
                   }`}>
                   {r}
                 </button>
@@ -220,28 +220,28 @@ function AddBatchModal({ onClose, onSave }) {
           </div>
           {/* Date hung */}
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Date Hung</label>
+            <label className="text-xs text-[#c5b08a] mb-1 block">Date Hung</label>
             <input type="date" value={dateHung} onChange={e => setDateHung(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600" />
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
           </div>
           {/* Note */}
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Note (optional)</label>
+            <label className="text-xs text-[#c5b08a] mb-1 block">Note (optional)</label>
             <input type="text" value={note} onChange={e => setNote(e.target.value)}
               placeholder="e.g. top shelf"
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-600" />
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600" />
           </div>
           {/* Number of racks */}
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Number of Racks</label>
+            <label className="text-xs text-[#c5b08a] mb-1 block">Number of Racks</label>
             <div className="flex items-center gap-3">
               <button onClick={() => setCount(c => Math.max(1, c - 1))}
-                className="w-10 h-10 rounded-xl border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors text-lg font-medium flex items-center justify-center">
+                className="w-10 h-10 rounded-xl border border-[#2a2418] text-[#c5b08a] hover:border-[#2a2418] hover:text-[#f5f5f0] transition-colors text-lg font-medium flex items-center justify-center">
                 −
               </button>
-              <span className="text-white font-semibold text-lg w-6 text-center">{count}</span>
+              <span className="text-[#f5f5f0] font-semibold text-lg w-6 text-center">{count}</span>
               <button onClick={() => setCount(c => Math.min(22, c + 1))}
-                className="w-10 h-10 rounded-xl border border-zinc-700 text-zinc-300 hover:border-zinc-500 hover:text-white transition-colors text-lg font-medium flex items-center justify-center">
+                className="w-10 h-10 rounded-xl border border-[#2a2418] text-[#c5b08a] hover:border-[#2a2418] hover:text-[#f5f5f0] transition-colors text-lg font-medium flex items-center justify-center">
                 +
               </button>
             </div>
@@ -270,11 +270,11 @@ function BatchCard({ batch, onBin }) {
     : null;
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+    <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <div className="text-white font-semibold text-sm leading-tight truncate">{getStrainName(batch.strainCode)}</div>
-          <div className="text-zinc-600 text-[10px] mt-0.5">{batch.strainCode}</div>
+          <div className="text-[#f5f5f0] font-semibold text-sm leading-tight truncate">{getStrainName(batch.strainCode)}</div>
+          <div className="text-[#6a5a3a] text-[10px] mt-0.5">{batch.strainCode}</div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
           {qualityBadge}
@@ -283,7 +283,7 @@ function BatchCard({ batch, onBin }) {
       </div>
       <div className="flex items-center justify-between mt-3">
         <div>
-          <div className="text-zinc-500 text-[10px]">Hung {fmtDate(batch.dateHung)} · {hanging}d hanging</div>
+          <div className="text-[#6a5a3a] text-[10px]">Hung {fmtDate(batch.dateHung)} · {hanging}d hanging</div>
           <div className={`text-xs font-semibold mt-0.5 ${color}`}>
             {overdue ? `OVERDUE by ${Math.abs(remaining)}d` : `${remaining}d remaining`}
           </div>
@@ -291,7 +291,7 @@ function BatchCard({ batch, onBin }) {
         {confirming ? (
           <div className="flex gap-2">
             <button onClick={() => setConfirming(false)}
-              className="px-3 py-1.5 rounded-lg text-xs text-zinc-400 border border-zinc-700 hover:border-zinc-500 transition-colors">
+              className="px-3 py-1.5 rounded-lg text-xs text-[#c5b08a] border border-[#2a2418] hover:border-[#2a2418] transition-colors">
               Cancel
             </button>
             <button onClick={() => onBin(batch.id)}
@@ -301,12 +301,12 @@ function BatchCard({ batch, onBin }) {
           </div>
         ) : (
           <button onClick={() => setConfirming(true)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 border border-zinc-700 hover:text-white hover:border-zinc-500 transition-colors">
+            className="px-3 py-1.5 rounded-lg text-xs font-medium text-[#c5b08a] border border-[#2a2418] hover:text-[#f5f5f0] hover:border-[#2a2418] transition-colors">
             Bin It
           </button>
         )}
       </div>
-      {batch.note && <div className="mt-2 text-zinc-500 text-[10px] italic">{batch.note}</div>}
+      {batch.note && <div className="mt-2 text-[#6a5a3a] text-[10px] italic">{batch.note}</div>}
     </div>
   );
 }
@@ -319,13 +319,13 @@ function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin
     <>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-zinc-300 text-xs font-medium">
+          <span className="text-[#c5b08a] text-xs font-medium">
             {active.length} batch{active.length !== 1 ? "es" : ""} hanging
           </span>
-          <span className="text-zinc-600 text-[10px]">·</span>
-          <span className="text-zinc-500 text-[10px]">{mainCount} main · {sideCount} side</span>
+          <span className="text-[#6a5a3a] text-[10px]">·</span>
+          <span className="text-[#6a5a3a] text-[10px]">{mainCount} main · {sideCount} side</span>
           {overdueCount > 0 && (
-            <><span className="text-zinc-600 text-[10px]">·</span>
+            <><span className="text-[#6a5a3a] text-[10px]">·</span>
             <span className="text-red-400 text-[10px] font-semibold">{overdueCount} overdue</span></>
           )}
         </div>
@@ -335,9 +335,9 @@ function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin
         </button>
       </div>
       {sorted.length === 0 ? (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-          <div className="text-zinc-400 text-sm font-medium mb-1">Nothing hanging</div>
-          <div className="text-zinc-600 text-xs">Tap + Add Batch to log today&apos;s harvest.</div>
+        <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 text-center">
+          <div className="text-[#c5b08a] text-sm font-medium mb-1">Nothing hanging</div>
+          <div className="text-[#6a5a3a] text-xs">Tap + Add Batch to log today&apos;s harvest.</div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -362,14 +362,14 @@ function ArchivePanel({ archive }) {
       <div className="mb-3">
         <input type="text" value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Search strain…"
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600" />
+          className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-3 py-2 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-[#2a2418]" />
       </div>
       {filtered.length === 0 ? (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-          <div className="text-zinc-400 text-sm font-medium mb-1">
+        <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 text-center">
+          <div className="text-[#c5b08a] text-sm font-medium mb-1">
             {archive.length === 0 ? "No archived batches yet" : "No results"}
           </div>
-          <div className="text-zinc-600 text-xs">
+          <div className="text-[#6a5a3a] text-xs">
             {archive.length === 0 ? "Binned batches will appear here." : "Try a different search."}
           </div>
         </div>
@@ -390,24 +390,24 @@ function ArchivePanel({ archive }) {
               ? <span className="text-[10px] px-2 py-0.5 rounded-full border bg-amber-900/50 text-amber-300 border-amber-700/40 font-medium">LOWERS</span>
               : null;
             return (
-              <div key={b.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+              <div key={b.id} className="bg-[#111111] border border-[#2a2418] rounded-2xl p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <div className="text-white text-sm font-medium truncate">{getStrainName(b.strainCode)}</div>
-                    <div className="text-zinc-600 text-[10px] mt-0.5">{b.strainCode}</div>
+                    <div className="text-[#f5f5f0] text-sm font-medium truncate">{getStrainName(b.strainCode)}</div>
+                    <div className="text-[#6a5a3a] text-[10px] mt-0.5">{b.strainCode}</div>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
                     {qualityBadge}
                     <span className="text-[10px] px-2 py-0.5 rounded-full border bg-sky-900/30 text-sky-400 border-sky-800/40 font-medium capitalize">{b.rackType}</span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 mt-2 text-[10px] text-zinc-500">
+                <div className="flex items-center gap-2 mt-2 text-[10px] text-[#6a5a3a]">
                   <span>Hung {fmtDate(b.dateHung)}</span>
-                  <span className="text-zinc-700">→</span>
+                  <span className="text-[#2a2418]">→</span>
                   <span>Binned {fmtDate(b.dateBinned)}</span>
-                  {totalDays !== null && <><span className="text-zinc-700">·</span><span>{totalDays}d dried</span></>}
+                  {totalDays !== null && <><span className="text-[#2a2418]">·</span><span>{totalDays}d dried</span></>}
                 </div>
-                {b.note && <div className="mt-1.5 text-zinc-600 text-[10px] italic">{b.note}</div>}
+                {b.note && <div className="mt-1.5 text-[#6a5a3a] text-[10px] italic">{b.note}</div>}
               </div>
             );
           })}
@@ -433,7 +433,7 @@ function BurpDots({ fillDate, burps }) {
             key={i}
             title={`Day ${i + 1}: ${dateStr}${burped ? " ✓" : isPast ? " missed" : ""}`}
             className={`w-2.5 h-2.5 rounded-full ${
-              burped ? "bg-emerald-500" : isPast ? "bg-red-800/70" : "bg-zinc-700"
+              burped ? "bg-emerald-500" : isPast ? "bg-red-800/70" : "bg-[#2a2418]"
             }`}
           />
         );
@@ -463,20 +463,20 @@ function BinCard({ bin, onBurp, onSend }) {
     ? <span className="text-[10px] px-2 py-0.5 rounded-full border bg-emerald-900/50 text-emerald-300 border-emerald-700/40 font-medium">TOPS</span>
     : bin.quality === "lowers"
     ? <span className="text-[10px] px-2 py-0.5 rounded-full border bg-amber-900/50 text-amber-300 border-amber-700/40 font-medium">LOWERS</span>
-    : <span className="text-[10px] px-2 py-0.5 rounded-full border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">MID</span>;
+    : <span className="text-[10px] px-2 py-0.5 rounded-full border bg-[#1a1a1a] text-[#c5b08a] border-[#2a2418] font-medium">MID</span>;
 
   return (
-    <div className={`bg-zinc-900 border rounded-2xl p-4 ${missed ? "border-red-900/60" : "border-zinc-800"}`}>
+    <div className={`bg-[#111111] border rounded-2xl p-4 ${missed ? "border-red-900/60" : "border-[#2a2418]"}`}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <div className="text-white font-semibold text-sm leading-tight truncate">
+          <div className="text-[#f5f5f0] font-semibold text-sm leading-tight truncate">
             {getStrainName(bin.strainCode)}
           </div>
-          <div className="text-zinc-600 text-[10px] mt-0.5">{bin.strainCode}</div>
+          <div className="text-[#6a5a3a] text-[10px] mt-0.5">{bin.strainCode}</div>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
           {qualityBadge}
-          <span className="text-[10px] px-2 py-0.5 rounded-full border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">
+          <span className="text-[10px] px-2 py-0.5 rounded-full border bg-[#1a1a1a] text-[#c5b08a] border-[#2a2418] font-medium">
             {bin.size === "half" ? "HALF" : "FULL"}
           </span>
           {missed && (
@@ -485,7 +485,7 @@ function BinCard({ bin, onBurp, onSend }) {
         </div>
       </div>
 
-      <div className="text-zinc-500 text-[10px] mt-2">
+      <div className="text-[#6a5a3a] text-[10px] mt-2">
         Filled {fmtDate(bin.fillDate)} · {days}d cured
       </div>
 
@@ -506,7 +506,7 @@ function BinCard({ bin, onBurp, onSend }) {
             )}
             <button
               onClick={onSend}
-              className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-500 border border-zinc-800 hover:text-zinc-300 hover:border-zinc-600 transition-colors">
+              className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#6a5a3a] border border-[#2a2418] hover:text-[#c5b08a] hover:border-[#2a2418] transition-colors">
               Send Downstairs
             </button>
           </div>
@@ -517,7 +517,7 @@ function BinCard({ bin, onBurp, onSend }) {
         <div className="flex justify-end mt-3">
           <button
             onClick={onSend}
-            className="px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-500 border border-zinc-800 hover:text-zinc-300 hover:border-zinc-600 transition-colors">
+            className="px-3 py-1.5 rounded-xl text-xs font-medium text-[#6a5a3a] border border-[#2a2418] hover:text-[#c5b08a] hover:border-[#2a2418] transition-colors">
             Send Downstairs
           </button>
         </div>
@@ -548,21 +548,21 @@ function AddBinModal({ archive, onClose, onSave }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-zinc-950 border border-zinc-800 rounded-t-3xl w-full max-w-sm p-6 pb-10 space-y-4">
+      <div className="bg-[#111111] border border-[#2a2418] rounded-t-3xl w-full max-w-sm p-6 pb-10 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold">Add Bin</h2>
-          <button onClick={onClose} aria-label="Close"><X size={20} className="text-zinc-500" /></button>
+          <h2 className="text-[#f5f5f0] font-semibold">Add Bin</h2>
+          <button onClick={onClose} aria-label="Close"><X size={20} className="text-[#6a5a3a]" /></button>
         </div>
 
         <div>
-          <label className="text-xs text-zinc-400 mb-1 block">Source Rack</label>
+          <label className="text-xs text-[#c5b08a] mb-1 block">Source Rack</label>
           {archive.length === 0 ? (
-            <div className="text-zinc-600 text-xs py-2">No archived racks yet — bin a rack in the Hanging tab first.</div>
+            <div className="text-[#6a5a3a] text-xs py-2">No archived racks yet — bin a rack in the Hanging tab first.</div>
           ) : (
             <select
               value={selectedRackId}
               onChange={e => setSelectedRackId(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600">
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600">
               {archive.map(r => (
                 <option key={r.id} value={r.id}>
                   {getStrainName(r.strainCode)} · {r.quality} · {fmtDate(r.dateHung)}
@@ -573,22 +573,22 @@ function AddBinModal({ archive, onClose, onSave }) {
         </div>
 
         {selectedRack && (
-          <div className="bg-zinc-900 rounded-xl px-3 py-2 text-[11px] text-zinc-500 space-y-0.5">
-            <div>Strain: <span className="text-zinc-300">{getStrainName(selectedRack.strainCode)}</span></div>
-            <div>Quality: <span className="text-zinc-300 capitalize">{selectedRack.quality}</span></div>
-            <div>Hung: <span className="text-zinc-300">{fmtDate(selectedRack.dateHung)}</span></div>
+          <div className="bg-[#1a1a1a] rounded-xl px-3 py-2 text-[11px] text-[#6a5a3a] space-y-0.5">
+            <div>Strain: <span className="text-[#c5b08a]">{getStrainName(selectedRack.strainCode)}</span></div>
+            <div>Quality: <span className="text-[#c5b08a] capitalize">{selectedRack.quality}</span></div>
+            <div>Hung: <span className="text-[#c5b08a]">{fmtDate(selectedRack.dateHung)}</span></div>
           </div>
         )}
 
         <div>
-          <label className="text-xs text-zinc-400 mb-1 block">Size</label>
+          <label className="text-xs text-[#c5b08a] mb-1 block">Size</label>
           <div className="flex gap-2">
             {["full", "half"].map(s => (
               <button key={s} onClick={() => setSize(s)}
                 className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
                   size === s
                     ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
-                    : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-600"
+                    : "bg-[#111111] text-[#6a5a3a] border-[#2a2418] hover:border-[#2a2418]"
                 }`}>
                 {s === "full" ? "Full Tote" : "Half Tote"}
               </button>
@@ -597,9 +597,9 @@ function AddBinModal({ archive, onClose, onSave }) {
         </div>
 
         <div>
-          <label className="text-xs text-zinc-400 mb-1 block">Fill Date</label>
+          <label className="text-xs text-[#c5b08a] mb-1 block">Fill Date</label>
           <input type="date" value={fillDate} onChange={e => setFillDate(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600" />
+            className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
         </div>
 
         <button
@@ -641,13 +641,13 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-zinc-950 border border-zinc-800 rounded-t-3xl w-full max-w-sm p-6 pb-10 space-y-4">
+      <div className="bg-[#111111] border border-[#2a2418] rounded-t-3xl w-full max-w-sm p-6 pb-10 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold">Send Downstairs</h2>
-          <button onClick={onClose} aria-label="Close"><X size={20} className="text-zinc-500" /></button>
+          <h2 className="text-[#f5f5f0] font-semibold">Send Downstairs</h2>
+          <button onClick={onClose} aria-label="Close"><X size={20} className="text-[#6a5a3a]" /></button>
         </div>
 
-        <div className="text-zinc-500 text-xs">
+        <div className="text-[#6a5a3a] text-xs">
           {getStrainName(bin.strainCode)} · {bin.quality} · filled {fmtDate(bin.fillDate)}
         </div>
 
@@ -658,7 +658,7 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
                 className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
                   mode === v
                     ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
-                    : "bg-zinc-900 text-zinc-500 border-zinc-800 hover:border-zinc-600"
+                    : "bg-[#111111] text-[#6a5a3a] border-[#2a2418] hover:border-[#2a2418]"
                 }`}>
                 {label}
               </button>
@@ -668,11 +668,11 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
 
         {mode === "existing" && (
           <div>
-            <label className="text-xs text-zinc-400 mb-1 block">Harvest</label>
+            <label className="text-xs text-[#c5b08a] mb-1 block">Harvest</label>
             <select
               value={selectedHarvestId}
               onChange={e => setSelectedHarvestId(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600">
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600">
               {harvests.map(h => (
                 <option key={h.id} value={h.id}>{harvestLabel(h)}</option>
               ))}
@@ -683,21 +683,21 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
         {mode === "new" && (
           <>
             <div>
-              <label className="text-xs text-zinc-400 mb-1 block">Harvest Name (optional)</label>
+              <label className="text-xs text-[#c5b08a] mb-1 block">Harvest Name (optional)</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)}
                 placeholder="e.g. Spring Run"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-emerald-600" />
+                className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600" />
             </div>
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="text-xs text-zinc-400 mb-1 block">Start Date</label>
+                <label className="text-xs text-[#c5b08a] mb-1 block">Start Date</label>
                 <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600" />
+                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
               </div>
               <div className="flex-1">
-                <label className="text-xs text-zinc-400 mb-1 block">End Date</label>
+                <label className="text-xs text-[#c5b08a] mb-1 block">End Date</label>
                 <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-600" />
+                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
               </div>
             </div>
           </>
@@ -725,32 +725,32 @@ function HarvestCard({ harvest, bins }) {
     ? <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-emerald-900/50 text-emerald-300 border-emerald-700/40 font-medium">TOPS</span>
     : q === "lowers"
     ? <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-amber-900/50 text-amber-300 border-amber-700/40 font-medium">LOWERS</span>
-    : <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-zinc-800 text-zinc-400 border-zinc-700 font-medium">MID</span>;
+    : <span className="text-[10px] px-1.5 py-0.5 rounded-full border bg-[#1a1a1a] text-[#c5b08a] border-[#2a2418] font-medium">MID</span>;
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+    <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between p-4 text-left">
         <div>
-          <div className="text-white text-sm font-medium">{label}</div>
-          <div className="text-zinc-500 text-[10px] mt-0.5">
+          <div className="text-[#f5f5f0] text-sm font-medium">{label}</div>
+          <div className="text-[#6a5a3a] text-[10px] mt-0.5">
             {bins.length} bin{bins.length !== 1 ? "s" : ""}
             {strainSummary && ` · ${strainSummary}`}
           </div>
         </div>
         <ChevronDown
           size={16}
-          className={`text-zinc-500 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`text-[#6a5a3a] transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
       {open && (
-        <div className="border-t border-zinc-800 divide-y divide-zinc-800">
+        <div className="border-t border-[#2a2418] divide-y divide-[#2a2418]">
           {bins.map(b => (
             <div key={b.id} className="px-4 py-3 flex items-center justify-between gap-2">
               <div className="flex-1 min-w-0">
-                <div className="text-zinc-200 text-xs font-medium truncate">{getStrainName(b.strainCode)}</div>
-                <div className="text-zinc-600 text-[10px] mt-0.5">
+                <div className="text-[#f5f5f0] text-xs font-medium truncate">{getStrainName(b.strainCode)}</div>
+                <div className="text-[#6a5a3a] text-[10px] mt-0.5">
                   Filled {fmtDate(b.fillDate)} · {getDaysCured(b)}d cured · {b.size === "half" ? "Half" : "Full"} tote
                 </div>
               </div>
@@ -833,8 +833,8 @@ function BinsPanel({ data, persist }) {
           <button key={v} onClick={() => setView(v)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
               view === v
-                ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700/50"
-                : "text-zinc-500 hover:text-zinc-300 border border-transparent"
+                ? "bg-[#2a1f00] text-amber-300 border border-[#3a2e00]"
+                : "text-[#6a5a3a] hover:text-[#c5b08a] border border-transparent"
             }`}>
             {v}
           </button>
@@ -844,7 +844,7 @@ function BinsPanel({ data, persist }) {
       {view === "active" && (
         <>
           <div className="flex items-center justify-between mb-3">
-            <span className="text-zinc-300 text-xs font-medium">
+            <span className="text-[#c5b08a] text-xs font-medium">
               {activeBins.length} bin{activeBins.length !== 1 ? "s" : ""} active
             </span>
             <button onClick={() => setShowAdd(true)}
@@ -855,7 +855,7 @@ function BinsPanel({ data, persist }) {
 
           {burpingBins.length > 0 && (
             <>
-              <div className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wide mb-2">Burping</div>
+              <div className="text-[#6a5a3a] text-[10px] font-semibold uppercase tracking-wide mb-2">Burping</div>
               <div className="space-y-3 mb-4">
                 {burpingBins.map(b => (
                   <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
@@ -866,7 +866,7 @@ function BinsPanel({ data, persist }) {
 
           {curingBins.length > 0 && (
             <>
-              <div className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wide mb-2">Curing</div>
+              <div className="text-[#6a5a3a] text-[10px] font-semibold uppercase tracking-wide mb-2">Curing</div>
               <div className="space-y-3 mb-4">
                 {curingBins.map(b => (
                   <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
@@ -876,9 +876,9 @@ function BinsPanel({ data, persist }) {
           )}
 
           {activeBins.length === 0 && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-              <div className="text-zinc-400 text-sm font-medium mb-1">No bins active</div>
-              <div className="text-zinc-600 text-xs">Tap + Add Bin to log a tote.</div>
+            <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 text-center">
+              <div className="text-[#c5b08a] text-sm font-medium mb-1">No bins active</div>
+              <div className="text-[#6a5a3a] text-xs">Tap + Add Bin to log a tote.</div>
             </div>
           )}
         </>
@@ -886,9 +886,9 @@ function BinsPanel({ data, persist }) {
 
       {view === "archive" && (
         harvests.length === 0 ? (
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
-            <div className="text-zinc-400 text-sm font-medium mb-1">No archived harvests</div>
-            <div className="text-zinc-600 text-xs">Bins sent downstairs will appear here.</div>
+          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 text-center">
+            <div className="text-[#c5b08a] text-sm font-medium mb-1">No archived harvests</div>
+            <div className="text-[#6a5a3a] text-xs">Bins sent downstairs will appear here.</div>
           </div>
         ) : (
           <div className="space-y-3">
