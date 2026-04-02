@@ -1647,7 +1647,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 <button
                   onClick={handleCloneConfirm}
                   disabled={!cloneInput.count || parseInt(cloneInput.count) < 1}
-                  className="flex-1 py-2.5 rounded-xl bg-[#1a1a1a] text-[#f5f5f0] text-sm font-semibold disabled:opacity-40 active:bg-[#2a2418] transition-colors"
+                  className="flex-1 py-2.5 rounded-xl bg-amber-600 text-[#0a0a0a] text-sm font-semibold disabled:opacity-40 active:bg-[#2a2418] transition-colors"
                 >
                   Confirm
                 </button>
