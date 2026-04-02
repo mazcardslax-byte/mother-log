@@ -4,6 +4,21 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Carbon Amber Design Tokens ───────────────────────────────────────────── */
+:root {
+  --color-bg:           #0a0a0a;
+  --color-surface:      #111111;
+  --color-border:       #2a2418;
+  --color-amber:        #fbbf24;
+  --color-amber-2:      #fcd34d;
+  --color-amber-3:      #fde68a;
+  --color-amber-bg:     #2a1f00;
+  --color-amber-border: #3a2e00;
+  --color-text-primary: #f5f5f0;
+  --color-text-body:    #c5b08a;
+  --color-text-muted:   #6a5a3a;
+}
+
 * {
   -webkit-tap-highlight-color: transparent;
   box-sizing: border-box;
