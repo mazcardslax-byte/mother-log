@@ -35,7 +35,7 @@ function daysBadgeColor(days) {
 
 function SectionLabel({ children }) {
   return (
-    <div className="text-[10px] font-semibold tracking-widest text-zinc-500 uppercase mb-3">
+    <div className="text-[10px] font-semibold tracking-widest text-[#6a5a3a] uppercase mb-3">
       {children}
     </div>
   );
@@ -60,18 +60,18 @@ function CloneRatesSection({ mothers, getStrain }) {
           { label: "Total cuts", value: overall.taken, style: { color: "#e4e4e7" } },
           { label: "Rooted", value: overall.rooted, style: { color: "#e4e4e7" } },
         ].map(({ label, value, style }) => (
-          <div key={label} className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+          <div key={label} className="flex-1 bg-[#111111] border border-[#2a2418] rounded-xl p-3 text-center">
             <div className="text-xl font-bold" style={style}>{value}</div>
-            <div className="text-[10px] text-zinc-500 mt-0.5">{label}</div>
+            <div className="text-[10px] text-[#6a5a3a] mt-0.5">{label}</div>
           </div>
         ))}
       </div>
 
       {/* Bar chart */}
       {byStrain.length === 0 ? (
-        <div className="text-zinc-600 text-sm text-center py-4">No clone data yet.</div>
+        <div className="text-[#6a5a3a] text-sm text-center py-4">No clone data yet.</div>
       ) : (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-4">
           <ResponsiveContainer width="100%" height={byStrain.length * 44 + 16}>
             <BarChart
               data={byStrain}
@@ -122,7 +122,7 @@ function HealthTrendsSection({ mothers, getStrain }) {
     return (
       <div className="mb-7">
         <SectionLabel>Health Trends</SectionLabel>
-        <div className="text-zinc-600 text-sm text-center py-4">No active mothers.</div>
+        <div className="text-[#6a5a3a] text-sm text-center py-4">No active mothers.</div>
       </div>
     );
   }
@@ -135,7 +135,7 @@ function HealthTrendsSection({ mothers, getStrain }) {
       <select
         value={mother ? String(mother.id) : ""}
         onChange={e => setSelectedId(e.target.value)}
-        className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-3 py-2.5 text-sm text-zinc-200 mb-3 appearance-none"
+        className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] mb-3 appearance-none"
       >
         {activeMothers.map(m => (
           <option key={m.id} value={String(m.id)}>
@@ -144,9 +144,9 @@ function HealthTrendsSection({ mothers, getStrain }) {
         ))}
       </select>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+      <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-4">
         {chartData.length < 2 ? (
-          <div className="text-zinc-600 text-xs text-center py-6">
+          <div className="text-[#6a5a3a] text-xs text-center py-6">
             Health trend starts recording from today — check back after a few updates.
           </div>
         ) : (
@@ -196,18 +196,18 @@ function StrainComparisonSection({ mothers, getStrain }) {
     <div className="mb-7">
       <SectionLabel>Strain Comparison</SectionLabel>
       {rows.length === 0 ? (
-        <div className="text-zinc-600 text-sm text-center py-4">No data yet.</div>
+        <div className="text-[#6a5a3a] text-sm text-center py-4">No data yet.</div>
       ) : (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+        <div className="bg-[#111111] border border-[#2a2418] rounded-xl overflow-hidden">
           {/* Header row */}
-          <div className="grid grid-cols-[1fr_52px_52px_52px] px-4 py-2 border-b border-zinc-800">
-            <div className="text-[10px] font-semibold text-zinc-600 uppercase tracking-wider">Strain</div>
+          <div className="grid grid-cols-[1fr_52px_52px_52px] px-4 py-2 border-b border-[#2a2418]">
+            <div className="text-[10px] font-semibold text-[#6a5a3a] uppercase tracking-wider">Strain</div>
             {headers.map(h => (
               <button
                 key={h.key}
                 onClick={() => setSortKey(h.key)}
                 className={`text-[10px] font-semibold uppercase tracking-wider text-center transition-colors ${
-                  sortKey === h.key ? "text-emerald-400" : "text-zinc-600"
+                  sortKey === h.key ? "text-amber-400" : "text-[#6a5a3a]"
                 }`}
               >
                 {h.label}{sortKey === h.key ? " ↓" : ""}
@@ -219,14 +219,14 @@ function StrainComparisonSection({ mothers, getStrain }) {
             <div
               key={row.strainCode}
               className={`grid grid-cols-[1fr_52px_52px_52px] px-4 py-3 ${
-                i < rows.length - 1 ? "border-b border-zinc-800/60" : ""
+                i < rows.length - 1 ? "border-b border-[#2a2418]" : ""
               }`}
             >
-              <div className="text-sm text-zinc-300 font-medium">{row.strainName}</div>
+              <div className="text-sm text-[#c5b08a] font-medium">{row.strainName}</div>
               <div className="text-sm font-bold text-center" style={{ color: healthColor(row.avgHealth) }}>
                 {row.avgHealth.toFixed(1)}
               </div>
-              <div className="text-sm text-zinc-300 text-center">{row.totalClones}</div>
+              <div className="text-sm text-[#c5b08a] text-center">{row.totalClones}</div>
               <div className="text-sm font-bold text-center" style={{ color: rateColor(row.rootingRate) }}>
                 {row.rootingRate > 0 ? `${row.rootingRate}%` : "—"}
               </div>
@@ -247,7 +247,7 @@ function CareGapsSection({ mothers, getStrain }) {
     <div className="mb-7">
       <SectionLabel>Care Gaps — days since last water</SectionLabel>
       {gaps.length === 0 ? (
-        <div className="text-zinc-600 text-sm text-center py-4">No active mothers.</div>
+        <div className="text-[#6a5a3a] text-sm text-center py-4">No active mothers.</div>
       ) : (
         <div className="flex flex-col gap-2">
           {gaps.map(g => {
@@ -256,13 +256,13 @@ function CareGapsSection({ mothers, getStrain }) {
             return (
               <div
                 key={g.id}
-                className={`bg-zinc-900 border rounded-xl px-4 py-3 flex items-center justify-between ${
-                  g.daysSinceNum > 10 ? "border-red-900/60" : g.daysSinceNum > 6 ? "border-yellow-900/60" : "border-zinc-800"
+                className={`bg-[#111111] border rounded-xl px-4 py-3 flex items-center justify-between ${
+                  g.daysSinceNum > 10 ? "border-red-900/60" : g.daysSinceNum > 6 ? "border-yellow-900/60" : "border-[#2a2418]"
                 }`}
               >
                 <div>
-                  <div className="text-sm font-semibold text-zinc-200">{g.name} — {g.location || "No location"}</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">
+                  <div className="text-sm font-semibold text-[#f5f5f0]">{g.name} — {g.location || "No location"}</div>
+                  <div className="text-xs text-[#6a5a3a] mt-0.5">
                     Last: {g.lastDate ? fmtDate(g.lastDate) : "Never"}
                   </div>
                 </div>
