@@ -2830,7 +2830,7 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
         <div className="flex justify-end">
           <button
             onClick={() => { setCompareMode(p => !p); setSelectedPhotos(new Set()); }}
-            className={`text-xs px-3 py-1.5 rounded-xl font-semibold border transition-colors min-h-[44px] ${compareMode ? "bg-zinc-700 text-white border-zinc-600" : "bg-zinc-900/80 border-zinc-800 text-zinc-500"}`}
+            className={`text-xs px-3 py-1.5 rounded-xl font-semibold border transition-colors min-h-[44px] ${compareMode ? "bg-[#2a2418] text-[#f5f5f0] border-[#2a2418]" : "bg-[#111111]/80 border-[#2a2418] text-[#6a5a3a]"}`}
           >
             Compare
           </button>
@@ -2846,13 +2846,13 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
         return (
           <div className="grid grid-cols-2 gap-2">
             {[pA, pB].map(p => (
-              <div key={p.id} className="rounded-xl overflow-hidden bg-zinc-900 border border-emerald-700/60">
+              <div key={p.id} className="rounded-xl overflow-hidden bg-[#111111] border border-emerald-700/60">
                 <div className="w-full aspect-square">
                   <img src={p.dataUrl} alt={p.caption || "Photo"} className="w-full h-full object-cover" />
                 </div>
                 <div className="px-2 py-1.5">
-                  {p.caption && <div className="text-[10px] text-zinc-300 truncate">{p.caption}</div>}
-                  {p.date && <div className="text-[10px] text-zinc-500">{fmtDate(p.date)}</div>}
+                  {p.caption && <div className="text-[10px] text-[#c5b08a] truncate">{p.caption}</div>}
+                  {p.date && <div className="text-[10px] text-[#6a5a3a]">{fmtDate(p.date)}</div>}
                 </div>
               </div>
             ))}
@@ -2868,8 +2868,8 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
           + Add Photo
         </button>
       ) : (
-        <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-4 space-y-3">
-          <div className="text-xs text-zinc-400 font-medium mb-1">New Photo</div>
+        <div className="bg-[#1a1a1a]/60 border border-[#2a2418] rounded-xl p-4 space-y-3">
+          <div className="text-xs text-[#c5b08a] font-medium mb-1">New Photo</div>
           <input
             ref={fileInputRef}
             type="file"
@@ -2879,12 +2879,12 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
           />
           <button
             onClick={() => fileInputRef.current && fileInputRef.current.click()}
-            className="w-full border border-dashed border-zinc-600 active:border-zinc-400 rounded-xl py-4 text-xs text-zinc-500 active:text-zinc-300 transition-colors"
+            className="w-full border border-dashed border-[#6a5a3a] active:border-[#c5b08a] rounded-xl py-4 text-xs text-[#6a5a3a] active:text-[#c5b08a] transition-colors"
           >
             {previewUrl ? "Change Photo" : "Tap to Select Photo"}
           </button>
           {previewUrl && (
-            <div className="w-full aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-zinc-700">
+            <div className="w-full aspect-square rounded-xl overflow-hidden bg-[#111111] border border-[#2a2418]">
               <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
             </div>
           )}
@@ -2915,7 +2915,7 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
       )}
 
       {photos.length === 0 && !adding ? (
-        <div className="text-center py-8 text-zinc-600 text-sm">No photos yet.</div>
+        <div className="text-center py-8 text-[#6a5a3a] text-sm">No photos yet.</div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
           {photos.map(p => {
@@ -2925,23 +2925,23 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
                 key={p.id}
                 aria-label={p.caption || "View photo"}
                 onClick={() => compareMode ? togglePhotoSelect(p.id) : setFullscreen(p)}
-                className={`rounded-xl overflow-hidden bg-zinc-900 border transition-colors text-left ${
+                className={`rounded-xl overflow-hidden bg-[#111111] border transition-colors text-left ${
                   compareMode && isSelected ? "border-emerald-500 ring-1 ring-emerald-500" :
-                  compareMode ? "border-zinc-700 active:border-zinc-500" :
-                  "border-zinc-800 active:border-zinc-600"
+                  compareMode ? "border-[#2a2418] active:border-[#6a5a3a]" :
+                  "border-[#2a2418] active:border-[#6a5a3a]"
                 }`}
               >
                 <div className="w-full aspect-square relative">
                   <img src={p.dataUrl} alt={p.caption || "Photo"} className="w-full h-full object-cover" />
                   {compareMode && isSelected && (
                     <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
-                      <span className="text-white text-[10px] font-bold">{[...selectedPhotos].indexOf(p.id) + 1}</span>
+                      <span className="text-[#f5f5f0] text-[10px] font-bold">{[...selectedPhotos].indexOf(p.id) + 1}</span>
                     </div>
                   )}
                 </div>
                 <div className="px-2 py-1.5">
-                  {p.date && <div className="text-[10px] text-zinc-500">{fmtDate(p.date)}</div>}
-                  {p.caption && <div className="text-[10px] text-zinc-300 truncate">{p.caption}</div>}
+                  {p.date && <div className="text-[10px] text-[#6a5a3a]">{fmtDate(p.date)}</div>}
+                  {p.caption && <div className="text-[10px] text-[#c5b08a] truncate">{p.caption}</div>}
                 </div>
               </button>
             );
@@ -2956,8 +2956,8 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
         >
           <div className="w-full max-w-md px-4 space-y-3" onClick={e => e.stopPropagation()}>
             <img src={fullscreen.dataUrl} alt={fullscreen.caption || "Photo"} className="w-full rounded-xl object-contain max-h-[65vh]" />
-            {fullscreen.caption && <div className="text-sm text-zinc-200 text-center">{fullscreen.caption}</div>}
-            {fullscreen.date && <div className="text-xs text-zinc-500 text-center">{fmtDate(fullscreen.date)}</div>}
+            {fullscreen.caption && <div className="text-sm text-[#f5f5f0] text-center">{fullscreen.caption}</div>}
+            {fullscreen.date && <div className="text-xs text-[#6a5a3a] text-center">{fmtDate(fullscreen.date)}</div>}
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => setFullscreen(null)}
