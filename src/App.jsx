@@ -203,7 +203,7 @@ const FEEDING_DAYS_THRESHOLDS = [
   { max: Infinity, cls: "text-red-400" },
 ];
 function feedingDaysColor(days) {
-  if (days === null) return "text-zinc-500";
+  if (days === null) return "text-[#6a5a3a]";
   return thresholdColor(days, FEEDING_DAYS_THRESHOLDS);
 }
 
@@ -217,19 +217,19 @@ function daysInVeg(mother) {
 }
 
 const VEG_DAYS_THRESHOLDS = [
-  { max: 24, cls: "text-zinc-500" },
+  { max: 24, cls: "text-[#6a5a3a]" },
   { max: 29, cls: "text-yellow-400" },
   { max: Infinity, cls: "text-red-400" },
 ];
 function vegDaysColor(days) {
-  if (days === null) return "text-zinc-500";
+  if (days === null) return "text-[#6a5a3a]";
   return thresholdColor(days, VEG_DAYS_THRESHOLDS);
 }
 
 function statusBadgeColor(status) {
   if (status === "Active") return "bg-emerald-900/50 text-emerald-300 border-emerald-700/40";
   if (status === "Sidelined") return "bg-[#1a1a1a] text-[#6a5a3a] border-[#2a2418]";
-  return "bg-zinc-800 text-zinc-500 border-zinc-700";
+  return "bg-[#1a1a1a] text-[#6a5a3a] border-[#2a2418]";
 }
 
 function cardAccentColor(m) {
@@ -303,7 +303,7 @@ function HealthDots({ level }) {
           className={`w-2 h-2 rounded-full ${
             i <= level
               ? level <= 2 ? "bg-red-400" : level === 3 ? "bg-yellow-400" : "bg-emerald-400"
-              : "bg-zinc-700"
+              : "bg-[#2a2418]"
           }`}
         />
       ))}
@@ -317,7 +317,7 @@ function ContainerBadge({ container }) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs text-sky-300 font-medium">{container || "—"}</span>
-      <div className="flex-1 h-1 bg-zinc-800 rounded-full min-w-[40px]">
+      <div className="flex-1 h-1 bg-[#1a1a1a] rounded-full min-w-[40px]">
         <div className="h-1 bg-sky-600 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
     </div>
