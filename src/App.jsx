@@ -957,22 +957,22 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-3 gap-2">
-        <StatBox label="Total Mothers" value={mothers.length} colorClass="text-zinc-200" />
+        <StatBox label="Total Mothers" value={mothers.length} colorClass="text-[#f5f5f0]" />
         <StatBox label="Active" value={active.length} colorClass="text-emerald-400" />
         <StatBox label="Total Clones" value={totalClones} colorClass="text-sky-400" />
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <StatBox label="Sidelined" value={sidelined.length} colorClass="text-zinc-500" />
+        <StatBox label="Sidelined" value={sidelined.length} colorClass="text-[#6a5a3a]" />
         <StatBox label="Strains" value={new Set(mothers.map(m => m.strainCode)).size} colorClass="text-violet-400" />
       </div>
 
       {byHealth.length > 0 && (
         <div>
           <SectionLabel>Health Breakdown</SectionLabel>
-          <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
+          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden">
             {byHealth.map(({ h, cnt }) => (
-              <div key={h} className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 last:border-0">
-                <span className="text-xs text-zinc-300">{healthLabels[h]}</span>
+              <div key={h} className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2418] last:border-0">
+                <span className="text-xs text-[#c5b08a]">{healthLabels[h]}</span>
                 <Badge label={cnt} colorClass={healthClasses[h]} />
               </div>
             ))}
@@ -983,11 +983,11 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
       {Object.keys(strainCounts).length > 0 && (
         <div>
           <SectionLabel>By Strain</SectionLabel>
-          <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
+          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden">
             {Object.entries(strainCounts).sort((a, b) => b[1] - a[1]).map(([name, cnt]) => (
-              <div key={name} className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/50 last:border-0">
-                <span className="text-xs text-zinc-300">{name}</span>
-                <span className="text-xs text-zinc-500">{cnt}</span>
+              <div key={name} className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2418] last:border-0">
+                <span className="text-xs text-[#c5b08a]">{name}</span>
+                <span className="text-xs text-[#6a5a3a]">{cnt}</span>
               </div>
             ))}
           </div>
@@ -1007,7 +1007,7 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-sky-300 font-medium">{s.code} – {s.name}</div>
-                      {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
+                      {m.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{m.location}</div>}
                     </div>
                     <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
                       {days === null ? "Never fed" : `${days}d ago`}
@@ -1027,11 +1027,11 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
             {vegOverdue.map(m => {
               const s = getStrain(m.strainCode);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-zinc-900 border border-red-900/50 rounded-2xl px-4 py-3.5 text-left">
+                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-[#111111] border border-red-900/50 rounded-2xl px-4 py-3.5 text-left">
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="text-sm text-red-400 font-medium">{s.code} – {s.name}</div>
-                      {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
+                      {m.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{m.location}</div>}
                     </div>
                     <span className="text-red-400 text-sm font-bold">{daysInVeg(m)}d</span>
                   </div>
@@ -1051,11 +1051,11 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
               const last = lastFeedingDate(m.feedingLog);
               const days = daysSince(last);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl px-4 py-3.5 text-left">
+                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-[#111111] border border-[#2a2418] rounded-2xl px-4 py-3.5 text-left">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-zinc-300 font-medium">{s.code} – {s.name}</div>
-                      {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
+                      <div className="text-sm text-[#c5b08a] font-medium">{s.code} – {s.name}</div>
+                      {m.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{m.location}</div>}
                     </div>
                     <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
                       {days === null ? "Never fed" : `${days}d ago`}
@@ -1075,9 +1075,9 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
             {sidelined.filter(m => !sidelinedNeedsWater.includes(m)).map(m => {
               const s = getStrain(m.strainCode);
               return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-zinc-900/80 border border-zinc-800 rounded-2xl px-4 py-3.5 text-left">
-                  <div className="text-sm text-zinc-400 font-medium">{s.code} – {s.name}</div>
-                  {m.location && <div className="text-xs text-zinc-500 mt-0.5">{m.location}</div>}
+                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-[#111111] border border-[#2a2418] rounded-2xl px-4 py-3.5 text-left">
+                  <div className="text-sm text-[#c5b08a] font-medium">{s.code} – {s.name}</div>
+                  {m.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{m.location}</div>}
                 </button>
               );
             })}
@@ -1087,28 +1087,28 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
 
       {mothers.length === 0 && (
         <div className="flex flex-col items-center justify-center py-10 px-2">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full text-center space-y-4">
+          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 w-full text-center space-y-4">
             <div className="text-4xl mb-2">🌿</div>
-            <div className="text-white font-semibold text-base">No mother plants yet</div>
-            <div className="text-zinc-500 text-sm leading-relaxed">
-              Tap <span className="text-emerald-400 font-medium">+ Add Mother</span> to get started
+            <div className="text-[#f5f5f0] font-semibold text-base">No mother plants yet</div>
+            <div className="text-[#6a5a3a] text-sm leading-relaxed">
+              Tap <span className="text-amber-400 font-medium">+ Add Mother</span> to get started
             </div>
-            <div className="bg-zinc-800/60 border border-zinc-700/50 rounded-xl p-4 text-left space-y-2 mt-2">
-              <div className="text-[10px] text-zinc-600 uppercase tracking-wider mb-2">What you can track</div>
-              <div className="flex items-start gap-2 text-xs text-zinc-400">
-                <span className="text-emerald-500 mt-0.5">•</span>
+            <div className="bg-[#1a1a1a] border border-[#2a2418] rounded-xl p-4 text-left space-y-2 mt-2">
+              <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">What you can track</div>
+              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
+                <span className="text-amber-400 mt-0.5">•</span>
                 <span>Health level, status, and VEG room location</span>
               </div>
-              <div className="flex items-start gap-2 text-xs text-zinc-400">
-                <span className="text-emerald-500 mt-0.5">•</span>
+              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
+                <span className="text-amber-400 mt-0.5">•</span>
                 <span>Container transplant history</span>
               </div>
-              <div className="flex items-start gap-2 text-xs text-zinc-400">
-                <span className="text-emerald-500 mt-0.5">•</span>
+              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
+                <span className="text-amber-400 mt-0.5">•</span>
                 <span>Amendment log with dates</span>
               </div>
-              <div className="flex items-start gap-2 text-xs text-zinc-400">
-                <span className="text-emerald-500 mt-0.5">•</span>
+              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
+                <span className="text-amber-400 mt-0.5">•</span>
                 <span>Clone cuts — send directly to Clone Log</span>
               </div>
             </div>
@@ -1147,28 +1147,28 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
               className="w-full flex items-center justify-between py-2 min-h-[44px]"
             >
               <SectionLabel>Strain Analytics</SectionLabel>
-              <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform duration-200 mb-2 ${strainExpanded ? "rotate-180" : ""}`} strokeWidth={2} />
+              <ChevronDown className={`w-4 h-4 text-[#6a5a3a] transition-transform duration-200 mb-2 ${strainExpanded ? "rotate-180" : ""}`} strokeWidth={2} />
             </button>
             {strainExpanded && (
               <div className="space-y-2">
                 {strainStats.map(st => {
                   const healthCls = st.avgHealthNum > 3 ? "text-emerald-400" : st.avgHealthNum === 3 ? "text-yellow-400" : "text-red-400";
                   return (
-                    <div key={st.code} className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl px-4 py-3 space-y-1.5">
+                    <div key={st.code} className="bg-[#111111] border border-[#2a2418] rounded-2xl px-4 py-3 space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-white">{st.code}</span>
-                        <span className="text-xs text-zinc-400 truncate">{st.name}</span>
+                        <span className="text-sm font-bold text-[#f5f5f0]">{st.code}</span>
+                        <span className="text-xs text-[#c5b08a] truncate">{st.name}</span>
                       </div>
                       <div className="flex items-center gap-3 flex-wrap">
-                        <span className="text-[10px] text-zinc-500">{st.totalMothers} mother{st.totalMothers !== 1 ? "s" : ""}</span>
+                        <span className="text-[10px] text-[#6a5a3a]">{st.totalMothers} mother{st.totalMothers !== 1 ? "s" : ""}</span>
                         <span className={`text-[10px] font-semibold ${healthCls}`}>health {st.avgHealth}</span>
-                        <span className="text-[10px] text-zinc-500">{st.totalCloneCount} clones</span>
+                        <span className="text-[10px] text-[#6a5a3a]">{st.totalCloneCount} clones</span>
                         {st.rootRate !== null && (
                           <span className={`text-[10px] font-semibold ${st.rootRate >= 70 ? "text-emerald-400" : st.rootRate >= 40 ? "text-yellow-400" : "text-red-400"}`}>
                             {st.rootRate}% root rate
                           </span>
                         )}
-                        {st.lastFed && <span className="text-[10px] text-zinc-600">fed {fmtDate(st.lastFed)}</span>}
+                        {st.lastFed && <span className="text-[10px] text-[#6a5a3a]">fed {fmtDate(st.lastFed)}</span>}
                       </div>
                     </div>
                   );
@@ -1258,16 +1258,16 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
-        className={`press-card w-full bg-zinc-900/80 border border-zinc-800/80 border-l-2 ${cardAccentColor(m)} rounded-2xl px-4 py-3.5 text-left cursor-pointer select-none`}
+        className={`press-card w-full bg-[#111111] border border-[#2a2418] border-l-2 ${cardAccentColor(m)} rounded-2xl px-4 py-3.5 text-left cursor-pointer select-none`}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-white">{s.code}</span>
+              <span className="text-sm font-bold text-[#f5f5f0]">{s.code}</span>
               <Badge label={m.status} colorClass={statusBadgeColor(m.status)} />
             </div>
-            <div className="text-xs text-zinc-400 mt-0.5 truncate">{s.name}</div>
-            {m.location && <div className="text-[10px] text-zinc-600 mt-0.5">{m.location}</div>}
+            <div className="text-xs text-[#c5b08a] mt-0.5 truncate">{s.name}</div>
+            {m.location && <div className="text-[10px] text-[#6a5a3a] mt-0.5">{m.location}</div>}
           </div>
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
             <HealthDots level={m.healthLevel} />
@@ -1275,8 +1275,8 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
           </div>
         </div>
         <div className="flex items-center gap-3 mt-2.5 flex-wrap">
-          {container && <span className="text-[10px] text-zinc-600">{txDate ? `${days}d in container` : "Date unknown"}</span>}
-          {totalClones > 0 && <span className="text-[10px] text-zinc-600">{totalClones} clones</span>}
+          {container && <span className="text-[10px] text-[#6a5a3a]">{txDate ? `${days}d in container` : "Date unknown"}</span>}
+          {totalClones > 0 && <span className="text-[10px] text-[#6a5a3a]">{totalClones} clones</span>}
           {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
           <span className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-zinc-600"}`}>{vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}</span>
         </div>
@@ -1319,14 +1319,14 @@ const StrainGroup = memo(function StrainGroup({
         className="w-full flex items-center gap-2 py-2 px-0.5 min-h-[44px]"
       >
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          <div className="w-0.5 h-4 rounded-full bg-zinc-700 flex-shrink-0" />
-          <span className="text-xs font-bold text-zinc-400 truncate">{group.name}</span>
+          <div className="w-0.5 h-4 rounded-full bg-[#2a2418] flex-shrink-0" />
+          <span className="text-xs font-bold text-[#c5b08a] truncate">{group.name}</span>
           <span className="text-[10px] font-semibold bg-emerald-950/80 text-emerald-500 border border-emerald-800/50 rounded-full px-1.5 py-0.5 flex-shrink-0">
             {group.mothers.length}
           </span>
         </div>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-zinc-600 flex-shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "rotate-180"}`}
+          className={`w-3.5 h-3.5 text-[#6a5a3a] flex-shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "rotate-180"}`}
           strokeWidth={2.5}
         />
       </button>
@@ -1426,7 +1426,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
       <input type="text" placeholder="Search strain, code, location..." value={search} onChange={e => setSearch(e.target.value)} className={inputCls} />
       <div className="flex gap-1.5 flex-wrap">
         {["All", "Active", "Sidelined", "Needs Water", "Veg Overdue"].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`${f.length > 10 ? "text-[10px]" : "text-xs"} px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[44px] flex items-center ${filter === f ? "bg-zinc-700 text-white" : "bg-zinc-900/80 border border-zinc-800 text-zinc-500 active:text-zinc-200"}`}>
+          <button key={f} onClick={() => setFilter(f)} className={`${f.length > 10 ? "text-[10px]" : "text-xs"} px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[44px] flex items-center ${filter === f ? "bg-[#2a2418] text-[#f5f5f0]" : "bg-[#111111] border border-[#2a2418] text-[#6a5a3a] active:text-[#f5f5f0]"}`}>
             {f}
           </button>
         ))}
@@ -1434,26 +1434,26 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
       {filtered.length === 0 ? (
         mothers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 px-2">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 w-full text-center space-y-3">
+            <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 w-full text-center space-y-3">
               <div className="text-4xl mb-2">🌿</div>
-              <div className="text-white font-semibold text-base">No mother plants yet</div>
-              <div className="text-zinc-500 text-sm">
-                Tap the green <span className="text-emerald-400 font-medium">Add</span> button in the top right to get started
+              <div className="text-[#f5f5f0] font-semibold text-base">No mother plants yet</div>
+              <div className="text-[#6a5a3a] text-sm">
+                Tap the green <span className="text-amber-400 font-medium">Add</span> button in the top right to get started
               </div>
-              <div className="text-zinc-600 text-xs mt-2">
+              <div className="text-[#6a5a3a] text-xs mt-2">
                 Track health, containers, amendments, and clone cuts all in one place.
               </div>
             </div>
           </div>
         ) : (
-          <div className="text-center py-10 text-zinc-600 text-sm">No results.</div>
+          <div className="text-center py-10 text-[#6a5a3a] text-sm">No results.</div>
         )
       ) : (
         <div>
           {filtered.length > 1 && filter !== "Sidelined" && (
             <button
               onClick={() => setWaterAllSheet(true)}
-              className="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-zinc-700/80 text-zinc-400 text-sm font-semibold active:bg-zinc-800/50 active:text-zinc-200 transition-colors min-h-[44px]"
+              className="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold active:bg-[#1a1a1a] active:text-[#f5f5f0] transition-colors min-h-[44px]"
             >
               <Droplets className="w-4 h-4" strokeWidth={2} />
               Water All ({filtered.length})
@@ -1490,13 +1490,13 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
         }
         return (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setQuickLogSheet(null); }}>
-            <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
-              <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-zinc-700" /></div>
+            <div className="bg-[#0e1512] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+              <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
               <div className="px-5 pb-6 pt-2 space-y-4">
                 {/* Header */}
                 <div>
-                  <div className="text-base font-bold text-white">{qlStrain.code} — {qlStrain.name}</div>
-                  {qlMother.location && <div className="text-xs text-zinc-500 mt-0.5">{qlMother.location}</div>}
+                  <div className="text-base font-bold text-[#f5f5f0]">{qlStrain.code} — {qlStrain.name}</div>
+                  {qlMother.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{qlMother.location}</div>}
                 </div>
                 {/* Feeding row */}
                 <div className="grid grid-cols-3 gap-2">
@@ -1527,7 +1527,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                   )}
                 </div>
                 {/* View full details */}
-                <button onClick={() => { setQuickLogSheet(null); onSelectMother(qlMother); }} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold active:bg-zinc-800/60 transition-colors min-h-[44px]">
+                <button onClick={() => { setQuickLogSheet(null); onSelectMother(qlMother); }} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold active:bg-[#1a1a1a] transition-colors min-h-[44px]">
                   View Full Details
                   <ChevronRight className="w-4 h-4" strokeWidth={2} />
                 </button>
@@ -1540,16 +1540,16 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
       {/* Water All confirm sheet */}
       {waterAllSheet && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setWaterAllSheet(false); }}>
-          <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
-            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-zinc-700" /></div>
+          <div className="bg-[#0e1512] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
             <div className="px-5 pb-6 pt-2 space-y-3">
               <div className="flex items-center gap-2">
                 <Droplets className="w-4 h-4 text-sky-400" strokeWidth={2} />
-                <div className="text-sm font-bold text-white">Water All</div>
+                <div className="text-sm font-bold text-[#f5f5f0]">Water All</div>
               </div>
-              <div className="text-zinc-400 text-sm">Log water for all {filtered.length} visible mothers?</div>
+              <div className="text-[#c5b08a] text-sm">Log water for all {filtered.length} visible mothers?</div>
               <div className="flex gap-2 pt-1">
-                <button onClick={() => setWaterAllSheet(false)} className="flex-1 py-2.5 rounded-xl border border-zinc-700 text-zinc-400 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
+                <button onClick={() => setWaterAllSheet(false)} className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#f5f5f0] transition-colors">Cancel</button>
                 <button
                   onClick={() => {
                     const count = filtered.length;
@@ -2371,12 +2371,12 @@ const MotherDetailModal = memo(function MotherDetailModal({
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <Badge label={mother.status} colorClass={statusBadgeColor(mother.status)} />
           <Badge label={healthLabel(mother.healthLevel)} colorClass={healthBg(mother.healthLevel)} />
-          {mother.location && <span className="text-xs text-zinc-500">{mother.location}</span>}
+          {mother.location && <span className="text-xs text-[#6a5a3a]">{mother.location}</span>}
         </div>
 
-        <div className="flex gap-1 bg-zinc-900 border border-zinc-800 rounded-xl p-1 mb-4 overflow-x-auto">
+        <div className="flex gap-1 bg-[#111111] border border-[#2a2418] rounded-xl p-1 mb-4 overflow-x-auto">
           {DETAIL_TABS.map(t => (
-            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-bold py-2 px-3 min-h-[44px] flex items-center rounded-lg transition-colors ${detailTab === t ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40" : "text-zinc-500 hover:text-zinc-300 active:text-zinc-300"}`}>
+            <button key={t} onClick={() => setDetailTab(t)} className={`flex-shrink-0 text-[10px] font-bold py-2 px-3 min-h-[44px] flex items-center rounded-lg transition-colors ${detailTab === t ? "bg-emerald-800/60 text-emerald-200 border border-emerald-700/40" : "text-[#6a5a3a] hover:text-[#c5b08a] active:text-[#c5b08a]"}`}>
               {t}
             </button>
           ))}
@@ -2400,20 +2400,20 @@ const MotherDetailModal = memo(function MotherDetailModal({
               <StatBox label="Amendments" value={(mother.amendmentLog || []).length} colorClass="text-violet-400" />
               <StatBox label="Root Rate" value={rootRate !== null ? rootRate + "%" : "—"} colorClass={rootRateCls} />
             </div>
-            <div className="bg-zinc-800/50 rounded-xl p-3">
+            <div className="bg-[#1a1a1a] rounded-xl p-3">
               <SectionLabel>Current Container</SectionLabel>
-              {container ? <ContainerBadge container={container} /> : <span className="text-xs text-zinc-600">No transplant recorded</span>}
-              {container && <div className="text-[10px] text-zinc-600 mt-1">{txDate ? `Since ${fmtDate(txDate)}` : "Date unknown"}</div>}
+              {container ? <ContainerBadge container={container} /> : <span className="text-xs text-[#6a5a3a]">No transplant recorded</span>}
+              {container && <div className="text-[10px] text-[#6a5a3a] mt-1">{txDate ? `Since ${fmtDate(txDate)}` : "Date unknown"}</div>}
             </div>
-            <div className="bg-zinc-800/50 rounded-xl p-3">
+            <div className="bg-[#1a1a1a] rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <SectionLabel>Health Level</SectionLabel>
-                <button onClick={() => setEditingHealth(!editingHealth)} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
+                <button onClick={() => setEditingHealth(!editingHealth)} className="text-[10px] text-[#6a5a3a] hover:text-[#c5b08a] active:text-[#c5b08a] min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingHealth ? (
                 <div className="flex gap-2">
                   {[1, 2, 3, 4, 5].map(i => (
-                    <button key={i} onClick={() => { onUpdate({ healthLevel: i }); setEditingHealth(false); }} className={`flex-1 h-8 rounded-xl border font-bold text-sm transition-colors ${mother.healthLevel === i ? i <= 2 ? "bg-red-900/60 border-red-700 text-red-300" : i === 3 ? "bg-yellow-900/60 border-yellow-700 text-yellow-300" : "bg-emerald-900/60 border-emerald-700 text-emerald-300" : "bg-zinc-800 border-zinc-700 text-zinc-600"}`}>
+                    <button key={i} onClick={() => { onUpdate({ healthLevel: i }); setEditingHealth(false); }} className={`flex-1 h-8 rounded-xl border font-bold text-sm transition-colors ${mother.healthLevel === i ? i <= 2 ? "bg-red-900/60 border-red-700 text-red-300" : i === 3 ? "bg-yellow-900/60 border-yellow-700 text-yellow-300" : "bg-emerald-900/60 border-emerald-700 text-emerald-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}>
                       {i}
                     </button>
                   ))}
@@ -2425,10 +2425,10 @@ const MotherDetailModal = memo(function MotherDetailModal({
                 </div>
               )}
             </div>
-            <div className="bg-zinc-800/50 rounded-xl p-3">
+            <div className="bg-[#1a1a1a] rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <SectionLabel>Status</SectionLabel>
-                <button onClick={() => setEditingStatus(!editingStatus)} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
+                <button onClick={() => setEditingStatus(!editingStatus)} className="text-[10px] text-[#6a5a3a] hover:text-[#c5b08a] active:text-[#c5b08a] min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingStatus ? (
                 <div className="flex gap-2">
@@ -2442,24 +2442,24 @@ const MotherDetailModal = memo(function MotherDetailModal({
                 <Badge label={mother.status} colorClass={statusBadgeColor(mother.status)} />
               )}
             </div>
-            <div className="bg-zinc-800/50 rounded-xl p-3">
+            <div className="bg-[#1a1a1a] rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
                 <SectionLabel>VEG Room Location</SectionLabel>
-                <button onClick={() => { setEditingLocation(!editingLocation); setLocationVal(mother.location || ""); }} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
+                <button onClick={() => { setEditingLocation(!editingLocation); setLocationVal(mother.location || ""); }} className="text-[10px] text-[#6a5a3a] hover:text-[#c5b08a] active:text-[#c5b08a] min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingLocation ? (
                 <div className="flex gap-2">
                   <input type="text" className={inputCls + " flex-1"} placeholder="e.g. Row 2, Spot 4" value={locationVal} onChange={e => setLocationVal(e.target.value)} />
-                  <button onClick={() => { onUpdate({ location: locationVal }); setEditingLocation(false); }} className="bg-emerald-700 text-white text-xs px-3 rounded-xl min-h-[44px]">Save</button>
+                  <button onClick={() => { onUpdate({ location: locationVal }); setEditingLocation(false); }} className="bg-amber-600 text-[#0a0a0a] text-xs px-3 rounded-xl min-h-[44px]">Save</button>
                 </div>
               ) : (
-                <span className="text-sm text-zinc-300">{mother.location || <span className="text-zinc-600">Not set</span>}</span>
+                <span className="text-sm text-[#c5b08a]">{mother.location || <span className="text-[#6a5a3a]">Not set</span>}</span>
               )}
             </div>
-            <div className="bg-zinc-800/50 rounded-xl p-3">
+            <div className="bg-[#1a1a1a] rounded-xl p-3">
               <div className="flex items-center justify-between mb-1">
                 <SectionLabel>Notes / Observations</SectionLabel>
-                <button onClick={() => { setEditingNotes(!editingNotes); setNotesVal(mother.notes || ""); }} className="text-[10px] text-zinc-500 hover:text-zinc-300 active:text-zinc-300 min-h-[44px] px-2 flex items-center">Edit</button>
+                <button onClick={() => { setEditingNotes(!editingNotes); setNotesVal(mother.notes || ""); }} className="text-[10px] text-[#6a5a3a] hover:text-[#c5b08a] active:text-[#c5b08a] min-h-[44px] px-2 flex items-center">Edit</button>
               </div>
               {editingNotes ? (
                 <div className="space-y-2">
@@ -2467,10 +2467,10 @@ const MotherDetailModal = memo(function MotherDetailModal({
                   <button onClick={() => { onUpdate({ notes: notesVal }); setEditingNotes(false); }} className={btnPrimary}>Save Notes</button>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-300 whitespace-pre-wrap">{mother.notes || <span className="text-zinc-600">No notes yet.</span>}</p>
+                <p className="text-sm text-[#c5b08a] whitespace-pre-wrap">{mother.notes || <span className="text-[#6a5a3a]">No notes yet.</span>}</p>
               )}
             </div>
-            <button onClick={onPrintLabel} className="w-full border border-zinc-700 text-zinc-400 active:text-white active:border-zinc-500 text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1.5 min-h-[44px]">
+            <button onClick={onPrintLabel} className="w-full border border-[#2a2418] text-[#c5b08a] active:text-[#f5f5f0] active:border-[#6a5a3a] text-xs rounded-xl py-2.5 transition-colors flex items-center justify-center gap-1.5 min-h-[44px]">
               Print Label
             </button>
             {confirmDelete ? (
@@ -2511,20 +2511,20 @@ const MotherDetailModal = memo(function MotherDetailModal({
             <div className="space-y-3">
               <button onClick={() => setActiveSheet("picker")} className={btnPrimary}>＋ Add</button>
               {timeline.length === 0 ? (
-                <div className="text-center py-8 text-zinc-600 text-sm">No history yet — tap + to log the first event.</div>
+                <div className="text-center py-8 text-[#6a5a3a] text-sm">No history yet — tap + to log the first event.</div>
               ) : (
-                <div className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden">
+                <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden">
                   {timeline.map(e => {
                     const meta = TYPE_META[e._type];
                     return (
-                      <div key={`${e._type}-${e.id}`} className={`flex items-start gap-3 px-4 py-3 border-b border-zinc-800/50 last:border-0 border-l-2 ${meta.border}`}>
+                      <div key={`${e._type}-${e.id}`} className={`flex items-start gap-3 px-4 py-3 border-b border-[#2a2418] last:border-0 border-l-2 ${meta.border}`}>
                         <div className="flex-1 min-w-0">
                           <div className={`text-[10px] font-bold uppercase tracking-wide mb-0.5 ${meta.text}`}>
                             {meta.label}{e._type === "transplant" && e.id === latestTxId ? " · Current" : ""}
                           </div>
-                          <div className="text-sm text-zinc-200 font-medium">{entrySummary(e)}</div>
-                          {e.notes && <div className="text-xs text-zinc-500 mt-0.5 truncate">{e.notes}</div>}
-                          <div className="text-xs text-zinc-600 mt-0.5">{e.date ? fmtDate(e.date) : "Date unknown"}</div>
+                          <div className="text-sm text-[#f5f5f0] font-medium">{entrySummary(e)}</div>
+                          {e.notes && <div className="text-xs text-[#6a5a3a] mt-0.5 truncate">{e.notes}</div>}
+                          <div className="text-xs text-[#6a5a3a] mt-0.5">{e.date ? fmtDate(e.date) : "Date unknown"}</div>
                           {e._type === "clone" && (
                             <div className="mt-1.5 space-y-1.5">
                               <button
@@ -2563,7 +2563,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
                             </div>
                           )}
                         </div>
-                        <button onClick={() => removeEntry(e)} aria-label="Remove entry" className="text-zinc-700 hover:text-red-500 text-sm w-11 h-11 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
+                        <button onClick={() => removeEntry(e)} aria-label="Remove entry" className="text-[#2a2418] hover:text-red-500 text-sm w-11 h-11 flex items-center justify-center rounded-lg transition-colors flex-shrink-0">✕</button>
                       </div>
                     );
                   })}
@@ -2571,12 +2571,12 @@ const MotherDetailModal = memo(function MotherDetailModal({
               )}
               {activeSheet === "picker" && (
                 <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setActiveSheet(null); }}>
-                  <div className="bg-[#0e1512] border border-zinc-700/50 rounded-t-3xl w-full max-w-md shadow-2xl">
+                  <div className="bg-[#0e1512] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
                     <div className="flex justify-center pt-3 pb-1">
-                      <div className="w-9 h-1 rounded-full bg-zinc-700" />
+                      <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
                     </div>
                     <div className="px-5 pb-6 pt-2 space-y-2">
-                      <div className="text-sm font-bold text-white mb-3">What would you like to log?</div>
+                      <div className="text-sm font-bold text-[#f5f5f0] mb-3">What would you like to log?</div>
                       {[
                         { label: "Transplant", action: () => { setActiveSheet(null); setTransplantForm({ container: container || "Black Pot", date: today(), dateUnknown: false }); setShowTransplantModal(true); } },
                         { label: "Amendment",  action: () => { setActiveSheet(null); setAmendForm({ date: today(), amendment: "", notes: "" }); setAmendSearch(""); setShowAmendModal(true); } },
@@ -2584,11 +2584,11 @@ const MotherDetailModal = memo(function MotherDetailModal({
                         { label: "Feeding",    action: () => { setActiveSheet(null); setFeedingForm({ date: today(), type: "Water Only", notes: "" }); setShowFeedingModal(true); } },
                         { label: "Reduction",  action: () => { setActiveSheet(null); setReductionForm({ date: today(), reason: "Space", notes: "" }); setShowReductionModal(true); } },
                       ].map(({ label, action }) => (
-                        <button key={label} onClick={action} className="w-full text-left px-4 py-3 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-700 rounded-xl text-sm text-zinc-200 font-medium transition-colors min-h-[44px]">
+                        <button key={label} onClick={action} className="w-full text-left px-4 py-3 bg-[#1a1a1a] hover:bg-[#2a2418] active:bg-[#2a2418] rounded-xl text-sm text-[#f5f5f0] font-medium transition-colors min-h-[44px]">
                           {label}
                         </button>
                       ))}
-                      <button onClick={() => setActiveSheet(null)} className="w-full py-2.5 mt-1 rounded-xl border border-zinc-700 text-zinc-500 text-sm font-semibold min-h-[44px] active:bg-zinc-800 active:text-zinc-200 transition-colors">Cancel</button>
+                      <button onClick={() => setActiveSheet(null)} className="w-full py-2.5 mt-1 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors">Cancel</button>
                     </div>
                   </div>
                 </div>
@@ -2621,11 +2621,11 @@ const MotherDetailModal = memo(function MotherDetailModal({
                   onClick={() => setTransplantForm(p => ({ ...p, dateUnknown: !p.dateUnknown }))}
                   className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl border transition-colors w-full ${
                     transplantForm.dateUnknown
-                      ? "bg-zinc-700 border-zinc-600 text-zinc-200"
-                      : "bg-zinc-800 border-zinc-700 text-zinc-500"
+                      ? "bg-[#2a2418] border-[#6a5a3a] text-[#f5f5f0]"
+                      : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"
                   }`}
                 >
-                  <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${transplantForm.dateUnknown ? "bg-emerald-600 border-emerald-500" : "border-zinc-600"}`}>
+                  <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${transplantForm.dateUnknown ? "bg-amber-600 border-amber-500" : "border-[#2a2418]"}`}>
                     {transplantForm.dateUnknown && <span className="text-white text-[10px]">✓</span>}
                   </span>
                   Date unknown
@@ -2653,9 +2653,9 @@ const MotherDetailModal = memo(function MotherDetailModal({
                 onFocus={() => { if (!amendSearch) setAmendSearch(amendForm.amendment || ""); }}
               />
               {amendSearch && (
-                <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-xl overflow-hidden max-h-36 overflow-y-auto">
+                <div className="mt-1 bg-[#1a1a1a] border border-[#2a2418] rounded-xl overflow-hidden max-h-36 overflow-y-auto">
                   {COMMON_AMENDMENTS.filter(a => a.toLowerCase().includes(amendSearch.toLowerCase())).map(a => (
-                    <button key={a} className="w-full text-left px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-700 transition-colors" onClick={() => { setAmendForm(p => ({ ...p, amendment: a })); setAmendSearch(""); }}>
+                    <button key={a} className="w-full text-left px-3 py-2 text-xs text-[#c5b08a] hover:bg-[#2a2418] transition-colors" onClick={() => { setAmendForm(p => ({ ...p, amendment: a })); setAmendSearch(""); }}>
                       {a}
                     </button>
                   ))}
@@ -2722,7 +2722,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
               <div className="flex gap-2 flex-wrap">
                 {["Space", "Sidelined", "Launchpad Prep", "Other"].map(r => (
                   <button key={r} onClick={() => setReductionForm(p => ({ ...p, reason: r }))}
-                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${reductionForm.reason === r ? "bg-amber-900/50 text-amber-300 border-amber-700/40" : "bg-zinc-800 border-zinc-700 text-zinc-500"}`}>
+                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${reductionForm.reason === r ? "bg-amber-900/50 text-amber-300 border-amber-700/40" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}>
                     {r}
                   </button>
                 ))}
