@@ -2022,7 +2022,7 @@ function facilityDaysSince(ts) {
   return Math.max(0, Math.floor((Date.now() - new Date(ts).getTime()) / 86400000));
 }
 function facilityBorderColor(days) {
-  if (days === null) return "border-l-zinc-700";
+  if (days === null) return "border-l-[#2a2418]";
   if (days <= 2) return "border-l-emerald-600";
   if (days <= 7) return "border-l-yellow-500";
   return "border-l-red-600";
