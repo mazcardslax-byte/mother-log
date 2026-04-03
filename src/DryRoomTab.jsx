@@ -935,9 +935,28 @@ function BinsPanel({ data, persist }) {
   const rackArchive = data.archive ?? [];
 
   const activeBins = bins.filter(b => !b.harvestId);
-  const burpingBins = activeBins.filter(b => getBinStatus(b) === "burping");
-  const curingBins  = activeBins.filter(b => getBinStatus(b) === "curing");
   const archivedBins = bins.filter(b => b.harvestId);
+
+  const QUALITY_ORDER = ["tops", "mid", "lowers"];
+  const QUALITY_LABELS = { tops: "Tops", mid: "Mid", lowers: "Lowers" };
+  const QUALITY_COLORS = {
+    tops:   { text: "text-emerald-400", border: "border-emerald-800/40" },
+    mid:    { text: "text-sky-400",     border: "border-sky-800/40" },
+    lowers: { text: "text-amber-400",   border: "border-amber-800/40" },
+  };
+
+  const emptyBinTiers = new Set(
+    QUALITY_ORDER.filter(q => !activeBins.some(b => b.quality === q))
+  );
+  const [collapsedBinQuality, setCollapsedBinQuality] = useState(emptyBinTiers);
+
+  const toggleBinQuality = useCallback(q => {
+    setCollapsedBinQuality(prev => {
+      const next = new Set(prev);
+      next.has(q) ? next.delete(q) : next.add(q);
+      return next;
+    });
+  }, []);
 
   function handleAddBin(fields) {
     persist(prev => ({
@@ -1013,32 +1032,69 @@ function BinsPanel({ data, persist }) {
             </button>
           </div>
 
-          {burpingBins.length > 0 && (
-            <>
-              <div className="text-[#6a5a3a] text-[10px] font-semibold uppercase tracking-wide mb-2">Burping</div>
-              <div className="space-y-3 mb-4">
-                {burpingBins.map(b => (
-                  <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
-                ))}
-              </div>
-            </>
-          )}
-
-          {curingBins.length > 0 && (
-            <>
-              <div className="text-[#6a5a3a] text-[10px] font-semibold uppercase tracking-wide mb-2">Curing</div>
-              <div className="space-y-3 mb-4">
-                {curingBins.map(b => (
-                  <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
-                ))}
-              </div>
-            </>
-          )}
-
-          {activeBins.length === 0 && (
+          {activeBins.length === 0 ? (
             <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 text-center">
               <div className="text-[#c5b08a] text-sm font-medium mb-1">No bins active</div>
               <div className="text-[#6a5a3a] text-xs">Tap + Add Bin to log a tote.</div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {QUALITY_ORDER.map(quality => {
+                const qBins = activeBins.filter(b => b.quality === quality);
+                const isCollapsed = collapsedBinQuality.has(quality);
+                const { text: qText, border: qBorder } = QUALITY_COLORS[quality];
+
+                const burping = qBins.filter(b => getBinStatus(b) === "burping");
+                const curing  = qBins.filter(b => getBinStatus(b) === "curing");
+
+                return (
+                  <div key={quality} className={`rounded-xl border ${qBorder} overflow-hidden`}>
+                    <button
+                      onClick={() => toggleBinQuality(quality)}
+                      className="w-full flex items-center justify-between px-3 py-2 bg-[#111111]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold uppercase tracking-widest ${qText}`}>
+                          {QUALITY_LABELS[quality]}
+                        </span>
+                        <span className="text-[10px] text-[#6a5a3a]">
+                          {qBins.length} bin{qBins.length !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <svg
+                        className={`w-3.5 h-3.5 text-[#6a5a3a] transition-transform ${isCollapsed ? "" : "rotate-180"}`}
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {!isCollapsed && (
+                      <div className="px-3 pb-3 space-y-4 pt-2">
+                        {burping.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wide font-medium px-1">Burping</div>
+                            {burping.map(b => (
+                              <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
+                            ))}
+                          </div>
+                        )}
+                        {curing.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wide font-medium px-1">Curing</div>
+                            {curing.map(b => (
+                              <BinCard key={b.id} bin={b} onBurp={handleBurp} onSend={() => setSendingBin(b)} />
+                            ))}
+                          </div>
+                        )}
+                        {qBins.length === 0 && (
+                          <div className="text-center text-[#555] text-xs py-2">No bins</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </>
