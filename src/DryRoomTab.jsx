@@ -157,11 +157,13 @@ function AddBatchModal({ onClose, onSave }) {
   const [dateHung, setDateHung]     = useState(today());
   const [note, setNote]             = useState("");
   const [count, setCount]           = useState(1);
+  const [size, setSize]             = useState(1.0);
 
   function handleSave() {
     if (!strainCode || !dateHung) return;
-    const fields = { strainCode, quality, rackType, dateHung, note: note.trim() };
+    const fields = { strainCode, quality, rackType, dateHung, note: note.trim(), size };
     for (let i = 0; i < count; i++) onSave(fields);
+    setSize(1.0);
     onClose();
   }
 
@@ -218,6 +220,26 @@ function AddBatchModal({ onClose, onSave }) {
                       : "bg-[#111111] text-[#6a5a3a] border-[#1a1a1a] hover:border-[#2a2418]"
                   }`}>
                   {r}
+                </button>
+              ))}
+            </div>
+          </div>
+          {/* Rack size */}
+          <div className="space-y-1">
+            <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wide font-medium">Rack Size</div>
+            <div className="flex gap-2">
+              {[0.25, 0.5, 0.75, 1.0].map(s => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSize(s)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    size === s
+                      ? "bg-[#2a2418] border-[#8a6a2a] text-[#f5f5f0]"
+                      : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"
+                  }`}
+                >
+                  {s === 1.0 ? "1.0" : s.toFixed(2)}
                 </button>
               ))}
             </div>
@@ -284,6 +306,9 @@ function BatchCard({ batch, onBin, onDelete }) {
         <div className="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
           {qualityBadge}
           <span className="text-[10px] px-2 py-0.5 rounded-full border bg-sky-900/30 text-sky-400 border-sky-800/40 font-medium capitalize">{batch.rackType}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#1a1a1a] border border-[#2a2418] text-[#6a5a3a] font-medium">
+            ×{(batch.size ?? 1) === 1 ? "1.0" : (batch.size ?? 1).toFixed(2)}
+          </span>
         </div>
       </div>
       <div className="flex items-center justify-between mt-3">
