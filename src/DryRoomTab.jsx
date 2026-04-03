@@ -368,7 +368,36 @@ function BatchCard({ batch, onBin, onDelete }) {
 function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin, onDelete }) {
   const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
   const [showAdd, setShowAdd] = useState(false);
-  const sorted = sortByUrgency(active);
+
+  const QUALITY_ORDER = ["tops", "mid", "lowers"];
+  const QUALITY_LABELS = { tops: "Tops", mid: "Mid", lowers: "Lowers" };
+  const QUALITY_COLORS = {
+    tops:   { text: "text-emerald-400", border: "border-emerald-800/40" },
+    mid:    { text: "text-sky-400",     border: "border-sky-800/40" },
+    lowers: { text: "text-amber-400",   border: "border-amber-800/40" },
+  };
+
+  const emptyTiers = new Set(
+    QUALITY_ORDER.filter(q => !active.some(b => b.quality === q))
+  );
+  const [collapsedQuality, setCollapsedQuality] = useState(emptyTiers);
+  const [collapsedSub, setCollapsedSub] = useState(new Set());
+
+  const toggleQuality = useCallback(q => {
+    setCollapsedQuality(prev => {
+      const next = new Set(prev);
+      next.has(q) ? next.delete(q) : next.add(q);
+      return next;
+    });
+  }, []);
+
+  const toggleSub = useCallback(key => {
+    setCollapsedSub(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
 
   return (
     <>
@@ -389,14 +418,90 @@ function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin
           + Add Batch
         </button>
       </div>
-      {sorted.length === 0 ? (
+      {active.length === 0 ? (
         <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 text-center">
           <div className="text-[#c5b08a] text-sm font-medium mb-1">Nothing hanging</div>
           <div className="text-[#6a5a3a] text-xs">Tap + Add Batch to log today&apos;s harvest.</div>
         </div>
       ) : (
         <div className="space-y-3">
-          {sorted.map(b => <BatchCard key={b.id} batch={b} onBin={onBin} onDelete={onDelete} />)}
+          {QUALITY_ORDER.map(quality => {
+            const qBatches = active.filter(b => b.quality === quality);
+            const qTotal = qBatches.reduce((s, b) => s + (b.size ?? 1), 0);
+            const isQCollapsed = collapsedQuality.has(quality);
+            const { text: qText, border: qBorder } = QUALITY_COLORS[quality];
+
+            return (
+              <div key={quality} className={`rounded-xl border ${qBorder} overflow-hidden`}>
+                <button
+                  onClick={() => toggleQuality(quality)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-[#111111]"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-bold uppercase tracking-widest ${qText}`}>
+                      {QUALITY_LABELS[quality]}
+                    </span>
+                    <span className="text-[10px] text-[#6a5a3a]">
+                      {fmt(qTotal)} rack{qTotal !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <svg
+                    className={`w-3.5 h-3.5 text-[#6a5a3a] transition-transform ${isQCollapsed ? "" : "rotate-180"}`}
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {!isQCollapsed && (
+                  <div className="divide-y divide-[#1a1a1a]">
+                    {["main", "side"].map(rackType => {
+                      const subKey = `${quality}-${rackType}`;
+                      const subBatches = sortByUrgency(qBatches.filter(b => b.rackType === rackType));
+                      const subTotal = subBatches.reduce((s, b) => s + (b.size ?? 1), 0);
+                      const isSubCollapsed = collapsedSub.has(subKey);
+                      if (subBatches.length === 0) return null;
+
+                      return (
+                        <div key={rackType} className="bg-[#0d0d0d]">
+                          <button
+                            onClick={() => toggleSub(subKey)}
+                            className="w-full flex items-center justify-between px-4 py-1.5"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-[#888] uppercase tracking-wide font-medium">
+                                {rackType === "main" ? "Main Rack" : "Side Rack"}
+                              </span>
+                              <span className="text-[10px] text-[#555]">{fmt(subTotal)}</span>
+                            </div>
+                            <svg
+                              className={`w-3 h-3 text-[#555] transition-transform ${isSubCollapsed ? "" : "rotate-180"}`}
+                              fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+
+                          {!isSubCollapsed && (
+                            <div className="px-3 pb-3 space-y-3">
+                              {subBatches.map(b => (
+                                <BatchCard
+                                  key={b.id}
+                                  batch={b}
+                                  onBin={onBin}
+                                  onDelete={onDelete}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
       {showAdd && <AddBatchModal onClose={() => setShowAdd(false)} onSave={onAdd} />}
