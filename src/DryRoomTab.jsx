@@ -113,8 +113,8 @@ export default function DryRoomTab() {
     persist(prev => ({ ...prev, active: prev.active.filter(b => b.id !== id) }));
   }, [persist]);
 
-  const mainCount    = data.active.filter(b => b.rackType === "main").length;
-  const sideCount    = data.active.filter(b => b.rackType === "side").length;
+  const mainCount    = data.active.filter(b => b.rackType === "main").reduce((s, b) => s + (b.size ?? 1), 0);
+  const sideCount    = data.active.filter(b => b.rackType === "side").reduce((s, b) => s + (b.size ?? 1), 0);
   const overdueCount = data.active.filter(b => daysRemaining(b.dateHung) <= 0).length;
 
   return (
@@ -366,6 +366,7 @@ function BatchCard({ batch, onBin, onDelete }) {
 }
 
 function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin, onDelete }) {
+  const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
   const [showAdd, setShowAdd] = useState(false);
   const sorted = sortByUrgency(active);
 
@@ -377,7 +378,7 @@ function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin
             {active.length} batch{active.length !== 1 ? "es" : ""} hanging
           </span>
           <span className="text-[#6a5a3a] text-[10px]">·</span>
-          <span className="text-[#6a5a3a] text-[10px]">{mainCount} main · {sideCount} side</span>
+          <span className="text-[#6a5a3a] text-[10px]">{fmt(mainCount)} main · {fmt(sideCount)} side</span>
           {overdueCount > 0 && (
             <><span className="text-[#6a5a3a] text-[10px]">·</span>
             <span className="text-red-400 text-[10px] font-semibold">{overdueCount} overdue</span></>
