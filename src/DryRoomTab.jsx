@@ -109,6 +109,10 @@ export default function DryRoomTab() {
     });
   }, [persist]);
 
+  const handleDelete = useCallback((id) => {
+    persist(prev => ({ ...prev, active: prev.active.filter(b => b.id !== id) }));
+  }, [persist]);
+
   const mainCount    = data.active.filter(b => b.rackType === "main").length;
   const sideCount    = data.active.filter(b => b.rackType === "side").length;
   const overdueCount = data.active.filter(b => daysRemaining(b.dateHung) <= 0).length;
@@ -137,7 +141,7 @@ export default function DryRoomTab() {
       <div className="flex-1 overflow-y-auto px-4 pb-24">
         {subTab === "Hanging" && (
           <HangingPanel active={data.active} mainCount={mainCount} sideCount={sideCount}
-            overdueCount={overdueCount} onAdd={addBatch} onBin={binBatch} />
+            overdueCount={overdueCount} onAdd={addBatch} onBin={binBatch} onDelete={handleDelete} />
         )}
         {subTab === "Archive" && <ArchivePanel archive={data.archive} />}
         {subTab === "Bins"    && <BinsPanel data={data} persist={persist} />}
@@ -256,8 +260,9 @@ function AddBatchModal({ onClose, onSave }) {
   );
 }
 
-function BatchCard({ batch, onBin }) {
+function BatchCard({ batch, onBin, onDelete }) {
   const [confirming, setConfirming] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const hanging   = daysHanging(batch.dateHung);
   const remaining = daysRemaining(batch.dateHung);
   const color     = countdownColor(remaining);
@@ -307,11 +312,35 @@ function BatchCard({ batch, onBin }) {
         )}
       </div>
       {batch.note && <div className="mt-2 text-[#6a5a3a] text-[10px] italic">{batch.note}</div>}
+      {confirmingDelete ? (
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#2a2418]">
+          <span className="text-xs text-red-400 flex-1">Delete this rack?</span>
+          <button
+            onClick={() => { setConfirmingDelete(false); onDelete(batch.id); }}
+            className="text-xs px-3 py-1 rounded-lg bg-red-900 text-red-300 border border-red-700"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => setConfirmingDelete(false)}
+            className="text-xs px-3 py-1 rounded-lg bg-[#1a1a1a] text-[#888] border border-[#333]"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirmingDelete(true)}
+          className="mt-2 pt-2 border-t border-[#2a2418] w-full text-left text-xs text-[#555] hover:text-red-400 transition-colors"
+        >
+          Delete rack
+        </button>
+      )}
     </div>
   );
 }
 
-function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin }) {
+function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin, onDelete }) {
   const [showAdd, setShowAdd] = useState(false);
   const sorted = sortByUrgency(active);
 
@@ -341,7 +370,7 @@ function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin
         </div>
       ) : (
         <div className="space-y-3">
-          {sorted.map(b => <BatchCard key={b.id} batch={b} onBin={onBin} />)}
+          {sorted.map(b => <BatchCard key={b.id} batch={b} onBin={onBin} onDelete={onDelete} />)}
         </div>
       )}
       {showAdd && <AddBatchModal onClose={() => setShowAdd(false)} onSave={onAdd} />}
