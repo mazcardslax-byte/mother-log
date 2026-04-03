@@ -1309,8 +1309,6 @@ const StrainGroup = memo(function StrainGroup({
     </div>
   );
 
-  // Single-mother strains: skip the collapsible header — it adds noise with no benefit
-  if (group.mothers.length === 1) return cards;
 
   return (
     <div className="mb-1">
