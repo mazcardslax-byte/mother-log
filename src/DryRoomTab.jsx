@@ -37,6 +37,14 @@ const DB_KEY = "dryroom";
 const DRY_ROOM_SUB_TABS = ["Hanging", "Archive", "Bins"];
 const DEFAULT_DATA = { active: [], archive: [], bins: [], harvests: [] };
 
+const QUALITY_ORDER = ["tops", "mid", "lowers"];
+const QUALITY_LABELS = { tops: "Tops", mid: "Mid", lowers: "Lowers" };
+const QUALITY_COLORS = {
+  tops:   { text: "text-emerald-400", border: "border-emerald-800/40" },
+  mid:    { text: "text-sky-400",     border: "border-sky-800/40" },
+  lowers: { text: "text-amber-400",   border: "border-amber-800/40" },
+};
+
 function load(key) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch { return null; } }
 function save(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch {} }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -369,18 +377,23 @@ function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin
   const fmt = n => Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
   const [showAdd, setShowAdd] = useState(false);
 
-  const QUALITY_ORDER = ["tops", "mid", "lowers"];
-  const QUALITY_LABELS = { tops: "Tops", mid: "Mid", lowers: "Lowers" };
-  const QUALITY_COLORS = {
-    tops:   { text: "text-emerald-400", border: "border-emerald-800/40" },
-    mid:    { text: "text-sky-400",     border: "border-sky-800/40" },
-    lowers: { text: "text-amber-400",   border: "border-amber-800/40" },
-  };
-
   const emptyTiers = new Set(
     QUALITY_ORDER.filter(q => !active.some(b => b.quality === q))
   );
   const [collapsedQuality, setCollapsedQuality] = useState(emptyTiers);
+  useEffect(() => {
+    setCollapsedQuality(prev => {
+      const next = new Set(prev);
+      let changed = false;
+      QUALITY_ORDER.forEach(q => {
+        if (next.has(q) && active.some(b => b.quality === q)) {
+          next.delete(q);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [active]);
   const [collapsedSub, setCollapsedSub] = useState(new Set());
 
   const toggleQuality = useCallback(q => {
@@ -937,18 +950,23 @@ function BinsPanel({ data, persist }) {
   const activeBins = bins.filter(b => !b.harvestId);
   const archivedBins = bins.filter(b => b.harvestId);
 
-  const QUALITY_ORDER = ["tops", "mid", "lowers"];
-  const QUALITY_LABELS = { tops: "Tops", mid: "Mid", lowers: "Lowers" };
-  const QUALITY_COLORS = {
-    tops:   { text: "text-emerald-400", border: "border-emerald-800/40" },
-    mid:    { text: "text-sky-400",     border: "border-sky-800/40" },
-    lowers: { text: "text-amber-400",   border: "border-amber-800/40" },
-  };
-
   const emptyBinTiers = new Set(
     QUALITY_ORDER.filter(q => !activeBins.some(b => b.quality === q))
   );
   const [collapsedBinQuality, setCollapsedBinQuality] = useState(emptyBinTiers);
+  useEffect(() => {
+    setCollapsedBinQuality(prev => {
+      const next = new Set(prev);
+      let changed = false;
+      QUALITY_ORDER.forEach(q => {
+        if (next.has(q) && activeBins.some(b => b.quality === q)) {
+          next.delete(q);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [activeBins]);
 
   const toggleBinQuality = useCallback(q => {
     setCollapsedBinQuality(prev => {
