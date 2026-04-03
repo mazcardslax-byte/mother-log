@@ -700,7 +700,6 @@ export default function MotherPlantTracker() {
 
   const active = useMemo(() => mothers.filter(m => m.status === "Active"), [mothers]);
   const sidelined = useMemo(() => mothers.filter(m => m.status === "Sidelined"), [mothers]);
-  const totalClones = useMemo(() => mothers.reduce((s, m) => s + (m.cloneLog || []).reduce((a, c) => a + (parseInt(c.count) || 0), 0), 0), [mothers]);
 
   // Stable callbacks for onSelectMother — deps [] because they only call stable setters
   const handleSelectMother = useCallback((m) => { setDetailMotherId(m.id); setDetailTab("Overview"); }, []);
@@ -836,7 +835,6 @@ export default function MotherPlantTracker() {
               mothers={mothers}
               active={active}
               sidelined={sidelined}
-              totalClones={totalClones}
               onSelectMother={handleSelectMother}
             />
           )}
@@ -916,7 +914,7 @@ export default function MotherPlantTracker() {
 }
 
 // ── Summary Tab ────────────────────────────────────────────────────────────
-const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalClones, onSelectMother }) {
+const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSelectMother }) {
   const [strainExpanded, setStrainExpanded] = useState(false);
   const todayDay = new Date().getDay(); // 0=Sun, 6=Sat
   const isSaturday = todayDay === 6;
@@ -959,7 +957,6 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, totalC
       <div className="grid grid-cols-3 gap-2">
         <StatBox label="Total Mothers" value={mothers.length} colorClass="text-[#f5f5f0]" />
         <StatBox label="Active" value={active.length} colorClass="text-emerald-400" />
-        <StatBox label="Total Clones" value={totalClones} colorClass="text-sky-400" />
       </div>
       <div className="grid grid-cols-2 gap-2">
         <StatBox label="Sidelined" value={sidelined.length} colorClass="text-[#6a5a3a]" />
