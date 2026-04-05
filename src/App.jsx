@@ -836,6 +836,7 @@ export default function MotherPlantTracker() {
               active={active}
               sidelined={sidelined}
               onSelectMother={handleSelectMother}
+              onWaterAll={waterAll}
             />
           )}
           {tab === "Mothers" && (
@@ -914,8 +915,9 @@ export default function MotherPlantTracker() {
 }
 
 // ── Summary Tab ────────────────────────────────────────────────────────────
-const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSelectMother }) {
+const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSelectMother, onWaterAll }) {
   const [strainExpanded, setStrainExpanded] = useState(false);
+  const [waterToast, setWaterToast] = useState(false);
   const todayDay = new Date().getDay(); // 0=Sun, 6=Sat
   const isSaturday = todayDay === 6;
 
@@ -954,14 +956,30 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSele
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-3 gap-2">
+      {waterToast && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2a1f00] border border-[#3a2e00] text-amber-200 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
+          Watered {active.length} moms
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
         <StatBox label="Total Mothers" value={mothers.length} colorClass="text-[#f5f5f0]" />
         <StatBox label="Active" value={active.length} colorClass="text-emerald-400" />
-      </div>
-      <div className="grid grid-cols-2 gap-2">
         <StatBox label="Sidelined" value={sidelined.length} colorClass="text-[#6a5a3a]" />
         <StatBox label="Strains" value={new Set(mothers.map(m => m.strainCode)).size} colorClass="text-violet-400" />
       </div>
+
+      {active.length > 0 && (
+        <button
+          onClick={() => {
+            onWaterAll(new Set(active.map(m => m.id)));
+            setWaterToast(true);
+            setTimeout(() => setWaterToast(false), 2500);
+          }}
+          className="w-full bg-sky-900/50 border border-sky-800/40 active:bg-sky-800/60 text-sky-300 font-semibold text-sm rounded-2xl py-3.5 transition-colors min-h-[44px]"
+        >
+          Water All Moms ({active.length})
+        </button>
+      )}
 
       {byHealth.length > 0 && (
         <div>
