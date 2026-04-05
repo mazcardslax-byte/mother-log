@@ -1846,7 +1846,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
                 return (
                   <div key={m.id} className="flex items-center justify-between bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5">
                     <button onClick={() => { onSelectMother(m); onClose(); }} className="flex-1 text-left">
-                      <div className="text-sm font-bold text-emerald-300">{s.code}</div>
+                      <div className="text-sm font-bold text-amber-300">{s.code}</div>
                       <div className="text-[10px] text-[#c5b08a] mt-0.5">{s.name}</div>
                       <HealthDots level={m.healthLevel} />
                     </button>
@@ -2079,7 +2079,7 @@ function FacilityTab({ facility, onLog }) {
   return (
     <div className="space-y-5 pt-1 pb-6">
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-900 border border-emerald-700 text-emerald-100 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2a1f00] border border-[#3a2e00] text-amber-200 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
           {toast}
         </div>
       )}
@@ -2255,8 +2255,8 @@ function SendToCloneLogModal({ cloneEntry, strainName, strainCode, motherLocatio
   return (
     <Modal title="Send to Clone Log" onClose={onClose}>
       <div className="space-y-4">
-        <div className="bg-emerald-900/20 border border-emerald-700/40 rounded-xl px-4 py-3">
-          <div className="text-xs text-emerald-300 font-semibold mb-1">Export Summary</div>
+        <div className="bg-[#2a1f00]/20 border border-[#3a2e00] rounded-xl px-4 py-3">
+          <div className="text-xs text-amber-300 font-semibold mb-1">Export Summary</div>
           <div className="text-sm text-[#f5f5f0] font-bold">{exportData.qty} clones of {strainName}</div>
           <div className="text-xs text-[#c5b08a] mt-0.5">Dated {fmtDate(cloneEntry.date)}</div>
           {motherLocation && <div className="text-xs text-[#6a5a3a] mt-0.5">Location: {motherLocation}</div>}
@@ -2273,7 +2273,7 @@ function SendToCloneLogModal({ cloneEntry, strainName, strainCode, motherLocatio
           onClick={handleCopy}
           className={`w-full font-semibold text-sm rounded-xl py-3 transition-colors ${
             copied
-              ? "bg-emerald-800 text-emerald-200 border border-emerald-700"
+              ? "bg-[#2a1f00] text-amber-200 border border-[#3a2e00]"
               : "bg-amber-600 hover:bg-amber-500 text-[#f5f5f0]"
           }`}
         >
@@ -2533,7 +2533,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
                                 <div className="flex gap-1.5">
                                   <button
                                     onClick={() => onUpdateCloneOutcome && onUpdateCloneOutcome(e.id, "rooted")}
-                                    className="text-[10px] px-2 py-1 rounded-lg bg-emerald-900/50 border border-emerald-700/50 text-emerald-300 font-semibold active:bg-emerald-800 transition-colors min-h-[44px] flex items-center"
+                                    className="text-[10px] px-2 py-1 rounded-lg bg-[#2a1f00] border border-[#3a2e00] text-amber-300 font-semibold active:bg-[#3a2e0a] transition-colors min-h-[44px] flex items-center"
                                   >
                                     Rooted
                                   </button>
@@ -2841,7 +2841,7 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
         return (
           <div className="grid grid-cols-2 gap-2">
             {[pA, pB].map(p => (
-              <div key={p.id} className="rounded-xl overflow-hidden bg-[#111111] border border-emerald-700/60">
+              <div key={p.id} className="rounded-xl overflow-hidden bg-[#111111] border border-[#2a2418]">
                 <div className="w-full aspect-square">
                   <img src={p.dataUrl} alt={p.caption || "Photo"} className="w-full h-full object-cover" />
                 </div>
@@ -2921,7 +2921,7 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
                 aria-label={p.caption || "View photo"}
                 onClick={() => compareMode ? togglePhotoSelect(p.id) : setFullscreen(p)}
                 className={`rounded-xl overflow-hidden bg-[#111111] border transition-colors text-left ${
-                  compareMode && isSelected ? "border-emerald-500 ring-1 ring-emerald-500" :
+                  compareMode && isSelected ? "border-amber-500 ring-1 ring-amber-500" :
                   compareMode ? "border-[#2a2418] active:border-[#6a5a3a]" :
                   "border-[#2a2418] active:border-[#6a5a3a]"
                 }`}
@@ -2929,7 +2929,7 @@ function PhotosTab({ mother, onAddPhoto, onRemovePhoto }) {
                 <div className="w-full aspect-square relative">
                   <img src={p.dataUrl} alt={p.caption || "Photo"} className="w-full h-full object-cover" />
                   {compareMode && isSelected && (
-                    <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
+                    <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
                       <span className="text-[#f5f5f0] text-[10px] font-bold">{[...selectedPhotos].indexOf(p.id) + 1}</span>
                     </div>
                   )}
