@@ -2,14 +2,14 @@ import { useState, useEffect, useRef, memo, useCallback, useMemo, lazy, Suspense
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import { daysRemaining } from "./dry-room-utils";
 import {
-  STRAINS, STRAINS_MAP, getStrain,
+  STRAINS, getStrain,
   CONTAINERS, MOTHER_STATUSES, COMMON_AMENDMENTS, FEEDING_TYPES, DETAIL_TABS, TYPE_META,
   uid, today, fmtDate, daysSince,
-  currentContainer, currentTransplantDate, thresholdColor,
+  currentContainer, currentTransplantDate,
   HEALTH_COLOR_THRESHOLDS, HEALTH_BG_THRESHOLDS, HEALTH_LABELS, HEALTH_BADGE_CLASSES,
   healthColor, healthBg, healthLabel,
-  lastFeedingDate, FEEDING_DAYS_THRESHOLDS, feedingDaysColor,
-  daysInVeg, VEG_DAYS_THRESHOLDS, vegDaysColor,
+  lastFeedingDate, feedingDaysColor,
+  daysInVeg, vegDaysColor,
   statusBadgeColor, cardAccentColor,
   inputCls, selectCls, btnPrimary, btnSecondary,
   Badge, Modal, StatBox, SectionLabel, FormField, HealthDots, ContainerBadge,
@@ -23,7 +23,7 @@ import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, Loader2, AlertCircle,
   ChevronDown, Droplets, ClipboardList,
-  Scissors, FlaskConical, ChevronRight, BarChart2, Wind, Minus,
+  Scissors, FlaskConical, BarChart2, Wind, Minus,
 } from "lucide-react";
 
 // ── Storage ────────────────────────────────────────────────────────────────
@@ -1156,7 +1156,6 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [swipedId, setSwipedId] = useState(null);
-  const [quickLogSheet, setQuickLogSheet] = useState(null); // null | { motherId }
   const [quickSheet, setQuickSheet] = useState(null); // null | { type: 'amend'|'clone'|'reduction', motherId }
   const [amendInput, setAmendInput] = useState({ amendment: "", notes: "", search: "" });
   const [cloneInput, setCloneInput] = useState({ count: "", notes: "" });
@@ -1301,65 +1300,6 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
           ))}
         </div>
       )}
-
-      {/* Quick Log sheet — tap a card to log */}
-      {quickLogSheet && (() => {
-        const qlMother = mothers.find(m => m.id === quickLogSheet.motherId);
-        if (!qlMother) return null;
-        const qlStrain = getStrain(qlMother.strainCode);
-        const isActive = qlMother.status === "Active";
-        return (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setQuickLogSheet(null); }}>
-            <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
-              <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
-              <div className="px-5 pb-6 pt-2 space-y-4">
-                {/* Header */}
-                <div>
-                  <div className="text-base font-bold text-[#f5f5f0]">{qlStrain.code} — {qlStrain.name}</div>
-                  {qlMother.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{qlMother.location}</div>}
-                </div>
-                {/* 2×2 action grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => { onQuickFeed(quickLogSheet.motherId, "Water Only"); setQuickLogSheet(null); showToast(`Watered — ${qlStrain.code}`); }}
-                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-sky-900/60 border border-sky-800/50 active:bg-sky-800 transition-colors min-h-[72px]"
-                  >
-                    <Droplets className="w-5 h-5 text-sky-400" strokeWidth={2} />
-                    <span className="text-[10px] font-semibold text-sky-300 leading-none">Water</span>
-                  </button>
-                  <button
-                    onClick={() => { setQuickLogSheet(null); handleOpenAmend(quickLogSheet.motherId); }}
-                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-violet-900/60 border border-violet-800/50 active:bg-violet-800 transition-colors min-h-[72px]"
-                  >
-                    <FlaskConical className="w-5 h-5 text-violet-400" strokeWidth={2} />
-                    <span className="text-[10px] font-semibold text-violet-300 leading-none">Amendment</span>
-                  </button>
-                  <button
-                    onClick={() => { setQuickLogSheet(null); handleOpenClone(quickLogSheet.motherId); }}
-                    disabled={!isActive}
-                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-amber-900/60 border border-amber-800/50 active:bg-amber-800 transition-colors min-h-[72px] disabled:opacity-40"
-                  >
-                    <Scissors className="w-5 h-5 text-amber-400" strokeWidth={2} />
-                    <span className="text-[10px] font-semibold text-amber-300 leading-none">Clone Cut</span>
-                  </button>
-                  <button
-                    onClick={() => { setQuickLogSheet(null); handleOpenReduction(quickLogSheet.motherId); }}
-                    className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-red-900/60 border border-red-800/50 active:bg-red-800 transition-colors min-h-[72px]"
-                  >
-                    <Minus className="w-5 h-5 text-red-400" strokeWidth={2.5} />
-                    <span className="text-[10px] font-semibold text-red-300 leading-none">Reduction</span>
-                  </button>
-                </div>
-                {/* View full details */}
-                <button onClick={() => { setQuickLogSheet(null); onSelectMother(qlMother); }} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold active:bg-[#1a1a1a] transition-colors min-h-[44px]">
-                  View Full Details
-                  <ChevronRight className="w-4 h-4" strokeWidth={2} />
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Water All confirm sheet */}
       {waterAllSheet && (
