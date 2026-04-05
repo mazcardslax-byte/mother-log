@@ -129,7 +129,7 @@ export default function DryRoomTab() {
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-1.5 px-4 pt-2 pb-1">
         {syncing && <Loader2 size={12} className="text-[#6a5a3a] animate-spin" />}
-        {!syncing && synced && !syncError && <Wifi size={12} className="text-emerald-500" />}
+        {!syncing && synced && !syncError && <Wifi size={12} className="text-amber-600" />}
         {syncError && <><WifiOff size={12} className="text-red-400" /><span className="text-[10px] text-red-400">{syncError}</span></>}
       </div>
 
@@ -194,7 +194,7 @@ function AddBatchModal({ onClose, onSave }) {
           <div>
             <label className="text-xs text-[#c5b08a] mb-1 block">Strain</label>
             <select value={strainCode} onChange={e => setStrainCode(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600">
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500">
               {STRAINS.map(s => <option key={s.code} value={s.code}>{s.name} ({s.code})</option>)}
             </select>
           </div>
@@ -256,14 +256,14 @@ function AddBatchModal({ onClose, onSave }) {
           <div>
             <label className="text-xs text-[#c5b08a] mb-1 block">Date Hung</label>
             <input type="date" value={dateHung} onChange={e => setDateHung(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500" />
           </div>
           {/* Note */}
           <div>
             <label className="text-xs text-[#c5b08a] mb-1 block">Note (optional)</label>
             <input type="text" value={note} onChange={e => setNote(e.target.value)}
               placeholder="e.g. top shelf"
-              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600" />
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500" />
           </div>
           {/* Number of racks */}
           <div>
@@ -281,7 +281,7 @@ function AddBatchModal({ onClose, onSave }) {
             </div>
           </div>
           <button onClick={handleSave}
-            className="w-full bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
+            className="w-full bg-amber-600 hover:bg-amber-500 text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
             {count === 1 ? "Add Batch" : `Add ${count} Batches`}
           </button>
         </div>
@@ -333,7 +333,7 @@ function BatchCard({ batch, onBin, onDelete }) {
               Cancel
             </button>
             <button onClick={() => onBin(batch.id)}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-800 text-emerald-200 border border-emerald-700 hover:bg-emerald-700 transition-colors">
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#2a1f00] text-amber-200 border border-[#3a2e00] hover:bg-[#3a2e0a] transition-colors">
               Confirm
             </button>
           </div>
@@ -427,7 +427,7 @@ function HangingPanel({ active, mainCount, sideCount, overdueCount, onAdd, onBin
           )}
         </div>
         <button onClick={() => setShowAdd(true)}
-          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-800 text-emerald-200 border border-emerald-700 hover:bg-emerald-700 transition-colors">
+          className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2a1f00] text-amber-200 border border-[#3a2e00] hover:bg-[#3a2e0a] transition-colors">
           + Add Batch
         </button>
       </div>
@@ -667,13 +667,13 @@ function BinCard({ bin, onBurp, onSend }) {
           <BurpDots fillDate={bin.fillDate} burps={bin.burps} />
           <div className="flex items-center justify-between mt-3 gap-2">
             {alreadyBurpedToday ? (
-              <span className="flex items-center gap-1 text-emerald-400 text-xs font-medium">
+              <span className="flex items-center gap-1 text-amber-400 text-xs font-medium">
                 <Check size={12} /> Burped today
               </span>
             ) : (
               <button
                 onClick={() => onBurp(bin.id)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-800 text-emerald-200 border border-emerald-700 hover:bg-emerald-700 transition-colors">
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2a1f00] text-amber-200 border border-[#3a2e00] hover:bg-[#3a2e0a] transition-colors">
                 Burp Today
               </button>
             )}
@@ -735,7 +735,7 @@ function AddBinModal({ archive, onClose, onSave }) {
             <select
               value={selectedRackId}
               onChange={e => setSelectedRackId(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600">
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500">
               {archive.map(r => (
                 <option key={r.id} value={r.id}>
                   {getStrainName(r.strainCode)} · {r.quality} · {fmtDate(r.dateHung)}
@@ -772,13 +772,13 @@ function AddBinModal({ archive, onClose, onSave }) {
         <div>
           <label className="text-xs text-[#c5b08a] mb-1 block">Fill Date</label>
           <input type="date" value={fillDate} onChange={e => setFillDate(e.target.value)}
-            className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
+            className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500" />
         </div>
 
         <button
           onClick={handleSave}
           disabled={!selectedRack}
-          className="w-full bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
+          className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
           Add Bin
         </button>
       </div>
@@ -845,7 +845,7 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
             <select
               value={selectedHarvestId}
               onChange={e => setSelectedHarvestId(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600">
+              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500">
               {harvests.map(h => (
                 <option key={h.id} value={h.id}>{harvestLabel(h)}</option>
               ))}
@@ -859,18 +859,18 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
               <label className="text-xs text-[#c5b08a] mb-1 block">Harvest Name (optional)</label>
               <input type="text" value={name} onChange={e => setName(e.target.value)}
                 placeholder="e.g. Spring Run"
-                className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600" />
+                className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500" />
             </div>
             <div className="flex gap-2">
               <div className="flex-1">
                 <label className="text-xs text-[#c5b08a] mb-1 block">Start Date</label>
                 <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
+                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500" />
               </div>
               <div className="flex-1">
                 <label className="text-xs text-[#c5b08a] mb-1 block">End Date</label>
                 <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-emerald-600" />
+                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500" />
               </div>
             </div>
           </>
@@ -879,7 +879,7 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
         <button
           onClick={handleSend}
           disabled={!canSend}
-          className="w-full bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
+          className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
           Send Downstairs
         </button>
       </div>
@@ -1045,7 +1045,7 @@ function BinsPanel({ data, persist }) {
               {activeBins.length} bin{activeBins.length !== 1 ? "s" : ""} active
             </span>
             <button onClick={() => setShowAdd(true)}
-              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-800 text-emerald-200 border border-emerald-700 hover:bg-emerald-700 transition-colors">
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#2a1f00] text-amber-200 border border-[#3a2e00] hover:bg-[#3a2e0a] transition-colors">
               + Add Bin
             </button>
           </div>
