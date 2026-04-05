@@ -23,7 +23,7 @@ import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, Loader2, AlertCircle,
   ChevronDown, Droplets, ClipboardList,
-  Scissors, FlaskConical, ChevronRight, BarChart2, Wind,
+  Scissors, FlaskConical, ChevronRight, BarChart2, Wind, Minus,
 } from "lucide-react";
 
 // ── Storage ────────────────────────────────────────────────────────────────
@@ -1346,7 +1346,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                     onClick={() => { setQuickLogSheet(null); handleOpenReduction(quickLogSheet.motherId); }}
                     className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-red-900/60 border border-red-800/50 active:bg-red-800 transition-colors min-h-[72px]"
                   >
-                    <Scissors className="w-5 h-5 text-red-400" strokeWidth={2} />
+                    <Minus className="w-5 h-5 text-red-400" strokeWidth={2.5} />
                     <span className="text-[10px] font-semibold text-red-300 leading-none">Reduction</span>
                   </button>
                 </div>
