@@ -700,21 +700,39 @@ function BinCard({ bin, onBurp, onSend }) {
 }
 
 function AddBinModal({ archive, onClose, onSave }) {
+  const [mode, setMode] = useState("rack");
+  // rack mode
   const [selectedRackId, setSelectedRackId] = useState(archive[0]?.id ?? "");
+  // standalone mode
+  const [saStrain, setSaStrain] = useState(STRAINS[0]?.code ?? "");
+  const [saQuality, setSaQuality] = useState("lowers");
+  const [saDateHung, setSaDateHung] = useState("");
+  // shared
   const [size, setSize] = useState("full");
   const [fillDate, setFillDate] = useState(today());
 
   const selectedRack = archive.find(r => r.id === selectedRackId);
+  const canSave = mode === "rack" ? !!selectedRack : !!saStrain;
 
   function handleSave() {
-    if (!selectedRack) return;
-    onSave({
-      strainCode: selectedRack.strainCode,
-      quality: selectedRack.quality,
-      dateHung: selectedRack.dateHung,
-      fillDate,
-      size,
-    });
+    if (!canSave) return;
+    if (mode === "rack") {
+      onSave({
+        strainCode: selectedRack.strainCode,
+        quality: selectedRack.quality,
+        dateHung: selectedRack.dateHung,
+        fillDate,
+        size,
+      });
+    } else {
+      onSave({
+        strainCode: saStrain,
+        quality: saQuality,
+        dateHung: saDateHung || null,
+        fillDate,
+        size,
+      });
+    }
     onClose();
   }
 
@@ -727,30 +745,79 @@ function AddBinModal({ archive, onClose, onSave }) {
           <button onClick={onClose} aria-label="Close"><X size={20} className="text-[#6a5a3a]" /></button>
         </div>
 
-        <div>
-          <label className="text-xs text-[#c5b08a] mb-1 block">Source Rack</label>
-          {archive.length === 0 ? (
-            <div className="text-[#6a5a3a] text-xs py-2">No archived racks yet — bin a rack in the Hanging tab first.</div>
-          ) : (
-            <select
-              value={selectedRackId}
-              onChange={e => setSelectedRackId(e.target.value)}
-              className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500">
-              {archive.map(r => (
-                <option key={r.id} value={r.id}>
-                  {getStrainName(r.strainCode)} · {r.quality} · {fmtDate(r.dateHung)}
-                </option>
-              ))}
-            </select>
-          )}
+        {/* Mode toggle */}
+        <div className="flex gap-2">
+          {[["rack", "From Rack"], ["standalone", "Standalone"]].map(([val, label]) => (
+            <button key={val} onClick={() => setMode(val)}
+              className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
+                mode === val
+                  ? "bg-[#2a1f00] border-amber-600 text-amber-300"
+                  : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"
+              }`}>
+              {label}
+            </button>
+          ))}
         </div>
 
-        {selectedRack && (
-          <div className="bg-[#1a1a1a] rounded-xl px-3 py-2 text-[11px] text-[#6a5a3a] space-y-0.5">
-            <div>Strain: <span className="text-[#c5b08a]">{getStrainName(selectedRack.strainCode)}</span></div>
-            <div>Quality: <span className="text-[#c5b08a] capitalize">{selectedRack.quality}</span></div>
-            <div>Hung: <span className="text-[#c5b08a]">{fmtDate(selectedRack.dateHung)}</span></div>
-          </div>
+        {mode === "rack" ? (
+          <>
+            <div>
+              <label className="text-xs text-[#c5b08a] mb-1 block">Source Rack</label>
+              {archive.length === 0 ? (
+                <div className="text-[#6a5a3a] text-xs py-2">No archived racks yet — bin a rack in the Hanging tab first.</div>
+              ) : (
+                <select
+                  value={selectedRackId}
+                  onChange={e => setSelectedRackId(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500">
+                  {archive.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {getStrainName(r.strainCode)} · {r.quality} · {fmtDate(r.dateHung)}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+            {selectedRack && (
+              <div className="bg-[#1a1a1a] rounded-xl px-3 py-2 text-[11px] text-[#6a5a3a] space-y-0.5">
+                <div>Strain: <span className="text-[#c5b08a]">{getStrainName(selectedRack.strainCode)}</span></div>
+                <div>Quality: <span className="text-[#c5b08a] capitalize">{selectedRack.quality}</span></div>
+                <div>Hung: <span className="text-[#c5b08a]">{fmtDate(selectedRack.dateHung)}</span></div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="text-xs text-[#c5b08a] mb-1 block">Strain</label>
+              <select value={saStrain} onChange={e => setSaStrain(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500">
+                {STRAINS.map(s => (
+                  <option key={s.code} value={s.code}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-[#c5b08a] mb-1 block">Quality</label>
+              <div className="flex gap-2">
+                {QUALITY_ORDER.map(q => (
+                  <button key={q} onClick={() => setSaQuality(q)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors capitalize ${
+                      saQuality === q
+                        ? "bg-[#2a1f00] border-amber-600 text-amber-300"
+                        : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"
+                    }`}>
+                    {QUALITY_LABELS[q]}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-[#c5b08a] mb-1 block">Date Hung <span className="text-[#6a5a3a]">(optional)</span></label>
+              <input type="date" value={saDateHung} onChange={e => setSaDateHung(e.target.value)}
+                className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500" />
+            </div>
+          </>
         )}
 
         <div>
@@ -777,7 +844,7 @@ function AddBinModal({ archive, onClose, onSave }) {
 
         <button
           onClick={handleSave}
-          disabled={!selectedRack}
+          disabled={!canSave}
           className="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl py-3 text-sm font-semibold transition-colors mt-2">
           Add Bin
         </button>

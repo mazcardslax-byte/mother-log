@@ -126,7 +126,7 @@ const STRAIN_PALETTE = [
   "#e879f9", "#38bdf8",
 ];
 
-const CLONE_SUB_TABS = ["Quick Log", "Summary", "Log", "Add Entry", "Trays", "Strains"];
+const CLONE_SUB_TABS = ["Summary", "Log", "Add Entry", "Trays", "Strains"];
 
 // ── Shared UI ────────────────────────────────────────────────────────────────
 function Badge({ label, colorClass }) {
@@ -402,6 +402,8 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
   const [error, setError] = useState("");
   const [transplantModal, setTransplantModal] = useState(null);
   const [transplantDate, setTransplantDate] = useState(today());
+  const [transplantSurvived, setTransplantSurvived] = useState("");
+  const [transplantRound, setTransplantRound] = useState("Next");
   const [collapsedStrains, setCollapsedStrains] = useState(new Set());
 
   function toggleStrainCollapse(strainName) {
@@ -572,6 +574,12 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
                 <div>
                   <span className="text-xs font-bold text-[#6a5a3a]">{t.code}</span>
                   <span className="text-xs text-[#6a5a3a] ml-2">{t.strainName}</span>
+                  {t.survived != null && t.count && (
+                    <span className="text-xs text-[#6a5a3a] ml-2">{t.survived}/{t.count}</span>
+                  )}
+                  {t.survived != null && !t.count && (
+                    <span className="text-xs text-[#6a5a3a] ml-2">{t.survived} survived</span>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => setTrayStatus(t.id, "Active")}
@@ -585,34 +593,67 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
         </div>
       )}
 
-      {transplantModal && (
-        <Modal title={`Transplant ${transplantModal.code}`} onClose={() => setTransplantModal(null)}>
-          <div className="space-y-4">
-            <div className="bg-[#1a1a1a] rounded-xl p-4 space-y-2 text-xs">
-              <div className="flex justify-between"><span className="text-[#6a5a3a]">Strain</span><span className="text-[#f5f5f0]">{transplantModal.strainName}</span></div>
-              <div className="flex justify-between"><span className="text-[#6a5a3a]">Clones logged</span>
-                <span className="text-emerald-300">{plants.filter(p => p.tray === transplantModal.code && p.status === "Cloned" && !p.archived).length} plants</span>
+      {transplantModal && (() => {
+        const loggedCount = plants.filter(p => p.tray === transplantModal.code && p.status === "Cloned" && !p.archived).length;
+        const survivedNum = transplantSurvived !== "" ? parseInt(transplantSurvived) : null;
+        const effectiveSurvived = survivedNum ?? loggedCount;
+        return (
+          <Modal title={`Transplant ${transplantModal.code}`} onClose={() => setTransplantModal(null)}>
+            <div className="space-y-4">
+              <div className="bg-[#1a1a1a] rounded-xl p-4 space-y-2 text-xs">
+                <div className="flex justify-between"><span className="text-[#6a5a3a]">Strain</span><span className="text-[#f5f5f0]">{transplantModal.strainName}</span></div>
+                {transplantModal.count && <div className="flex justify-between"><span className="text-[#6a5a3a]">Total in tray</span><span className="text-[#c5b08a]">{transplantModal.count}</span></div>}
+                <div className="flex justify-between"><span className="text-[#6a5a3a]">Individually logged</span><span className="text-emerald-300">{loggedCount} plants</span></div>
               </div>
+              <div>
+                <label className="text-xs text-[#c5b08a] block mb-1.5">Survived</label>
+                <input
+                  type="number" min="0" max={transplantModal.count || undefined}
+                  value={transplantSurvived}
+                  onChange={e => setTransplantSurvived(e.target.value)}
+                  placeholder={transplantModal.count ? `of ${transplantModal.count}` : "how many survived?"}
+                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-sky-500" />
+                {survivedNum !== null && transplantModal.count && survivedNum < transplantModal.count && (
+                  <div className="text-[10px] text-[#6a5a3a] mt-1">{transplantModal.count - survivedNum} did not survive</div>
+                )}
+              </div>
+              <div>
+                <label className="text-xs text-[#c5b08a] block mb-1.5">Round</label>
+                <div className="flex gap-2">
+                  {["Upcoming", "Next"].map(r => (
+                    <button key={r} onClick={() => setTransplantRound(r)}
+                      className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${transplantRound === r ? "bg-teal-900/40 border-teal-600 text-teal-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-[#c5b08a] block mb-1.5">Transplant Date</label>
+                <input type="date" value={transplantDate} onChange={e => setTransplantDate(e.target.value)}
+                  className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-sm text-[#f5f5f0] focus:outline-none" />
+              </div>
+              <button
+                onClick={() => {
+                  onTransplantTray(transplantModal.code, transplantDate, survivedNum, transplantRound);
+                  setTransplantModal(null);
+                  setTransplantSurvived("");
+                }}
+                className="w-full bg-sky-700 hover:bg-sky-600 text-[#f5f5f0] font-semibold py-3 rounded-xl text-sm transition-colors">
+                ✓ Transplant {effectiveSurvived > 0 ? `${effectiveSurvived} plants` : "All"}
+              </button>
+              <button onClick={() => { setTransplantModal(null); setTransplantSurvived(""); }} className="w-full text-[#6a5a3a] text-xs py-2">Cancel</button>
             </div>
-            <div>
-              <label className="text-xs text-[#6a5a3a] block mb-1.5">Transplant Date</label>
-              <input type="date" value={transplantDate} onChange={e => setTransplantDate(e.target.value)}
-                className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-sm text-[#f5f5f0] focus:outline-none" />
-            </div>
-            <p className="text-xs text-[#6a5a3a] text-center">All Cloned plants in this tray will be marked Transplanted. Tray will be marked Done.</p>
-            <button onClick={() => { onTransplantTray(transplantModal.code, transplantDate); setTransplantModal(null); }}
-              className="w-full bg-sky-700 hover:bg-sky-600 text-[#f5f5f0] font-semibold py-3 rounded-xl text-sm transition-colors">✓ Transplant All</button>
-            <button onClick={() => setTransplantModal(null)} className="w-full text-[#6a5a3a] text-xs py-2">Cancel</button>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        );
+      })()}
     </div>
   );
 }
 
 // ── MAIN CLONES TAB ──────────────────────────────────────────────────────────
 export default function ClonesTab() {
-  const [tab, setTab] = useState("Quick Log");
+  const [tab, setTab] = useState("Summary");
   const [plants, setPlants] = useState([]);
   const [strains, setStrains] = useState(DEFAULT_STRAINS);
   const [trays, setTrays] = useState([]);
@@ -663,14 +704,6 @@ export default function ClonesTab() {
       const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n;
     });
   }
-
-  // Quick Log
-  const [quickStrain, setQuickStrain] = useState("");
-  const [quickQty, setQuickQty] = useState("");
-  const [quickPot, setQuickPot] = useState("Black Pot");
-  const [quickRound, setQuickRound] = useState("Upcoming");
-  const [quickFeedback, setQuickFeedback] = useState(null);
-  const quickFeedbackTimerRef = useRef(null);
 
   // Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -789,26 +822,6 @@ export default function ClonesTab() {
     setTimeout(() => setUndoToast(false), 2500);
   }
 
-  function handleQuickLog() {
-    if (!quickStrain || !quickQty || parseInt(quickQty) < 1) return;
-    const resolved = resolveCode(quickStrain, strains);
-    if (!resolved) return;
-    const { strain, suffix } = resolved;
-    const newPlants = Array.from({ length: parseInt(quickQty) }, () => ({
-      id: uid(), strainCode: strain.code + (suffix || ""),
-      strainName: strain.name + (suffix ? ` ${suffix}` : ""),
-      dateCloned: null, dateTransplanted: null,
-      pot: quickPot, round: quickRound, status: "Cloned",
-      notes: "", batchNote: "", tray: "", archived: false,
-    }));
-    savePlants([...plants, ...newPlants]);
-    const qty2 = parseInt(quickQty);
-    setQuickFeedback(`✓ ${qty2} ${strain.name}${suffix ? " " + suffix : ""} logged`);
-    setQuickQty("");
-    if (quickFeedbackTimerRef.current) clearTimeout(quickFeedbackTimerRef.current);
-    quickFeedbackTimerRef.current = setTimeout(() => setQuickFeedback(null), 2500);
-  }
-
   function handleAddEntry() {
     if (!parsed?.resolved) { setEntryError("Strain code not found. Try: '19 2023b march 24'"); return; }
     if (!parsed.qty) { setEntryError("Add a quantity, e.g. '19 2023b'"); return; }
@@ -854,13 +867,41 @@ export default function ClonesTab() {
     clearSelect();
   }
 
-  function transplantTray(trayCode, date) {
-    savePlants(plants.map(p =>
-      p.tray === trayCode && p.status === "Cloned" && !p.archived
-        ? { ...p, status: "Transplanted", dateTransplanted: date }
-        : p
-    ));
-    saveTrays(trays.map(t => t.code === trayCode ? { ...t, status: "Done" } : t));
+  function transplantTray(trayCode, date, survived, round) {
+    const tray = trays.find(t => t.code === trayCode);
+    const loggedInTray = plants.filter(p => p.tray === trayCode && p.status === "Cloned" && !p.archived);
+    const survivedCount = survived != null ? survived : loggedInTray.length;
+    const toTransplantCount = Math.min(survivedCount, loggedInTray.length);
+    const transplantIds = new Set(loggedInTray.slice(0, toTransplantCount).map(p => p.id));
+    const archiveIds = new Set(loggedInTray.slice(toTransplantCount).map(p => p.id));
+
+    // Create new plant records for survivors beyond what was individually logged
+    const newPlants = survivedCount > loggedInTray.length
+      ? Array.from({ length: survivedCount - loggedInTray.length }, () => ({
+          id: uid(),
+          strainCode: tray?.strainCode || "",
+          strainName: tray?.strainName || "",
+          dateCloned: tray?.dateStarted || null,
+          dateTransplanted: date,
+          pot: "Black Pot",
+          round: round || "Next",
+          status: "Transplanted",
+          notes: "",
+          batchNote: `Transplanted from tray ${trayCode}`,
+          tray: trayCode,
+          archived: false,
+        }))
+      : [];
+
+    savePlants([
+      ...plants.map(p => {
+        if (transplantIds.has(p.id)) return { ...p, status: "Transplanted", dateTransplanted: date };
+        if (archiveIds.has(p.id)) return { ...p, archived: true };
+        return p;
+      }),
+      ...newPlants,
+    ]);
+    saveTrays(trays.map(t => t.code === trayCode ? { ...t, status: "Done", survived: survivedCount } : t));
   }
 
   function cloneBatch(strainName, round) {
@@ -1182,103 +1223,6 @@ export default function ClonesTab() {
                 </div>
               </div>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* ── QUICK LOG ── */}
-      {tab === "Quick Log" && (
-        <div className="p-4 space-y-5">
-          <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-4">
-            <div className="text-xs text-[#6a5a3a]">Minimal entry — strain + quantity, everything else defaults.</div>
-          </div>
-
-          <div>
-            <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">Strain</div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {strains.map(s => {
-                const dotC = strainDefColorMap[s.name] || STRAIN_PALETTE[0];
-                return (
-                  <button key={s.code} onClick={() => setQuickStrain(quickStrain === s.code ? "" : s.code)}
-                    className={`py-2.5 px-2 rounded-xl text-[10px] font-medium border transition-colors text-center leading-tight ${quickStrain === s.code ? "border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}
-                    style={quickStrain === s.code ? { backgroundColor: dotC + "22", borderColor: dotC + "88" } : {}}>
-                    <div className="flex items-center justify-center gap-1 mb-0.5">
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotC }} />
-                      <span className="font-bold" style={{ color: dotC }}>{s.code}</span>
-                    </div>
-                    <div className="truncate">{s.name.split(" ").slice(0, 2).join(" ")}</div>
-                  </button>
-                );
-              })}
-            </div>
-            {TESTER_CODES.includes(quickStrain) && (
-              <div className="mt-2 flex gap-1.5">
-                {["A", "B", "C", "D"].map(sfx => {
-                  const full = quickStrain + sfx.toLowerCase();
-                  return (
-                    <button key={sfx} onClick={() => setQuickStrain(quickStrain === full ? quickStrain.slice(0, -1) : full)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${quickStrain === full ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>{sfx}</button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">Quantity</div>
-            <input value={quickQty} onChange={e => setQuickQty(e.target.value)} placeholder="Enter quantity"
-              type="number" min="1"
-              className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-3 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500 transition-colors" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">Pot</div>
-              <div className="flex flex-col gap-1.5">
-                {["Black Pot", "Green Pot"].map(p => (
-                  <button key={p} onClick={() => setQuickPot(p)}
-                    className={`py-2 rounded-xl text-xs font-medium border transition-colors ${quickPot === p ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}>{p}</button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">Round</div>
-              <div className="flex flex-col gap-1.5">
-                {["Upcoming", "Next"].map(r => (
-                  <button key={r} onClick={() => setQuickRound(r)}
-                    className={`py-2 rounded-xl text-xs font-medium border transition-colors ${quickRound === r ? "bg-teal-900/40 border-teal-600 text-teal-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}>{r}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {quickStrain && quickQty && (
-            <div className="bg-[#111111] border border-[#3a2e00] rounded-xl px-4 py-3 text-xs flex justify-between items-center">
-              <span className="text-[#c5b08a]">
-                {parseInt(quickQty)} × {(() => { const r = resolveCode(quickStrain, strains); return r ? r.strain.name + (r.suffix ? " " + r.suffix : "") : quickStrain; })()}
-              </span>
-              <div className="flex gap-1.5">
-                <Badge label={quickPot} colorClass="bg-[#1a1a1a] text-[#c5b08a] border border-[#2a2418]" />
-                <Badge label={quickRound} colorClass={ROUND_COLORS[quickRound]} />
-              </div>
-            </div>
-          )}
-
-          <button onClick={handleQuickLog}
-            disabled={!quickStrain || !quickQty || parseInt(quickQty) < 1}
-            className="w-full bg-amber-600 active:bg-amber-700 disabled:opacity-30 disabled:cursor-not-allowed text-[#f5f5f0] font-bold py-4 rounded-xl text-base transition-colors">
-            + Log Plants
-          </button>
-
-          {quickFeedback && (
-            <div className="text-center text-amber-400 text-sm font-medium">{quickFeedback}</div>
-          )}
-
-          {undoStack.length > 0 && (
-            <button onClick={handleUndo}
-              className="w-full text-xs text-[#6a5a3a] border border-[#2a2418] rounded-xl py-2.5 active:text-[#c5b08a] transition-colors">
-              ↩ Undo last entry
-            </button>
           )}
         </div>
       )}
