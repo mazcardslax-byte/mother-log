@@ -12,6 +12,8 @@ export default defineConfig({
           'tab-stats':   ['./src/StatsTab.jsx'],
           'tab-dryroom': ['./src/DryRoomTab.jsx'],
           'tab-clones':  ['./src/ClonesTab.jsx'],
+          'tab-detail':  ['./src/MotherDetail.jsx'],
+          'shared':      ['./src/shared.jsx'],
         },
       },
     },

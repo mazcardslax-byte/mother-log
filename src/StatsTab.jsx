@@ -1,8 +1,4 @@
 import { useMemo, useState } from "react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
-  LineChart, Line, CartesianGrid,
-} from "recharts";
 import { calcCloneRates, calcStrainComparison, calcCareGaps } from "./stats-utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -67,35 +63,66 @@ function CloneRatesSection({ mothers, getStrain }) {
         ))}
       </div>
 
-      {/* Bar chart */}
       {byStrain.length === 0 ? (
         <div className="text-[#6a5a3a] text-sm text-center py-4">No clone data yet.</div>
       ) : (
-        <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-4">
-          <ResponsiveContainer width="100%" height={byStrain.length * 44 + 16}>
-            <BarChart
-              data={byStrain}
-              layout="vertical"
-              margin={{ top: 0, right: 40, left: 4, bottom: 0 }}
-              barSize={10}
-            >
-              <XAxis type="number" domain={[0, 100]} tick={{ fill: "#52525b", fontSize: 10 }} tickFormatter={v => `${v}%`} />
-              <YAxis type="category" dataKey="strainName" tick={{ fill: "#a1a1aa", fontSize: 11 }} width={90} />
-              <Tooltip
-                formatter={(value) => [`${value}%`, "Rooting rate"]}
-                contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: "#e4e4e7" }}
-              />
-              <Bar dataKey="rate" radius={[0, 4, 4, 0]}>
-                {byStrain.map((entry) => (
-                  <Cell key={entry.strainCode} fill={rateColor(entry.rate)} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-4 space-y-3">
+          {byStrain.map(entry => (
+            <div key={entry.strainCode} className="flex items-center gap-3">
+              <div className="w-[88px] text-[11px] text-[#c5b08a] truncate shrink-0">{entry.strainName}</div>
+              <div className="flex-1 bg-[#1a1a1a] rounded-full h-2">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${entry.rate}%`, backgroundColor: rateColor(entry.rate) }}
+                />
+              </div>
+              <div className="text-xs font-bold w-8 text-right shrink-0" style={{ color: rateColor(entry.rate) }}>
+                {entry.rate}%
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
+  );
+}
+
+// ─── SVG Line Chart (no recharts) ────────────────────────────────────────────
+
+function HealthLineChart({ data }) {
+  const VB_W = 300, VB_H = 120;
+  const PAD = { l: 24, r: 8, t: 8, b: 22 };
+  const cw = VB_W - PAD.l - PAD.r;
+  const ch = VB_H - PAD.t - PAD.b;
+  const n = data.length;
+  const xOf = i => PAD.l + (n === 1 ? cw / 2 : (i / (n - 1)) * cw);
+  const yOf = v => PAD.t + ch - ((v - 1) / 4) * ch;
+  const pts = data.map((d, i) => `${xOf(i)},${yOf(d.level)}`).join(" ");
+  // Show at most 6 date labels evenly
+  const labelStep = Math.max(1, Math.ceil(n / 6));
+
+  return (
+    <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full" style={{ height: 140 }}>
+      {/* Grid lines */}
+      {[1, 2, 3, 4, 5].map(v => (
+        <line key={v} x1={PAD.l} x2={VB_W - PAD.r} y1={yOf(v)} y2={yOf(v)}
+          stroke="#27272a" strokeDasharray="3 3" strokeWidth="1" />
+      ))}
+      {/* Y axis labels */}
+      {[1, 3, 5].map(v => (
+        <text key={v} x={PAD.l - 4} y={yOf(v) + 3.5} textAnchor="end" fontSize="8" fill="#52525b">{v}</text>
+      ))}
+      {/* Line */}
+      <polyline points={pts} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
+      {/* Dots */}
+      {data.map((d, i) => (
+        <circle key={i} cx={xOf(i)} cy={yOf(d.level)} r="3" fill="#10b981" />
+      ))}
+      {/* X axis labels */}
+      {data.map((d, i) => i % labelStep === 0 && (
+        <text key={i} x={xOf(i)} y={VB_H - 4} textAnchor="middle" fontSize="8" fill="#52525b">{d.date}</text>
+      ))}
+    </svg>
   );
 }
 
@@ -150,26 +177,7 @@ function HealthTrendsSection({ mothers, getStrain }) {
             Health trend starts recording from today — check back after a few updates.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={140}>
-            <LineChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-              <XAxis dataKey="date" tick={{ fill: "#52525b", fontSize: 10 }} />
-              <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fill: "#52525b", fontSize: 10 }} />
-              <Tooltip
-                formatter={(value) => [value, "Health"]}
-                contentStyle={{ background: "#18181b", border: "1px solid #3f3f46", borderRadius: 8, fontSize: 12 }}
-                labelStyle={{ color: "#e4e4e7" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="level"
-                stroke="#10b981"
-                strokeWidth={2}
-                dot={{ fill: "#10b981", r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <HealthLineChart data={chartData} />
         )}
       </div>
     </div>
