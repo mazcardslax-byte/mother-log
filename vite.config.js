@@ -6,6 +6,15 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'tab-stats':   ['./src/StatsTab.jsx'],
+          'tab-dryroom': ['./src/DryRoomTab.jsx'],
+          'tab-clones':  ['./src/ClonesTab.jsx'],
+        },
+      },
+    },
   },
   test: {
     environment: 'jsdom',

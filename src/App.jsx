@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, memo, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, memo, useCallback, useMemo, lazy, Suspense } from "react";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
-import ClonesTab from "./ClonesTab";
-import StatsTab from "./StatsTab";
-import DryRoomTab from "./DryRoomTab";
+const ClonesTab  = lazy(() => import("./ClonesTab"));
+const StatsTab   = lazy(() => import("./StatsTab"));
+const DryRoomTab = lazy(() => import("./DryRoomTab"));
 import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, Loader2, AlertCircle,
@@ -877,9 +877,11 @@ export default function MotherPlantTracker() {
           )}
         </div>
       )}
-      {tab === "Stats"   && <StatsTab mothers={mothers} getStrain={getStrain} />}
-      {tab === "DryRoom" && <DryRoomTab />}
-      {tab === "Clones"  && <ClonesTab />}
+      <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="w-5 h-5 text-amber-600 animate-spin" /></div>}>
+        {tab === "Stats"   && <StatsTab mothers={mothers} getStrain={getStrain} />}
+        {tab === "DryRoom" && <DryRoomTab />}
+        {tab === "Clones"  && <ClonesTab />}
+      </Suspense>
 
       {detailMotherId && (() => {
         const detailMother = mothers.find(m => m.id === detailMotherId) ?? null;
