@@ -281,14 +281,14 @@ function ImportFromMotherLog({ strains, plants, savePlants, onAdded }) {
       <textarea value={raw} onChange={e => { setRaw(e.target.value); setParsed(null); setError(""); }}
         placeholder={'Paste JSON from Mother Log…\n{\n  "type": "clone_import",\n  "strainCode": "2023",\n  "qty": 10,\n  ...\n}'}
         rows={5}
-        className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-xs text-[#c5b08a] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600 transition-colors resize-none font-mono" />
+        className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-xs text-[#c5b08a] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500 transition-colors resize-none font-mono" />
       {error && <div className="text-red-400 text-xs">{error}</div>}
-      {success && <div className="text-emerald-400 text-xs font-medium">{success}</div>}
+      {success && <div className="text-amber-400 text-xs font-medium">{success}</div>}
       {parsed && (
-        <div className="bg-emerald-900/20 border border-emerald-700/40 rounded-xl px-4 py-3 space-y-1.5 text-xs">
-          <div className="text-emerald-300 font-semibold text-[10px] uppercase tracking-wider mb-1">Preview</div>
+        <div className="bg-[#2a1f00]/20 border border-[#3a2e00] rounded-xl px-4 py-3 space-y-1.5 text-xs">
+          <div className="text-amber-300 font-semibold text-[10px] uppercase tracking-wider mb-1">Preview</div>
           <div className="flex justify-between"><span className="text-[#6a5a3a]">Strain</span><span className="text-[#f5f5f0]">{parsed.strainName}</span></div>
-          <div className="flex justify-between"><span className="text-[#6a5a3a]">Quantity</span><span className="text-emerald-300 font-bold">{parsed.qty} plants</span></div>
+          <div className="flex justify-between"><span className="text-[#6a5a3a]">Quantity</span><span className="text-amber-300 font-bold">{parsed.qty} plants</span></div>
           {parsed.dateCloned && <div className="flex justify-between"><span className="text-[#6a5a3a]">Date Cloned</span><span className="text-[#f5f5f0]">{fmtDate(parsed.dateCloned)}</span></div>}
           {parsed.batchNote && <div className="flex justify-between"><span className="text-[#6a5a3a]">Note</span><span className="text-[#c5b08a] truncate ml-4 text-right">{parsed.batchNote}</span></div>}
         </div>
@@ -300,7 +300,7 @@ function ImportFromMotherLog({ strains, plants, savePlants, onAdded }) {
             <div className="flex flex-col gap-1">
               {["Black Pot", "Green Pot"].map(p => (
                 <button key={p} onClick={() => setPot(p)}
-                  className={`py-2 rounded-lg text-xs font-medium border transition-colors ${pot === p ? "bg-emerald-900/40 border-emerald-600 text-emerald-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#c5b08a]"}`}>{p}</button>
+                  className={`py-2 rounded-lg text-xs font-medium border transition-colors ${pot === p ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#c5b08a]"}`}>{p}</button>
               ))}
             </div>
           </div>
@@ -375,7 +375,7 @@ function ManualEntry({ strains, plants, savePlants, onAdded }) {
       <div className="flex gap-2">
         {["Black Pot", "Green Pot"].map(p => (
           <button key={p} onClick={() => setPot(p)}
-            className={`flex-1 py-2 rounded-lg text-xs border transition-colors ${pot === p ? "bg-emerald-900/40 border-emerald-600 text-emerald-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}>{p}</button>
+            className={`flex-1 py-2 rounded-lg text-xs border transition-colors ${pot === p ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}>{p}</button>
         ))}
       </div>
       <div className="flex gap-2">
@@ -450,7 +450,7 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
         </select>
         <div className="flex gap-2">
           <input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Tray code e.g. 2023-T1"
-            className="flex-1 bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-xs text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600" />
+            className="flex-1 bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-xs text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500" />
           {strainCode && (
             <button onClick={() => setCode(autoCode())}
               className="text-xs bg-[#2a2418] hover:bg-[#222] text-[#c5b08a] px-3 rounded-lg transition-colors">Auto</button>
@@ -541,7 +541,7 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
                                   <span className="text-[#6a5a3a] text-[9px]">14</span>
                                 </div>
                                 {t.count && <span className="text-[#6a5a3a]">Cap: <span className="text-[#6a5a3a]">{t.count}</span></span>}
-                                {loggedCount > 0 && <span className="text-[#6a5a3a]">Logged: <span className="text-emerald-500">{loggedCount}</span></span>}
+                                {loggedCount > 0 && <span className="text-[#6a5a3a]">Logged: <span className="text-amber-400">{loggedCount}</span></span>}
                                 {t.notes && <span className="text-[#6a5a3a] italic">{t.notes}</span>}
                               </div>
                             </div>
@@ -958,12 +958,12 @@ export default function ClonesTab() {
   // ── Render ────────────────────────────────────────────────────────────────
   if (loading) return (
     <div className="flex items-center justify-center py-20">
-      <Loader2 size={20} className="text-emerald-600 animate-spin" />
+      <Loader2 size={20} className="text-amber-600 animate-spin" />
     </div>
   );
 
   const SyncIcon = syncStatus === "syncing" ? Loader2 : syncStatus === "error" ? AlertCircle : syncStatus === "offline" ? WifiOff : Wifi;
-  const syncColor = syncStatus === "syncing" ? "text-yellow-400 animate-spin" : syncStatus === "error" ? "text-red-500" : syncStatus === "offline" ? "text-[#6a5a3a]" : "text-emerald-600";
+  const syncColor = syncStatus === "syncing" ? "text-yellow-400 animate-spin" : syncStatus === "error" ? "text-red-500" : syncStatus === "offline" ? "text-[#6a5a3a]" : "text-amber-600";
 
   return (
     <div>
@@ -972,7 +972,7 @@ export default function ClonesTab() {
         <div className="flex overflow-x-auto">
           {CLONE_SUB_TABS.map(t => (
             <button key={t} onClick={() => { setTab(t); if (t !== "Log") clearSelect(); }}
-              className={`px-3 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-colors flex-shrink-0 ${tab === t ? "border-emerald-500 text-emerald-400" : "border-transparent text-[#6a5a3a] active:text-[#c5b08a]"}`}>
+              className={`px-3 py-2.5 text-xs font-medium border-b-2 whitespace-nowrap transition-colors flex-shrink-0 ${tab === t ? "border-amber-500 text-amber-400" : "border-transparent text-[#6a5a3a] active:text-[#c5b08a]"}`}>
               {t}
               {t === "Trays" && alertTrays.length > 0
                 ? <span className="inline-block w-1.5 h-1.5 rounded-full bg-red-500 ml-1 mb-0.5 align-middle" />
@@ -988,7 +988,7 @@ export default function ClonesTab() {
             <Download size={12} />
           </button>
           <button onClick={() => setShowSearch(s => !s)} aria-label="Search"
-            className={`w-8 h-7 flex items-center justify-center ${showSearch ? "text-emerald-400" : "text-[#6a5a3a] active:text-[#c5b08a]"}`}>
+            className={`w-8 h-7 flex items-center justify-center ${showSearch ? "text-amber-400" : "text-[#6a5a3a] active:text-[#c5b08a]"}`}>
             <Search size={12} />
           </button>
         </div>
@@ -1000,7 +1000,7 @@ export default function ClonesTab() {
           <input autoFocus value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={e => { if (e.key === "Escape") { setShowSearch(false); setSearchQuery(""); } }}
             placeholder="Search strain, tray, status, note…"
-            className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600 transition-colors" />
+            className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500 transition-colors" />
           {searchQuery.trim() && (() => {
             const q = searchQuery.toLowerCase();
             const results = plants.filter(p =>
@@ -1134,7 +1134,7 @@ export default function ClonesTab() {
                     {rows.map(r => (
                       <div key={r.name} className="px-4 py-3 grid grid-cols-3 items-center">
                         <span className="text-xs text-[#c5b08a] truncate pr-2">{r.name}</span>
-                        <span className="text-center text-sm font-bold text-emerald-400">{r.trayCount || "—"}</span>
+                        <span className="text-center text-sm font-bold text-amber-400">{r.trayCount || "—"}</span>
                         <div className="text-right">
                           <span className={`text-xs font-medium ${r.loggedCount > 0 ? "text-sky-400" : "text-[#6a5a3a]"}`}>
                             {r.loggedCount > 0 ? `${r.loggedCount} logged` : "none logged"}
@@ -1144,7 +1144,7 @@ export default function ClonesTab() {
                     ))}
                   </div>
                   <div className="px-4 py-2.5 bg-[#1a1a1a]/30 flex justify-between text-[10px] text-[#6a5a3a]">
-                    <span>In trays: <span className="text-emerald-400 font-bold">{rows.reduce((s, r) => s + r.trayCount, 0)}</span></span>
+                    <span>In trays: <span className="text-amber-400 font-bold">{rows.reduce((s, r) => s + r.trayCount, 0)}</span></span>
                     <span>Logged: <span className="text-sky-400 font-bold">{rows.reduce((s, r) => s + r.loggedCount, 0)}</span></span>
                   </div>
                 </div>
@@ -1200,7 +1200,7 @@ export default function ClonesTab() {
                 const dotC = strainDefColorMap[s.name] || STRAIN_PALETTE[0];
                 return (
                   <button key={s.code} onClick={() => setQuickStrain(quickStrain === s.code ? "" : s.code)}
-                    className={`py-2.5 px-2 rounded-xl text-[10px] font-medium border transition-colors text-center leading-tight ${quickStrain === s.code ? "border-emerald-600 text-emerald-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}
+                    className={`py-2.5 px-2 rounded-xl text-[10px] font-medium border transition-colors text-center leading-tight ${quickStrain === s.code ? "border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}
                     style={quickStrain === s.code ? { backgroundColor: dotC + "22", borderColor: dotC + "88" } : {}}>
                     <div className="flex items-center justify-center gap-1 mb-0.5">
                       <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotC }} />
@@ -1217,7 +1217,7 @@ export default function ClonesTab() {
                   const full = quickStrain + sfx.toLowerCase();
                   return (
                     <button key={sfx} onClick={() => setQuickStrain(quickStrain === full ? quickStrain.slice(0, -1) : full)}
-                      className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${quickStrain === full ? "bg-emerald-900/40 border-emerald-600 text-emerald-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>{sfx}</button>
+                      className={`flex-1 py-2 rounded-lg text-xs font-bold border transition-colors ${quickStrain === full ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>{sfx}</button>
                   );
                 })}
               </div>
@@ -1228,7 +1228,7 @@ export default function ClonesTab() {
             <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">Quantity</div>
             <input value={quickQty} onChange={e => setQuickQty(e.target.value)} placeholder="Enter quantity"
               type="number" min="1"
-              className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-3 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600 transition-colors" />
+              className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-3 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500 transition-colors" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -1237,7 +1237,7 @@ export default function ClonesTab() {
               <div className="flex flex-col gap-1.5">
                 {["Black Pot", "Green Pot"].map(p => (
                   <button key={p} onClick={() => setQuickPot(p)}
-                    className={`py-2 rounded-xl text-xs font-medium border transition-colors ${quickPot === p ? "bg-emerald-900/40 border-emerald-600 text-emerald-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}>{p}</button>
+                    className={`py-2 rounded-xl text-xs font-medium border transition-colors ${quickPot === p ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}>{p}</button>
                 ))}
               </div>
             </div>
@@ -1253,7 +1253,7 @@ export default function ClonesTab() {
           </div>
 
           {quickStrain && quickQty && (
-            <div className="bg-[#111111] border border-emerald-700/30 rounded-xl px-4 py-3 text-xs flex justify-between items-center">
+            <div className="bg-[#111111] border border-[#3a2e00] rounded-xl px-4 py-3 text-xs flex justify-between items-center">
               <span className="text-[#c5b08a]">
                 {parseInt(quickQty)} × {(() => { const r = resolveCode(quickStrain, strains); return r ? r.strain.name + (r.suffix ? " " + r.suffix : "") : quickStrain; })()}
               </span>
@@ -1271,7 +1271,7 @@ export default function ClonesTab() {
           </button>
 
           {quickFeedback && (
-            <div className="text-center text-emerald-400 text-sm font-medium">{quickFeedback}</div>
+            <div className="text-center text-amber-400 text-sm font-medium">{quickFeedback}</div>
           )}
 
           {undoStack.length > 0 && (
@@ -1303,7 +1303,7 @@ export default function ClonesTab() {
           )}
           <div className="flex gap-2">
             <button onClick={() => { setShowArchived(false); setFilterRound("All"); setFilterStatus("All"); setFilterStrain("All"); }}
-              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${!showArchived ? "bg-emerald-900/40 border-emerald-700 text-emerald-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>Active</button>
+              className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${!showArchived ? "bg-[#2a1f00] border-[#3a2e00] text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>Active</button>
             <button onClick={() => { setShowArchived(true); setFilterRound("All"); setFilterStatus("All"); setFilterStrain("All"); }}
               className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${showArchived ? "bg-[#2a2418] border-[#2a2418] text-[#f5f5f0]" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>
               Archived {archived.length > 0 && `(${archived.length})`}
@@ -1348,7 +1348,7 @@ export default function ClonesTab() {
                         onChange={() => allSel
                           ? setSelected(s => { const n = new Set(s); groupIds.forEach(id => n.delete(id)); return n; })
                           : setSelected(s => new Set([...s, ...groupIds]))}
-                        className="w-4 h-4 accent-emerald-500 flex-shrink-0" />
+                        className="w-4 h-4 accent-amber-500 flex-shrink-0" />
                     )}
                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
                     <button onClick={() => toggleLogStrain(strainName)}
@@ -1367,11 +1367,11 @@ export default function ClonesTab() {
                   <div className="px-4 py-2 bg-[#1a1a1a]/20 text-xs text-[#6a5a3a] italic border-b border-[#2a2418]/40">📝 {group[0].batchNote}</div>
                 )}
                 {!isCollapsed && compactView ? (
-                  <div className="divide-y divide-zinc-800/30">
+                  <div className="divide-y divide-[#2a2418]/30">
                     {group.map(p => (
                       <div key={p.id} onClick={selectMode ? () => toggleSelect(p.id) : undefined}
-                        className={`px-4 py-2 flex items-center gap-2 ${selectMode ? "cursor-pointer" : ""} ${selected.has(p.id) ? "bg-emerald-900/10" : ""}`}>
-                        {selectMode && <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="w-4 h-4 accent-emerald-500 flex-shrink-0" />}
+                        className={`px-4 py-2 flex items-center gap-2 ${selectMode ? "cursor-pointer" : ""} ${selected.has(p.id) ? "bg-amber-900/10" : ""}`}>
+                        {selectMode && <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="w-4 h-4 accent-amber-500 flex-shrink-0" />}
                         <div className="w-1 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: dotColor }} />
                         <div className="flex-1 flex items-center gap-1.5 min-w-0 flex-wrap">
                           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${STATUS_COLORS[p.status] || "bg-[#1a1a1a] text-[#c5b08a] border-[#2a2418]"}`}>{p.status}</span>
@@ -1386,11 +1386,11 @@ export default function ClonesTab() {
                     ))}
                   </div>
                 ) : !isCollapsed ? (
-                  <div className="divide-y divide-zinc-800/40">
+                  <div className="divide-y divide-[#2a2418]/40">
                     {group.map(p => (
                       <div key={p.id} onClick={selectMode ? () => toggleSelect(p.id) : undefined}
-                        className={`px-4 py-3 flex items-start gap-3 ${selectMode ? "cursor-pointer" : ""} ${selected.has(p.id) ? "bg-emerald-900/10" : ""}`}>
-                        {selectMode && <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="w-4 h-4 mt-0.5 accent-emerald-500 flex-shrink-0" />}
+                        className={`px-4 py-3 flex items-start gap-3 ${selectMode ? "cursor-pointer" : ""} ${selected.has(p.id) ? "bg-amber-900/10" : ""}`}>
+                        {selectMode && <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggleSelect(p.id)} className="w-4 h-4 mt-0.5 accent-amber-500 flex-shrink-0" />}
                         <div className="w-0.5 self-stretch rounded-full flex-shrink-0 mt-0.5" style={{ backgroundColor: dotColor, opacity: 0.5 }} />
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap gap-1.5 mb-1.5">
@@ -1427,11 +1427,11 @@ export default function ClonesTab() {
             <input value={smartInput} onChange={e => setSmartInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleAddEntry()}
               placeholder="e.g. 19 2023b march 24"
-              className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-3 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600 transition-colors" />
+              className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-3 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500 transition-colors" />
             {entryError && <div className="text-red-400 text-xs mt-1.5">{entryError}</div>}
           </div>
           {parsed && (
-            <div className={`rounded-xl border p-4 space-y-2 text-xs ${parsed.resolved && parsed.qty ? "border-emerald-700/40 bg-emerald-900/10" : "border-[#2a2418] bg-[#111111]"}`}>
+            <div className={`rounded-xl border p-4 space-y-2 text-xs ${parsed.resolved && parsed.qty ? "border-[#3a2e00] bg-amber-900/10" : "border-[#2a2418] bg-[#111111]"}`}>
               <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-1">Preview</div>
               {[
                 ["Strain", parsed.resolved ? `${parsed.resolved.strain.name}${parsed.resolved.suffix ? " " + parsed.resolved.suffix : ""}` : "Not recognized", !!parsed.resolved],
@@ -1450,7 +1450,7 @@ export default function ClonesTab() {
             <div className="flex gap-2">
               {["Black Pot", "Green Pot"].map(p => (
                 <button key={p} onClick={() => setEntryPot(p)}
-                  className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-colors ${entryPot === p ? "bg-emerald-900/40 border-emerald-600 text-emerald-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}>{p}</button>
+                  className={`flex-1 py-2.5 rounded-xl text-xs font-medium border transition-colors ${entryPot === p ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#c5b08a]"}`}>{p}</button>
               ))}
             </div>
           </div>
@@ -1502,7 +1502,7 @@ export default function ClonesTab() {
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {trays.filter(t => t.status === "Active").map(t => (
                   <button key={t.id} onClick={() => setEntryTray(t.code)}
-                    className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${entryTray === t.code ? "bg-emerald-900/40 border-emerald-600 text-emerald-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>
+                    className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${entryTray === t.code ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#111111] border-[#2a2418] text-[#6a5a3a]"}`}>
                     {t.code}
                   </button>
                 ))}
@@ -1546,9 +1546,9 @@ export default function ClonesTab() {
             <div className="text-xs text-[#6a5a3a] font-medium">Add Strain Code</div>
             <div className="flex gap-2">
               <input value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="Code"
-                className="w-20 bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-xs text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600" />
+                className="w-20 bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-xs text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500" />
               <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Strain name"
-                className="flex-1 bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-xs text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-emerald-600" />
+                className="flex-1 bg-[#1a1a1a] border border-[#2a2418] rounded-lg px-3 py-2 text-xs text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500" />
               <button onClick={handleAddStrain} className="bg-amber-600 active:bg-amber-700 text-[#f5f5f0] text-xs px-3 rounded-lg transition-colors">Add</button>
             </div>
             {strainError && <div className="text-red-400 text-xs">{strainError}</div>}
@@ -1557,7 +1557,7 @@ export default function ClonesTab() {
             <div className="px-4 py-2.5 bg-[#1a1a1a]/60 text-[10px] text-[#6a5a3a] uppercase tracking-wider grid grid-cols-3">
               <span>Code</span><span>Name</span><span />
             </div>
-            <div className="divide-y divide-zinc-800/60">
+            <div className="divide-y divide-[#2a2418]/60">
               {strains.map(s => {
                 const dotC = strainDefColorMap[s.name] || STRAIN_PALETTE[0];
                 return (
@@ -1594,7 +1594,7 @@ export default function ClonesTab() {
               ].map(([l, v, h]) => (
                 <div key={l} className="flex justify-between items-center">
                   <span className="text-xs text-[#6a5a3a]">{l}</span>
-                  <span className={`text-xs font-medium ${h ? "text-emerald-300" : "text-[#f5f5f0]"}`}>{v}</span>
+                  <span className={`text-xs font-medium ${h ? "text-amber-300" : "text-[#f5f5f0]"}`}>{v}</span>
                 </div>
               ))}
             </div>
@@ -1615,7 +1615,7 @@ export default function ClonesTab() {
               <div className="grid grid-cols-2 gap-2">
                 {["Cloned", "Transplanted"].map(s => (
                   <button key={s} onClick={() => setBulkStatus(s)}
-                    className={`py-2.5 rounded-xl text-xs font-medium border transition-colors ${bulkStatus === s ? "border-emerald-600 bg-emerald-900/40 text-emerald-300" : "border-[#2a2418] bg-[#1a1a1a] text-[#c5b08a]"}`}>{s}</button>
+                    className={`py-2.5 rounded-xl text-xs font-medium border transition-colors ${bulkStatus === s ? "border-amber-600 bg-[#2a1f00] text-amber-300" : "border-[#2a2418] bg-[#1a1a1a] text-[#c5b08a]"}`}>{s}</button>
                 ))}
               </div>
             </div>
@@ -1650,7 +1650,7 @@ export default function ClonesTab() {
               <div className="grid grid-cols-2 gap-2">
                 {["Cloned", "Transplanted"].map(s => (
                   <button key={s} onClick={() => { const u = { ...editPlant, status: s }; setEditPlant(u); updatePlant(editPlant.id, "status", s); }}
-                    className={`py-2 rounded-lg text-xs font-medium border transition-colors ${editPlant.status === s ? "border-emerald-600 bg-emerald-900/40 text-emerald-300" : "border-[#2a2418] bg-[#1a1a1a] text-[#c5b08a]"}`}>{s}</button>
+                    className={`py-2 rounded-lg text-xs font-medium border transition-colors ${editPlant.status === s ? "border-amber-600 bg-[#2a1f00] text-amber-300" : "border-[#2a2418] bg-[#1a1a1a] text-[#c5b08a]"}`}>{s}</button>
                 ))}
               </div>
             </div>
@@ -1668,7 +1668,7 @@ export default function ClonesTab() {
               <div className="flex gap-2">
                 {["Black Pot", "Green Pot"].map(pt => (
                   <button key={pt} onClick={() => { const u = { ...editPlant, pot: pt }; setEditPlant(u); updatePlant(editPlant.id, "pot", pt); }}
-                    className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${editPlant.pot === pt ? "bg-emerald-900/40 border-emerald-600 text-emerald-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#c5b08a]"}`}>{pt}</button>
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-colors ${editPlant.pot === pt ? "bg-[#2a1f00] border-amber-600 text-amber-300" : "bg-[#1a1a1a] border-[#2a2418] text-[#c5b08a]"}`}>{pt}</button>
                 ))}
               </div>
             </div>

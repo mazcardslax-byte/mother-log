@@ -233,7 +233,7 @@ function statusBadgeColor(status) {
 }
 
 function cardAccentColor(m) {
-  if (m.status === "Sidelined") return "border-l-zinc-700";
+  if (m.status === "Sidelined") return "border-l-[#2a2418]";
   if (m.healthLevel <= 2) return "border-l-red-500";
   if (m.healthLevel === 3) return "border-l-yellow-500";
   return "border-l-emerald-500";
@@ -1244,7 +1244,7 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
             className="flex-1 flex flex-col items-center justify-center gap-1 bg-amber-900 active:bg-amber-800 transition-colors"
           >
             <span className="text-base leading-none">✂️</span>
-            <span className="text-[11px] font-semibold text-emerald-300 leading-none">Clone</span>
+            <span className="text-[11px] font-semibold text-amber-300 leading-none">Clone</span>
           </button>
         )}
       </div>
@@ -1516,8 +1516,8 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                   </button>
                   {showClone && (
                     <button onClick={() => { setQuickLogSheet(null); handleOpenClone(quickLogSheet.motherId); }} className="flex flex-col items-center justify-center gap-2 py-4 rounded-xl bg-amber-900/60 border border-amber-800/50 active:bg-amber-800 transition-colors min-h-[72px]">
-                      <Scissors className="w-5 h-5 text-emerald-400" strokeWidth={2} />
-                      <span className="text-[10px] font-semibold text-emerald-300 leading-none">Clone Cut</span>
+                      <Scissors className="w-5 h-5 text-amber-400" strokeWidth={2} />
+                      <span className="text-[10px] font-semibold text-amber-300 leading-none">Clone Cut</span>
                     </button>
                   )}
                 </div>
@@ -1657,7 +1657,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
 
 // ── Room Tab ───────────────────────────────────────────────────────────────
 const BENCHES = [
-  { id: 1, label: "Bench 1", desc: "Mothers only", accent: "emerald", lower: true },
+  { id: 1, label: "Bench 1", desc: "Mothers only", accent: "amber", lower: true },
   { id: 2, label: "Bench 2", desc: "Mostly mothers", accent: "sky" },
   { id: 3, label: "Bench 3", desc: "Mostly upcoming", accent: "violet" },
   { id: 4, label: "Bench 4", desc: "Upcoming rounds", accent: "indigo" },
@@ -1762,7 +1762,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
   return (
     <Modal title={`Bench ${bench} · Spot ${spot}`} onClose={onClose}>
       {spotToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] bg-emerald-900 border border-emerald-700 text-emerald-100 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[60] bg-[#2a1f00] border border-[#3a2e00] text-amber-200 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
           {spotToast}
         </div>
       )}
@@ -1933,7 +1933,7 @@ function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMot
 
       {BENCHES.map(bench => {
         const accentMap = {
-          emerald: "text-emerald-400 border-emerald-800/40",
+          amber: "text-amber-400 border-amber-800/40",
           sky: "text-sky-400 border-sky-800/40",
           violet: "text-violet-400 border-violet-800/40",
           indigo: "text-indigo-400 border-indigo-800/40",
