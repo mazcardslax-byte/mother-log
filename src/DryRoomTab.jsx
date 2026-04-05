@@ -830,7 +830,7 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
               <button key={v} onClick={() => setMode(v)}
                 className={`flex-1 py-2 rounded-xl text-xs font-medium border transition-colors ${
                   mode === v
-                    ? "bg-emerald-900/60 text-emerald-300 border-emerald-700"
+                    ? "bg-[#2a1f00] text-amber-300 border-[#3a2e00]"
                     : "bg-[#111111] text-[#6a5a3a] border-[#2a2418] hover:border-[#2a2418]"
                 }`}>
                 {label}
