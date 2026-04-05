@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, memo, useCallback, useMemo, lazy, Suspense } from "react";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
+import { daysRemaining } from "./dry-room-utils";
 const ClonesTab  = lazy(() => import("./ClonesTab"));
 const StatsTab   = lazy(() => import("./StatsTab"));
 const DryRoomTab = lazy(() => import("./DryRoomTab"));
@@ -917,9 +918,30 @@ export default function MotherPlantTracker() {
 }
 
 // ── Summary Tab ────────────────────────────────────────────────────────────
+const DR_DEFAULT = { active: [], bins: [] };
+
 const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSelectMother, onWaterAll }) {
   const [strainExpanded, setStrainExpanded] = useState(false);
   const [waterToast, setWaterToast] = useState(false);
+
+  // ── Pipeline snapshot (dry room + clones) ──────────────────────────────
+  const [drData, setDrData] = useState(DR_DEFAULT);
+  const [clonePlants, setClonePlants] = useState([]);
+
+  useEffect(() => {
+    loadFromDB("dryroom").then(d => { if (d) setDrData({ ...DR_DEFAULT, ...d }); });
+    loadFromDB("clone_plants_v1").then(p => { if (p) setClonePlants(p); });
+    const unsubDr = subscribeToKey("dryroom", (d) => { if (d) setDrData({ ...DR_DEFAULT, ...d }); });
+    const unsubCl = subscribeToKey("clone_plants_v1", (p) => { if (p) setClonePlants(p); });
+    return () => { unsubDr.unsubscribe(); unsubCl.unsubscribe(); };
+  }, []);
+
+  const hangingCount  = drData.active.length;
+  const overdueCount  = drData.active.filter(b => daysRemaining(b.dateHung) <= 0).length;
+  const activeBins    = drData.bins.filter(b => !b.harvestId).length;
+  const propagating   = clonePlants.filter(p => !p.archived && p.status === "Cloned").length;
+  const rooted        = clonePlants.filter(p => !p.archived && p.status === "Transplanted").length;
+
   const todayDay = new Date().getDay(); // 0=Sun, 6=Sat
   const isSaturday = todayDay === 6;
 
@@ -981,6 +1003,41 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSele
         >
           Water All Moms ({active.length})
         </button>
+      )}
+
+      {(hangingCount > 0 || activeBins > 0 || propagating > 0 || rooted > 0) && (
+        <div>
+          <SectionLabel>Pipeline</SectionLabel>
+          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden divide-y divide-[#2a2418]">
+            {hangingCount > 0 && (
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-[#c5b08a]">Hanging</span>
+                <div className="flex items-center gap-2">
+                  {overdueCount > 0 && <span className="text-[10px] text-red-400 font-semibold">{overdueCount} overdue</span>}
+                  <span className="text-xs font-semibold text-[#f5f5f0]">{hangingCount} batch{hangingCount !== 1 ? "es" : ""}</span>
+                </div>
+              </div>
+            )}
+            {activeBins > 0 && (
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-[#c5b08a]">Curing / Burping</span>
+                <span className="text-xs font-semibold text-[#f5f5f0]">{activeBins} bin{activeBins !== 1 ? "s" : ""}</span>
+              </div>
+            )}
+            {propagating > 0 && (
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-[#c5b08a]">Propagating</span>
+                <span className="text-xs font-semibold text-[#f5f5f0]">{propagating} plant{propagating !== 1 ? "s" : ""}</span>
+              </div>
+            )}
+            {rooted > 0 && (
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-xs text-[#c5b08a]">Rooted / Ready</span>
+                <span className="text-xs font-semibold text-emerald-400">{rooted} plant{rooted !== 1 ? "s" : ""}</span>
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {byHealth.length > 0 && (
