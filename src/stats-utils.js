@@ -111,6 +111,46 @@ export function calcStrainComparison(mothers, getStrain) {
 }
 
 /**
+ * Aggregate clone survival rates from completed trays only.
+ * Only trays with status "Done", a known count, and a survived value are included.
+ *
+ * @param {Array} trays  Array of tray objects from clone_trays_v1
+ * @returns {{ overall: { count, survived, rate }, byStrain: Array }}
+ */
+export function calcTrayRates(trays) {
+  const strainMap = {};
+
+  for (const t of trays) {
+    if (t.status !== "Done" || t.survived == null || t.count == null) continue;
+    const key = t.strainCode ?? t.strainName ?? "unknown";
+    if (!strainMap[key]) {
+      strainMap[key] = { strainCode: key, strainName: t.strainName ?? key, count: 0, survived: 0 };
+    }
+    strainMap[key].count += t.count;
+    strainMap[key].survived += t.survived;
+  }
+
+  const byStrain = Object.values(strainMap).map(s => ({
+    ...s,
+    rate: s.count > 0 ? Math.round((s.survived / s.count) * 1000) / 10 : 0,
+  })).sort((a, b) => b.rate - a.rate);
+
+  const overall = byStrain.reduce(
+    (acc, s) => ({ count: acc.count + s.count, survived: acc.survived + s.survived }),
+    { count: 0, survived: 0 }
+  );
+
+  return {
+    overall: {
+      count: overall.count,
+      survived: overall.survived,
+      rate: overall.count > 0 ? Math.round((overall.survived / overall.count) * 1000) / 10 : 0,
+    },
+    byStrain,
+  };
+}
+
+/**
  * Return active mothers sorted by days since last feeding (most neglected first).
  * @param {Array} mothers
  * @param {Function} getStrain

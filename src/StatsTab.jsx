@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { calcCloneRates, calcStrainComparison, calcCareGaps } from "./stats-utils";
+import { useMemo, useState, useEffect } from "react";
+import { loadFromDB } from "./supabase";
+import { calcTrayRates, calcStrainComparison, calcCareGaps } from "./stats-utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -39,11 +40,14 @@ function SectionLabel({ children }) {
 
 // ─── Section A: Clone Rooting Rates ──────────────────────────────────────────
 
-function CloneRatesSection({ mothers, getStrain }) {
-  const { overall, byStrain } = useMemo(
-    () => calcCloneRates(mothers, getStrain),
-    [mothers, getStrain]
-  );
+function CloneRatesSection() {
+  const [trays, setTrays] = useState([]);
+
+  useEffect(() => {
+    loadFromDB("clone_trays_v1").then(data => { if (data) setTrays(data); });
+  }, []);
+
+  const { overall, byStrain } = useMemo(() => calcTrayRates(trays), [trays]);
 
   return (
     <div className="mb-7">
@@ -52,9 +56,9 @@ function CloneRatesSection({ mothers, getStrain }) {
       {/* Summary row */}
       <div className="flex gap-2 mb-4">
         {[
-          { label: "Overall", value: overall.taken === 0 ? "—" : `${overall.rate}%`, style: { color: overall.taken === 0 ? "#71717a" : rateColor(overall.rate) } },
-          { label: "Total cuts", value: overall.taken, style: { color: "#e4e4e7" } },
-          { label: "Rooted", value: overall.rooted, style: { color: "#e4e4e7" } },
+          { label: "Overall", value: overall.count === 0 ? "—" : `${overall.rate}%`, style: { color: overall.count === 0 ? "#71717a" : rateColor(overall.rate) } },
+          { label: "Total in trays", value: overall.count === 0 ? "—" : overall.count, style: { color: "#e4e4e7" } },
+          { label: "Survived", value: overall.count === 0 ? "—" : overall.survived, style: { color: "#e4e4e7" } },
         ].map(({ label, value, style }) => (
           <div key={label} className="flex-1 bg-[#111111] border border-[#2a2418] rounded-xl p-3 text-center">
             <div className="text-xl font-bold" style={style}>{value}</div>
@@ -188,16 +192,33 @@ function HealthTrendsSection({ mothers, getStrain }) {
 
 function StrainComparisonSection({ mothers, getStrain }) {
   const [sortKey, setSortKey] = useState("avgHealth");
+  const [trays, setTrays] = useState([]);
+
+  useEffect(() => {
+    loadFromDB("clone_trays_v1").then(data => { if (data) setTrays(data); });
+  }, []);
+
+  const trayRateMap = useMemo(() => {
+    const { byStrain } = calcTrayRates(trays);
+    return Object.fromEntries(byStrain.map(s => [s.strainCode, s]));
+  }, [trays]);
 
   const rows = useMemo(() => {
-    const data = calcStrainComparison(mothers, getStrain);
+    const data = calcStrainComparison(mothers, getStrain).map(row => {
+      const trayData = trayRateMap[row.strainCode];
+      return {
+        ...row,
+        totalClones: trayData ? trayData.count : row.totalClones,
+        rootingRate: trayData ? trayData.rate : -1,
+      };
+    });
     return [...data].sort((a, b) => b[sortKey] - a[sortKey]);
-  }, [mothers, getStrain, sortKey]);
+  }, [mothers, getStrain, sortKey, trayRateMap]);
 
   const headers = [
     { key: "avgHealth", label: "Health" },
     { key: "totalClones", label: "Clones" },
-    { key: "rootingRate", label: "Root%" },
+    { key: "rootingRate", label: "Surv%" },
   ];
 
   return (
@@ -235,8 +256,8 @@ function StrainComparisonSection({ mothers, getStrain }) {
                 {row.avgHealth.toFixed(1)}
               </div>
               <div className="text-sm text-[#c5b08a] text-center">{row.totalClones}</div>
-              <div className="text-sm font-bold text-center" style={{ color: rateColor(row.rootingRate) }}>
-                {row.rootingRate > 0 ? `${row.rootingRate}%` : "—"}
+              <div className="text-sm font-bold text-center" style={{ color: row.rootingRate >= 0 ? rateColor(row.rootingRate) : "#71717a" }}>
+                {row.rootingRate >= 0 ? `${row.rootingRate}%` : "—"}
               </div>
             </div>
           ))}
@@ -291,7 +312,7 @@ function CareGapsSection({ mothers, getStrain }) {
 export default function StatsTab({ mothers, getStrain }) {
   return (
     <div className="px-4 py-4 pb-8 overflow-y-auto flex-1">
-      <CloneRatesSection mothers={mothers} getStrain={getStrain} />
+      <CloneRatesSection />
       <HealthTrendsSection mothers={mothers} getStrain={getStrain} />
       <StrainComparisonSection mothers={mothers} getStrain={getStrain} />
       <CareGapsSection mothers={mothers} getStrain={getStrain} />
