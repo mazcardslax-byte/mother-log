@@ -592,6 +592,7 @@ function ArchivePanel({ archive }) {
 
 function BurpDots({ fillDate, burps }) {
   const todayStr = today();
+  if (!fillDate) return null;
 
   return (
     <div className="flex gap-0.5 mt-1.5">
@@ -621,7 +622,7 @@ function BinCard({ bin, onBurp, onSend }) {
   const t = today();
   const alreadyBurpedToday = bin.burps.includes(t);
 
-  const missed = status === "burping" && (() => {
+  const missed = status === "burping" && !!bin.fillDate && (() => {
     const daysCured = getDaysCured(bin);
     for (let i = 1; i < daysCured; i++) {
       const d = new Date(bin.fillDate + "T00:00:00Z");
@@ -659,7 +660,8 @@ function BinCard({ bin, onBurp, onSend }) {
       </div>
 
       <div className="text-[#6a5a3a] text-[10px] mt-2">
-        Filled {fmtDate(bin.fillDate)} · {days}d cured
+        {bin.dateHung && <span>Hung {fmtDate(bin.dateHung)} · </span>}
+        {bin.fillDate ? <>Filled {fmtDate(bin.fillDate)} · {days}d cured</> : <span className="text-[#4a3a22]">No fill date · {days}d cured</span>}
       </div>
 
       {status === "burping" && (
@@ -709,7 +711,7 @@ function AddBinModal({ archive, onClose, onSave }) {
   const [saDateHung, setSaDateHung] = useState("");
   // shared
   const [size, setSize] = useState("full");
-  const [fillDate, setFillDate] = useState(today());
+  const [fillDate, setFillDate] = useState("");
 
   const selectedRack = archive.find(r => r.id === selectedRackId);
   const canSave = mode === "rack" ? !!selectedRack : !!saStrain;
@@ -721,7 +723,7 @@ function AddBinModal({ archive, onClose, onSave }) {
         strainCode: selectedRack.strainCode,
         quality: selectedRack.quality,
         dateHung: selectedRack.dateHung,
-        fillDate,
+        fillDate: fillDate || null,
         size,
       });
     } else {
@@ -729,7 +731,7 @@ function AddBinModal({ archive, onClose, onSave }) {
         strainCode: saStrain,
         quality: saQuality,
         dateHung: saDateHung || null,
-        fillDate,
+        fillDate: fillDate || null,
         size,
       });
     }
@@ -837,7 +839,7 @@ function AddBinModal({ archive, onClose, onSave }) {
         </div>
 
         <div>
-          <label className="text-xs text-[#c5b08a] mb-1 block">Fill Date</label>
+          <label className="text-xs text-[#c5b08a] mb-1 block">Fill Date <span className="text-[#6a5a3a]">(optional)</span></label>
           <input type="date" value={fillDate} onChange={e => setFillDate(e.target.value)}
             className="w-full bg-[#1a1a1a] border border-[#2a2418] rounded-xl px-3 py-2.5 text-sm text-[#f5f5f0] focus:outline-none focus:border-amber-500" />
         </div>
@@ -888,7 +890,7 @@ function SendDownstairsModal({ bin, harvests, onClose, onSend }) {
         </div>
 
         <div className="text-[#6a5a3a] text-xs">
-          {getStrainName(bin.strainCode)} · {bin.quality} · filled {fmtDate(bin.fillDate)}
+          {getStrainName(bin.strainCode)} · {bin.quality}{bin.dateHung ? ` · hung ${fmtDate(bin.dateHung)}` : ""}{bin.fillDate ? ` · filled ${fmtDate(bin.fillDate)}` : ""}
         </div>
 
         {harvests.length > 0 && (
@@ -991,7 +993,8 @@ function HarvestCard({ harvest, bins }) {
               <div className="flex-1 min-w-0">
                 <div className="text-[#f5f5f0] text-xs font-medium truncate">{getStrainName(b.strainCode)}</div>
                 <div className="text-[#6a5a3a] text-[10px] mt-0.5">
-                  Filled {fmtDate(b.fillDate)} · {getDaysCured(b)}d cured · {b.size === "half" ? "Half" : "Full"} tote
+                  {b.dateHung && <span>Hung {fmtDate(b.dateHung)} · </span>}
+                  {b.fillDate ? `Filled ${fmtDate(b.fillDate)} · ` : ""}{getDaysCured(b)}d cured · {b.size === "half" ? "Half" : "Full"} tote
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
