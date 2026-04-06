@@ -1163,6 +1163,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
   const [collapsed, setCollapsed] = useState(new Set());
   const [waterAllSheet, setWaterAllSheet] = useState(false);
   const [toast, setToast] = useState(null);
+  const [quickLogSheet, setQuickLogSheet] = useState(null); // null | { motherId }
 
   const filtered = useMemo(() => mothers
     .filter(m => {
@@ -1331,6 +1332,65 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
           </div>
         </div>
       )}
+
+      {/* Quick-log hub sheet — tap a card to open */}
+      {quickLogSheet && (() => {
+        const m = mothers.find(mo => mo.id === quickLogSheet.motherId);
+        if (!m) return null;
+        const s = getStrain(m.strainCode);
+        const isSidelined = m.status === "Sidelined";
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
+            onClick={e => { if (e.target === e.currentTarget) setQuickLogSheet(null); }}>
+            <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+              <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
+              <div className="px-5 pb-6 pt-2 space-y-4">
+                <div>
+                  <div className="text-sm font-bold text-[#f5f5f0]">{s.code} — {s.name}</div>
+                  {m.location && <div className="text-[10px] text-[#6a5a3a] mt-0.5">{m.location}</div>}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => { onQuickWater(m.id); setQuickLogSheet(null); showToast("Watered"); }}
+                    className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-sky-900/50 border border-sky-800/40 active:bg-sky-800/60 transition-colors min-h-[80px]"
+                  >
+                    <span className="text-xl leading-none">💧</span>
+                    <span className="text-xs font-semibold text-sky-300">Water</span>
+                  </button>
+                  <button
+                    onClick={() => { setQuickLogSheet(null); handleOpenAmend(m.id); }}
+                    className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-violet-900/50 border border-violet-800/40 active:bg-violet-800/60 transition-colors min-h-[80px]"
+                  >
+                    <span className="text-xl leading-none">🌿</span>
+                    <span className="text-xs font-semibold text-violet-300">Amendment</span>
+                  </button>
+                  <button
+                    disabled={isSidelined}
+                    onClick={() => { setQuickLogSheet(null); handleOpenClone(m.id); }}
+                    className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-amber-900/50 border border-amber-800/40 active:bg-amber-800/60 disabled:opacity-40 transition-colors min-h-[80px]"
+                  >
+                    <span className="text-xl leading-none">✂️</span>
+                    <span className="text-xs font-semibold text-amber-300">Clone Cut</span>
+                  </button>
+                  <button
+                    onClick={() => { setQuickLogSheet(null); handleOpenReduction(m.id); }}
+                    className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-red-900/50 border border-red-800/40 active:bg-red-800/60 transition-colors min-h-[80px]"
+                  >
+                    <span className="text-xl leading-none">−</span>
+                    <span className="text-xs font-semibold text-red-300">Reduction</span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => { setQuickLogSheet(null); onSelectMother(m); }}
+                  className="w-full py-3 rounded-2xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold active:bg-[#1a1a1a] active:text-[#f5f5f0] transition-colors min-h-[44px]"
+                >
+                  View Details →
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Quick-log bottom sheets */}
       {quickSheet?.type === "amend" && (
