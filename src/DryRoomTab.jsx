@@ -1,5 +1,5 @@
 // src/DryRoomTab.jsx
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import Wifi from "lucide-react/dist/esm/icons/wifi";
 import WifiOff from "lucide-react/dist/esm/icons/wifi-off";
@@ -1017,8 +1017,8 @@ function BinsPanel({ data, persist }) {
   const harvests = data.harvests ?? [];
   const rackArchive = data.archive ?? [];
 
-  const activeBins = bins.filter(b => !b.harvestId);
-  const archivedBins = bins.filter(b => b.harvestId);
+  const activeBins = useMemo(() => bins.filter(b => !b.harvestId), [bins]);
+  const archivedBins = useMemo(() => bins.filter(b => b.harvestId), [bins]);
 
   const emptyBinTiers = new Set(
     QUALITY_ORDER.filter(q => !activeBins.some(b => b.quality === q))
