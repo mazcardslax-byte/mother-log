@@ -876,7 +876,7 @@ export default function ClonesTab() {
     const archiveIds = new Set(loggedInTray.slice(toTransplantCount).map(p => p.id));
 
     // Create new plant records for survivors beyond what was individually logged
-    const newPlants = survivedCount > loggedInTray.length
+    const newSurvivorPlants = survivedCount > loggedInTray.length
       ? Array.from({ length: survivedCount - loggedInTray.length }, () => ({
           id: uid(),
           strainCode: tray?.strainCode || "",
@@ -893,13 +893,37 @@ export default function ClonesTab() {
         }))
       : [];
 
+    // Create archived records for non-survivors not already in the system,
+    // so survivalByStrain uses tray.count as the true denominator
+    const trayTotal = tray?.count ?? null;
+    const extraNonSurvived = trayTotal != null
+      ? Math.max(0, (trayTotal - survivedCount) - archiveIds.size)
+      : 0;
+    const newNonSurvivorPlants = extraNonSurvived > 0
+      ? Array.from({ length: extraNonSurvived }, () => ({
+          id: uid(),
+          strainCode: tray?.strainCode || "",
+          strainName: tray?.strainName || "",
+          dateCloned: tray?.dateStarted || null,
+          dateTransplanted: null,
+          pot: "Black Pot",
+          round: round || "Next",
+          status: "Cloned",
+          notes: "",
+          batchNote: `Did not survive — tray ${trayCode}`,
+          tray: trayCode,
+          archived: true,
+        }))
+      : [];
+
     savePlants([
       ...plants.map(p => {
         if (transplantIds.has(p.id)) return { ...p, status: "Transplanted", dateTransplanted: date };
         if (archiveIds.has(p.id)) return { ...p, archived: true };
         return p;
       }),
-      ...newPlants,
+      ...newSurvivorPlants,
+      ...newNonSurvivorPlants,
     ]);
     saveTrays(trays.map(t => t.code === trayCode ? { ...t, status: "Done", survived: survivedCount } : t));
   }
