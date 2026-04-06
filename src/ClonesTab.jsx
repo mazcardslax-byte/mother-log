@@ -993,7 +993,10 @@ export default function ClonesTab() {
     [trays]
   );
 
+  // Only count plants that originated from a tray transplant (p.tray is set).
+  // Individually-logged plants don't have meaningful survival data.
   const survivalByStrain = useMemo(() => plants.reduce((acc, p) => {
+    if (!p.tray) return acc;
     const n = p.strainName;
     if (!acc[n]) acc[n] = { transplanted: 0, total: 0 };
     if (p.status === "Transplanted") acc[n].transplanted++;
