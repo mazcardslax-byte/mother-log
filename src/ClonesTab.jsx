@@ -1,12 +1,20 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
+import { Badge, Modal, StatBox } from "./shared";
+import {
+  uid, today, fmtDate, daysSince,
+  TESTER_CODES, STATUS_COLORS, ROUND_COLORS, STATUSES,
+  STRAIN_PALETTE, CLONE_SUB_TABS, TRAY_ALERT_DAYS,
+  resolveCode, parseSmartEntry, autoTrayCode, getAlertTrays,
+  calcSurvivalByStrain, buildTransplantPipeline, filterAndGroupPlants,
+  buildStrainColorMap, applyTrayTransplant, searchPlants, groupByStrain,
+} from "./clones-utils";
 import Wifi from "lucide-react/dist/esm/icons/wifi";
 import WifiOff from "lucide-react/dist/esm/icons/wifi-off";
 import Loader2 from "lucide-react/dist/esm/icons/loader-2";
 import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import Search from "lucide-react/dist/esm/icons/search";
 import Download from "lucide-react/dist/esm/icons/download";
-import X from "lucide-react/dist/esm/icons/x";
 
 // ── Storage (localStorage cache) ─────────────────────────────────────────────
 function load(key) {
@@ -18,7 +26,7 @@ function save(key, data) {
 
 function normTs(ts) { try { return ts ? new Date(ts).toISOString() : null; } catch { return ts; } }
 
-// ── Strains ──────────────────────────────────────────────────────────────────
+// ── Default strains (used as initial state before DB load) ───────────────────
 const DEFAULT_STRAINS = [
   { code: "2000", name: "Electric PB Cookie #33" },
   { code: "2001", name: "Burn Out #33" },
@@ -42,128 +50,9 @@ const DEFAULT_STRAINS = [
   { code: "2023", name: "Papaya Runtz" },
   { code: "2024", name: "Chocolate Rolex" },
 ];
-const TESTER_CODES = ["2020", "2021", "2022", "2023", "2024"];
 
-function resolveCode(input, strains) {
-  const clean = input.toLowerCase().trim();
-  const exact = strains.find(s => s.code.toLowerCase() === clean);
-  if (exact) return { strain: exact, suffix: "" };
-  const match = clean.match(/^(\d+)([a-z]+)$/);
-  if (match && TESTER_CODES.includes(match[1])) {
-    const base = strains.find(s => s.code === match[1]);
-    if (base) return { strain: base, suffix: match[2].toUpperCase() };
-  }
-  return null;
-}
-
-// ── Parser ───────────────────────────────────────────────────────────────────
-const MONTH_MAP = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
-  january: 0, february: 1, march: 2, april: 3, june: 5, july: 6, august: 7,
-  september: 8, october: 9, november: 10, december: 11,
-};
-
-function parseSmartEntry(raw, strains) {
-  const tokens = raw.toLowerCase().trim().split(/[\s,]+/);
-  let qty = null, codeRaw = null, month = null, day = null, year = new Date().getFullYear();
-  for (const t of tokens) {
-    if (!codeRaw && resolveCode(t, strains)) { codeRaw = t; continue; }
-    if (!qty && /^\d+$/.test(t) && parseInt(t) > 0 && parseInt(t) <= 1900) { qty = parseInt(t); continue; }
-    if (/^\d{4}$/.test(t) && parseInt(t) > 1900) { year = parseInt(t); continue; }
-    if (MONTH_MAP[t] !== undefined && month === null) { month = MONTH_MAP[t]; continue; }
-    if (month !== null && day === null && /^\d{1,2}(st|nd|rd|th)?$/.test(t)) { day = parseInt(t); continue; }
-  }
-  if (month === null) {
-    for (const t of tokens) {
-      const slash = t.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
-      if (slash) {
-        const m = parseInt(slash[1]) - 1, d = parseInt(slash[2]);
-        if (m >= 0 && m <= 11 && d >= 1 && d <= 31) {
-          month = m; day = d;
-          if (slash[3]) { const y = parseInt(slash[3]); year = y < 100 ? 2000 + y : y; }
-          break;
-        }
-      }
-    }
-  }
-  const resolved = codeRaw ? resolveCode(codeRaw, strains) : null;
-  const dateStr = (month !== null && day !== null)
-    ? new Date(year, month, day).toISOString().split("T")[0]
-    : null;
-  return { qty, resolved, dateStr };
-}
-
-// ── Utilities ────────────────────────────────────────────────────────────────
-function fmtDate(d) {
-  if (!d) return "—";
-  const [y, m, day] = d.split("-");
-  return `${parseInt(m)}/${parseInt(day)}/${y}`;
-}
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-function today() { return new Date().toISOString().split("T")[0]; }
-function daysSince(dateStr) {
-  if (!dateStr) return null;
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const local = new Date(y, m - 1, d);
-  return Math.max(0, Math.floor((Date.now() - local.getTime()) / 86400000));
-}
-
-// ── Constants ────────────────────────────────────────────────────────────────
-const TRAY_ALERT_DAYS = 14;
-const STATUS_COLORS = {
-  "Cloned":       "bg-emerald-900/50 text-emerald-300 border-emerald-700/40",
-  "Transplanted": "bg-sky-900/50 text-sky-300 border-sky-700/40",
-};
-const ROUND_COLORS = {
-  "Upcoming": "bg-teal-900/50 text-teal-300 border-teal-700/40",
-  "Next":     "bg-orange-900/50 text-orange-300 border-orange-700/40",
-  "Archived": "bg-[#1a1a1a] text-[#6a5a3a] border-[#2a2418]",
-};
-const STATUSES = ["Cloned", "Transplanted"];
-const STRAIN_PALETTE = [
-  "#34d399", "#60a5fa", "#f472b6", "#fb923c", "#a78bfa",
-  "#facc15", "#2dd4bf", "#f87171", "#818cf8", "#4ade80",
-  "#e879f9", "#38bdf8",
-];
-
-const CLONE_SUB_TABS = ["Summary", "Log", "Add Entry", "Trays", "Strains"];
-
-// ── Shared UI ────────────────────────────────────────────────────────────────
-function Badge({ label, colorClass }) {
-  return <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${colorClass}`}>{label}</span>;
-}
-
-function Modal({ title, onClose, children }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#0f0f0f] border border-[#2a2418]/50 rounded-t-3xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-[#2a2418]" />
-        </div>
-        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0">
-          <span className="text-[#f5f5f0] font-semibold text-sm">{title}</span>
-          <button onClick={onClose} aria-label="Close"
-            className="text-[#6a5a3a] hover:text-[#f5f5f0] w-11 h-11 flex items-center justify-center rounded-full hover:bg-[#222] transition-colors">
-            <X size={16} />
-          </button>
-        </div>
-        <div className="px-5 pb-8 overflow-y-auto">{children}</div>
-      </div>
-    </div>
-  );
-}
-
-function StatBox({ label, value, color, sub }) {
-  const c = { green: "text-amber-400", sky: "text-sky-400" };
-  return (
-    <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-3 text-center">
-      <div className={`text-2xl font-bold ${c[color] || "text-[#f5f5f0]"}`}>{value}</div>
-      <div className="text-[10px] text-[#6a5a3a] mt-0.5">{label}</div>
-      {sub && <div className="text-[10px] text-[#6a5a3a] mt-0.5">{sub}</div>}
-    </div>
-  );
-}
+// Badge, Modal imported from ./shared
+// StatBox imported from ./shared (colorClass prop — see usages below)
 
 function RoundPanel({ title, plants, colorClass }) {
   const grouped = plants.reduce((a, p) => { a[p.strainName] = (a[p.strainName] || 0) + 1; return a; }, {});
@@ -414,11 +303,7 @@ function TrayManager({ trays, saveTrays, strains, plants, onTransplantTray, aler
     });
   }
 
-  function autoCode() {
-    if (!strainCode) return "";
-    const n = trays.filter(t => t.strainCode === strainCode).length + 1;
-    return `${strainCode}-T${n}`;
-  }
+  function autoCode() { return autoTrayCode(trays, strainCode); }
 
   function handleAdd() {
     if (!code.trim()) { setError("Tray code required."); return; }
@@ -868,64 +753,9 @@ export default function ClonesTab() {
   }
 
   function transplantTray(trayCode, date, survived, round) {
-    const tray = trays.find(t => t.code === trayCode);
-    const loggedInTray = plants.filter(p => p.tray === trayCode && p.status === "Cloned" && !p.archived);
-    const survivedCount = survived != null ? survived : loggedInTray.length;
-    const toTransplantCount = Math.min(survivedCount, loggedInTray.length);
-    const transplantIds = new Set(loggedInTray.slice(0, toTransplantCount).map(p => p.id));
-    const archiveIds = new Set(loggedInTray.slice(toTransplantCount).map(p => p.id));
-
-    // Create new plant records for survivors beyond what was individually logged
-    const newSurvivorPlants = survivedCount > loggedInTray.length
-      ? Array.from({ length: survivedCount - loggedInTray.length }, () => ({
-          id: uid(),
-          strainCode: tray?.strainCode || "",
-          strainName: tray?.strainName || "",
-          dateCloned: tray?.dateStarted || null,
-          dateTransplanted: date,
-          pot: "Black Pot",
-          round: round || "Next",
-          status: "Transplanted",
-          notes: "",
-          batchNote: `Transplanted from tray ${trayCode}`,
-          tray: trayCode,
-          archived: false,
-        }))
-      : [];
-
-    // Create archived records for non-survivors not already in the system,
-    // so survivalByStrain uses tray.count as the true denominator
-    const trayTotal = tray?.count ?? null;
-    const extraNonSurvived = trayTotal != null
-      ? Math.max(0, (trayTotal - survivedCount) - archiveIds.size)
-      : 0;
-    const newNonSurvivorPlants = extraNonSurvived > 0
-      ? Array.from({ length: extraNonSurvived }, () => ({
-          id: uid(),
-          strainCode: tray?.strainCode || "",
-          strainName: tray?.strainName || "",
-          dateCloned: tray?.dateStarted || null,
-          dateTransplanted: null,
-          pot: "Black Pot",
-          round: round || "Next",
-          status: "Cloned",
-          notes: "",
-          batchNote: `Did not survive — tray ${trayCode}`,
-          tray: trayCode,
-          archived: true,
-        }))
-      : [];
-
-    savePlants([
-      ...plants.map(p => {
-        if (transplantIds.has(p.id)) return { ...p, status: "Transplanted", dateTransplanted: date };
-        if (archiveIds.has(p.id)) return { ...p, archived: true };
-        return p;
-      }),
-      ...newSurvivorPlants,
-      ...newNonSurvivorPlants,
-    ]);
-    saveTrays(trays.map(t => t.code === trayCode ? { ...t, status: "Done", survived: survivedCount } : t));
+    const { nextPlants, nextTrays } = applyTrayTransplant(plants, trays, trayCode, date, survived, round);
+    savePlants(nextPlants);
+    saveTrays(nextTrays);
   }
 
   function cloneBatch(strainName, round) {
@@ -988,40 +818,21 @@ export default function ClonesTab() {
   const upcoming = useMemo(() => active.filter(p => p.round === "Upcoming"), [active]);
   const next = useMemo(() => active.filter(p => p.round === "Next"), [active]);
 
-  const alertTrays = useMemo(
-    () => trays.filter(t => t.status === "Active" && daysSince(t.dateStarted) >= TRAY_ALERT_DAYS),
-    [trays]
-  );
+  const alertTrays = useMemo(() => getAlertTrays(trays), [trays]);
 
   // Only count plants that originated from a tray transplant (p.tray is set).
   // Individually-logged plants don't have meaningful survival data.
-  const survivalByStrain = useMemo(() => plants.reduce((acc, p) => {
-    if (!p.tray) return acc;
-    const n = p.strainName;
-    if (!acc[n]) acc[n] = { transplanted: 0, total: 0 };
-    if (p.status === "Transplanted") acc[n].transplanted++;
-    acc[n].total++;
-    return acc;
-  }, {}), [plants]);
+  const survivalByStrain = useMemo(() => calcSurvivalByStrain(plants), [plants]);
 
-  const { displayPlants, grouped } = useMemo(() => {
-    const displayPlants = [], grouped = {};
-    for (const p of plants) {
-      if (showArchived ? !p.archived : p.archived) continue;
-      if (filterStrain !== "All" && p.strainName !== filterStrain) continue;
-      if (filterRound !== "All" && p.round !== filterRound) continue;
-      if (filterStatus !== "All" && p.status !== filterStatus) continue;
-      displayPlants.push(p);
-      if (!grouped[p.strainName]) grouped[p.strainName] = [];
-      grouped[p.strainName].push(p);
-    }
-    return { displayPlants, grouped };
-  }, [plants, showArchived, filterStrain, filterRound, filterStatus]);
+  const { displayPlants, grouped } = useMemo(
+    () => filterAndGroupPlants(plants, { showArchived, filterStrain, filterRound, filterStatus }),
+    [plants, showArchived, filterStrain, filterRound, filterStatus]
+  );
 
   const usedNames = useMemo(() => [...new Set(plants.map(p => p.strainName))].sort(), [plants]);
-  const strainColorMap = useMemo(() => Object.fromEntries(usedNames.map((n, i) => [n, STRAIN_PALETTE[i % STRAIN_PALETTE.length]])), [usedNames]);
+  const strainColorMap = useMemo(() => buildStrainColorMap(usedNames), [usedNames]);
   const allStrainNames = useMemo(() => strains.map(s => s.name).sort(), [strains]);
-  const strainDefColorMap = useMemo(() => Object.fromEntries(allStrainNames.map((n, i) => [n, STRAIN_PALETTE[i % STRAIN_PALETTE.length]])), [allStrainNames]);
+  const strainDefColorMap = useMemo(() => buildStrainColorMap(allStrainNames), [allStrainNames]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   if (loading) return (
@@ -1070,14 +881,8 @@ export default function ClonesTab() {
             placeholder="Search strain, tray, status, note…"
             className="w-full bg-[#111111] border border-[#2a2418] rounded-xl px-4 py-2.5 text-sm text-[#f5f5f0] placeholder-[#6a5a3a] focus:outline-none focus:border-amber-500 transition-colors" />
           {searchQuery.trim() && (() => {
-            const q = searchQuery.toLowerCase();
-            const results = plants.filter(p =>
-              p.strainName?.toLowerCase().includes(q) || p.strainCode?.toLowerCase().includes(q) ||
-              p.status?.toLowerCase().includes(q) || p.tray?.toLowerCase().includes(q) ||
-              p.notes?.toLowerCase().includes(q) || p.batchNote?.toLowerCase().includes(q) ||
-              p.round?.toLowerCase().includes(q)
-            );
-            const grp = results.reduce((acc, p) => { if (!acc[p.strainName]) acc[p.strainName] = []; acc[p.strainName].push(p); return acc; }, {});
+            const results = searchPlants(plants, searchQuery);
+            const grp = groupByStrain(results);
             return (
               <div className="mt-2 space-y-2 max-h-80 overflow-y-auto">
                 {results.length === 0
@@ -1155,8 +960,8 @@ export default function ClonesTab() {
           <div>
             <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">All Active</div>
             <div className="grid grid-cols-2 gap-2">
-              <StatBox label="Cloned / In Tray" value={active.filter(p => p.status === "Cloned").length} color="green" />
-              <StatBox label="Transplanted" value={active.filter(p => p.status === "Transplanted").length} color="sky" />
+              <StatBox label="Cloned / In Tray" value={active.filter(p => p.status === "Cloned").length} colorClass="text-amber-400" />
+              <StatBox label="Transplanted" value={active.filter(p => p.status === "Transplanted").length} colorClass="text-sky-400" />
             </div>
           </div>
 
@@ -1173,23 +978,7 @@ export default function ClonesTab() {
           <div>
             <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">Transplant Pipeline</div>
             {(() => {
-              const trayTotals = trays.filter(t => t.status === "Active").reduce((a, t) => {
-                if (!t.strainName) return a;
-                if (!a[t.strainName]) a[t.strainName] = { trayCount: 0 };
-                a[t.strainName].trayCount += (t.count || 0);
-                return a;
-              }, {});
-              const loggedTotals = active.filter(p => p.status === "Cloned").reduce((a, p) => {
-                if (!a[p.strainName]) a[p.strainName] = { loggedCount: 0 };
-                a[p.strainName].loggedCount++;
-                return a;
-              }, {});
-              const allStrains = new Set([...Object.keys(trayTotals), ...Object.keys(loggedTotals)]);
-              const rows = [...allStrains].sort().map(name => ({
-                name,
-                trayCount: trayTotals[name]?.trayCount || 0,
-                loggedCount: loggedTotals[name]?.loggedCount || 0,
-              }));
+              const rows = buildTransplantPipeline(trays, active);
               if (rows.length === 0) return (
                 <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-4 text-xs text-[#6a5a3a] text-center">No active trays or clones in pipeline</div>
               );
