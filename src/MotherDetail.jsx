@@ -1,9 +1,9 @@
 import { useState, useMemo, useRef, memo } from "react";
 import {
   getStrain, currentContainer, currentTransplantDate, daysSince, daysInVeg,
-  today, fmtDate, uid, lastFeedingDate,
+  today, fmtDate, uid,
   healthColor, healthBg, healthLabel, statusBadgeColor, vegDaysColor,
-  CONTAINERS, COMMON_AMENDMENTS, FEEDING_TYPES, DETAIL_TABS, TYPE_META, MOTHER_STATUSES,
+  CONTAINERS, COMMON_AMENDMENTS, DETAIL_TABS, TYPE_META, MOTHER_STATUSES,
   inputCls, selectCls, btnPrimary, btnSecondary,
   Badge, Modal, StatBox, SectionLabel, FormField, HealthDots, ContainerBadge,
   compressImage,
@@ -308,7 +308,6 @@ const MotherDetailModal = memo(function MotherDetailModal({
   onAddTransplant, onRemoveTransplant,
   onAddAmendment, onRemoveAmendment,
   onAddCloneEntry, onRemoveCloneEntry,
-  onAddFeedingEntry, onRemoveFeedingEntry,
   onAddReductionEntry, onRemoveReductionEntry,
   onAddPhoto, onRemovePhoto,
   onUpdateCloneOutcome,
@@ -336,19 +335,12 @@ const MotherDetailModal = memo(function MotherDetailModal({
   const [amendSearch, setAmendSearch] = useState("");
   const [showCloneModal, setShowCloneModal] = useState(false);
   const [cloneForm, setCloneForm] = useState({ date: today(), count: "", notes: "" });
-  const [showFeedingModal, setShowFeedingModal] = useState(false);
-  const [feedingForm, setFeedingForm] = useState({ date: today(), type: "Water Only", notes: "" });
   const [showReductionModal, setShowReductionModal] = useState(false);
   const [reductionForm, setReductionForm] = useState({ date: today(), reason: "Space", notes: "" });
-
-  const feedingLog = mother.feedingLog || [];
-  const lastFed = lastFeedingDate(feedingLog);
-  const daysSinceFed = daysSince(lastFed);
 
   const timeline = useMemo(() => [
     ...[...mother.transplantHistory].map(e => ({ ...e, _type: "transplant" })),
     ...(mother.amendmentLog || []).map(e => ({ ...e, _type: "amendment" })),
-    ...(mother.feedingLog || []).map(e => ({ ...e, _type: "feeding" })),
     ...(mother.cloneLog || []).map(e => ({ ...e, _type: "clone" })),
     ...(mother.reductionLog || []).map(e => ({ ...e, _type: "reduction" })),
   ].sort((a, b) => {
@@ -488,7 +480,7 @@ const MotherDetailModal = memo(function MotherDetailModal({
           function entrySummary(e) {
             if (e._type === "transplant") return `→ ${e.container}`;
             if (e._type === "amendment") return e.amendment;
-            if (e._type === "feeding") return e.type;
+            if (e._type === "feeding") return `Feeding: ${e.type}`;
             if (e._type === "clone") return `${e.count} clone${parseInt(e.count) !== 1 ? "s" : ""} taken`;
             if (e._type === "reduction") return e.reason;
             return "";
@@ -496,7 +488,6 @@ const MotherDetailModal = memo(function MotherDetailModal({
           function removeEntry(e) {
             if (e._type === "transplant") onRemoveTransplant(e.id);
             else if (e._type === "amendment") onRemoveAmendment(e.id);
-            else if (e._type === "feeding") onRemoveFeedingEntry(e.id);
             else if (e._type === "clone") onRemoveCloneEntry(e.id);
             else if (e._type === "reduction") onRemoveReductionEntry(e.id);
           }
@@ -573,7 +564,6 @@ const MotherDetailModal = memo(function MotherDetailModal({
                         { label: "Transplant", action: () => { setActiveSheet(null); setTransplantForm({ container: container || "Black Pot", date: today(), dateUnknown: false }); setShowTransplantModal(true); } },
                         { label: "Amendment",  action: () => { setActiveSheet(null); setAmendForm({ date: today(), amendment: "", notes: "" }); setAmendSearch(""); setShowAmendModal(true); } },
                         { label: "Clone Cut",  action: () => { setActiveSheet(null); setCloneForm({ date: today(), count: "", notes: "" }); setShowCloneModal(true); } },
-                        { label: "Feeding",    action: () => { setActiveSheet(null); setFeedingForm({ date: today(), type: "Water Only", notes: "" }); setShowFeedingModal(true); } },
                         { label: "Reduction",  action: () => { setActiveSheet(null); setReductionForm({ date: today(), reason: "Space", notes: "" }); setShowReductionModal(true); } },
                       ].map(({ label, action }) => (
                         <button key={label} onClick={action} className="w-full text-left px-4 py-3 bg-[#1a1a1a] hover:bg-[#2a2418] active:bg-[#2a2418] rounded-xl text-sm text-[#f5f5f0] font-medium transition-colors min-h-[44px]">
@@ -677,27 +667,6 @@ const MotherDetailModal = memo(function MotherDetailModal({
             </FormField>
             <button onClick={() => { if (cloneForm.count) { onAddCloneEntry(cloneForm); setShowCloneModal(false); } }} className={btnPrimary} disabled={!cloneForm.count}>
               Save Clone Log
-            </button>
-          </div>
-        </Modal>
-      )}
-
-      {showFeedingModal && (
-        <Modal title="Log Feeding" onClose={() => setShowFeedingModal(false)}>
-          <div className="space-y-4">
-            <FormField label="Feeding Type">
-              <select className={selectCls} value={feedingForm.type} onChange={e => setFeedingForm(p => ({ ...p, type: e.target.value }))}>
-                {FEEDING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            </FormField>
-            <FormField label="Date">
-              <input type="date" className={inputCls} value={feedingForm.date} onChange={e => setFeedingForm(p => ({ ...p, date: e.target.value }))} />
-            </FormField>
-            <FormField label="Notes (optional)">
-              <input type="text" placeholder="pH, EC, volume, observations..." className={inputCls} value={feedingForm.notes} onChange={e => setFeedingForm(p => ({ ...p, notes: e.target.value }))} />
-            </FormField>
-            <button onClick={() => { onAddFeedingEntry(feedingForm); setShowFeedingModal(false); }} className={btnPrimary}>
-              Save Feeding
             </button>
           </div>
         </Modal>

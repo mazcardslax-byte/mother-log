@@ -3,12 +3,11 @@ import { loadFromDB, saveToDB, subscribeToKey } from "./supabase";
 import { daysRemaining } from "./dry-room-utils";
 import {
   STRAINS, getStrain,
-  CONTAINERS, MOTHER_STATUSES, COMMON_AMENDMENTS, FEEDING_TYPES, DETAIL_TABS, TYPE_META,
+  CONTAINERS, MOTHER_STATUSES, COMMON_AMENDMENTS, DETAIL_TABS, TYPE_META,
   uid, today, fmtDate, daysSince,
   currentContainer, currentTransplantDate,
   HEALTH_COLOR_THRESHOLDS, HEALTH_BG_THRESHOLDS, HEALTH_LABELS, HEALTH_BADGE_CLASSES,
   healthColor, healthBg, healthLabel,
-  lastFeedingDate, feedingDaysColor,
   daysInVeg, vegDaysColor,
   statusBadgeColor, cardAccentColor,
   inputCls, selectCls, btnPrimary, btnSecondary,
@@ -25,7 +24,7 @@ const MotherDetailModal = lazy(() => import("./MotherDetail"));
 import {
   LayoutDashboard, Leaf, Grid3X3, Plus, Download,
   Wifi, Loader2, AlertCircle,
-  ChevronDown, Droplets, ClipboardList,
+  ChevronDown, ClipboardList,
   Scissors, BarChart2, Wind, Minus,
 } from "lucide-react";
 
@@ -423,15 +422,6 @@ export default function MotherPlantTracker() {
     ));
   }, []);
 
-  const waterAll = useCallback((motherIds) => {
-    const entry = { date: today(), type: "Water Only", notes: "" };
-    setMothers(prev => prev.map(m =>
-      motherIds.has(m.id)
-        ? { ...m, feedingLog: [{ ...entry, id: uid() }, ...(m.feedingLog || [])] }
-        : m
-    ));
-  }, []);
-
   const active = useMemo(() => mothers.filter(m => m.status === "Active"), [mothers]);
   const sidelined = useMemo(() => mothers.filter(m => m.status === "Sidelined"), [mothers]);
 
@@ -570,19 +560,16 @@ export default function MotherPlantTracker() {
               active={active}
               sidelined={sidelined}
               onSelectMother={handleSelectMother}
-              onWaterAll={waterAll}
             />
           )}
           {tab === "Mothers" && (
             <MothersTab
               mothers={mothers}
               onSelectMother={handleSelectMother}
-              onQuickWater={mid => addFeedingEntry(mid, { date: today(), type: "Water Only", notes: "" })}
-              onQuickFeed={(mid, type) => addFeedingEntry(mid, { date: today(), type, notes: "" })}
+              onQuickTransplant={(mid, container) => addTransplant(mid, { container, date: today() })}
               onQuickAmend={(mid, amendment, notes) => addAmendment(mid, { date: today(), amendment, notes })}
               onQuickClone={(mid, count, notes) => addCloneEntry(mid, { date: today(), count, notes })}
               onQuickReduction={(mid, reason, notes) => addReductionEntry(mid, { date: today(), reason, notes })}
-              onWaterAll={waterAll}
             />
           )}
           {tab === "Room" && (
@@ -592,7 +579,6 @@ export default function MotherPlantTracker() {
               setRoomSpots={setRoomSpots}
               onSelectMother={handleSelectMother}
               onUpdateMother={updateMother}
-              onQuickWater={waterAll}
               onAddAmendment={addAmendment}
             />
           )}
@@ -638,8 +624,6 @@ export default function MotherPlantTracker() {
               onRemoveAmendment={(eid) => removeAmendment(detailMother.id, eid)}
               onAddCloneEntry={(entry) => addCloneEntry(detailMother.id, entry)}
               onRemoveCloneEntry={(eid) => removeCloneEntry(detailMother.id, eid)}
-              onAddFeedingEntry={(entry) => addFeedingEntry(detailMother.id, entry)}
-              onRemoveFeedingEntry={(eid) => removeFeedingEntry(detailMother.id, eid)}
               onAddReductionEntry={(entry) => addReductionEntry(detailMother.id, entry)}
               onRemoveReductionEntry={(eid) => removeReductionEntry(detailMother.id, eid)}
               onAddPhoto={(photo) => addPhoto(detailMother.id, photo)}
@@ -656,9 +640,8 @@ export default function MotherPlantTracker() {
 // ── Summary Tab ────────────────────────────────────────────────────────────
 const DR_DEFAULT = { active: [], bins: [] };
 
-const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSelectMother, onWaterAll }) {
+const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSelectMother }) {
   const [strainExpanded, setStrainExpanded] = useState(false);
-  const [waterToast, setWaterToast] = useState(false);
 
   // ── Pipeline snapshot (dry room + clones) ──────────────────────────────
   const [drData, setDrData] = useState(DR_DEFAULT);
@@ -678,24 +661,7 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSele
   const propagating   = clonePlants.filter(p => !p.archived && p.status === "Cloned").length;
   const rooted        = clonePlants.filter(p => !p.archived && p.status === "Transplanted").length;
 
-  const todayDay = new Date().getDay(); // 0=Sun, 6=Sat
-  const isSaturday = todayDay === 6;
-
-  // Needs water: Active mothers not fed in 3+ days (or never fed)
-  const needsWater = active.filter(m => {
-    const last = lastFeedingDate(m.feedingLog);
-    const days = daysSince(last);
-    return days === null || days >= 3;
-  });
-
-  // Sidelined plants need daily water except Saturday
   const vegOverdue = mothers.filter(m => m.status === "Active" && daysInVeg(m) >= 30);
-
-  const sidelinedNeedsWater = isSaturday ? [] : sidelined.filter(m => {
-    const last = lastFeedingDate(m.feedingLog);
-    const days = daysSince(last);
-    return days === null || days >= 1;
-  });
 
   const strainCounts = mothers.reduce((acc, m) => {
     const s = getStrain(m.strainCode);
@@ -711,30 +677,12 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSele
 
   return (
     <div className="space-y-5">
-      {waterToast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#2a1f00] border border-[#3a2e00] text-amber-200 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
-          Watered {active.length} moms
-        </div>
-      )}
       <div className="grid grid-cols-2 gap-2">
         <StatBox label="Total Mothers" value={mothers.length} colorClass="text-[#f5f5f0]" />
         <StatBox label="Active" value={active.length} colorClass="text-emerald-400" />
         <StatBox label="Sidelined" value={sidelined.length} colorClass="text-[#6a5a3a]" />
         <StatBox label="Strains" value={new Set(mothers.map(m => m.strainCode)).size} colorClass="text-violet-400" />
       </div>
-
-      {active.length > 0 && (
-        <button
-          onClick={() => {
-            onWaterAll(new Set(active.map(m => m.id)));
-            setWaterToast(true);
-            setTimeout(() => setWaterToast(false), 2500);
-          }}
-          className="w-full bg-sky-900/50 border border-sky-800/40 active:bg-sky-800/60 text-sky-300 font-semibold text-sm rounded-2xl py-3.5 transition-colors min-h-[44px]"
-        >
-          Water All Moms ({active.length})
-        </button>
-      )}
 
       {(hangingCount > 0 || activeBins > 0 || propagating > 0 || rooted > 0) && (
         <div>
@@ -799,32 +747,6 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSele
         </div>
       )}
 
-      {needsWater.length > 0 && (
-        <div>
-          <SectionLabel>Needs Water / Feeding</SectionLabel>
-          <div className="space-y-2">
-            {needsWater.map(m => {
-              const s = getStrain(m.strainCode);
-              const last = lastFeedingDate(m.feedingLog);
-              const days = daysSince(last);
-              return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-sky-950/30 border border-sky-800/40 rounded-2xl px-4 py-3.5 text-left">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-sky-300 font-medium">{s.code} – {s.name}</div>
-                      {m.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{m.location}</div>}
-                    </div>
-                    <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
-                      {days === null ? "Never fed" : `${days}d ago`}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {vegOverdue.length > 0 && (
         <div>
           <SectionLabel>Veg Overdue — Cut or Clone</SectionLabel>
@@ -847,37 +769,11 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSele
         </div>
       )}
 
-      {sidelinedNeedsWater.length > 0 && (
-        <div>
-          <SectionLabel>Sidelined — Needs Water</SectionLabel>
-          <div className="space-y-2">
-            {sidelinedNeedsWater.map(m => {
-              const s = getStrain(m.strainCode);
-              const last = lastFeedingDate(m.feedingLog);
-              const days = daysSince(last);
-              return (
-                <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-[#111111] border border-[#2a2418] rounded-2xl px-4 py-3.5 text-left">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-sm text-[#c5b08a] font-medium">{s.code} – {s.name}</div>
-                      {m.location && <div className="text-xs text-[#6a5a3a] mt-0.5">{m.location}</div>}
-                    </div>
-                    <span className={`text-xs font-bold ${feedingDaysColor(days)}`}>
-                      {days === null ? "Never fed" : `${days}d ago`}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {sidelined.filter(m => !sidelinedNeedsWater.includes(m)).length > 0 && (
+      {sidelined.length > 0 && (
         <div>
           <SectionLabel>Sidelined</SectionLabel>
           <div className="space-y-2">
-            {sidelined.filter(m => !sidelinedNeedsWater.includes(m)).map(m => {
+            {sidelined.map(m => {
               const s = getStrain(m.strainCode);
               return (
                 <button key={m.id} onClick={() => onSelectMother(m)} className="press-card w-full bg-[#111111] border border-[#2a2418] rounded-2xl px-4 py-3.5 text-left">
@@ -988,9 +884,9 @@ const SummaryTab = memo(function SummaryTab({ mothers, active, sidelined, onSele
 });
 
 // ── Mothers Tab ────────────────────────────────────────────────────────────
-const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onOpenQuickLog, onQuickWater, onOpenAmend, onOpenClone }) {
+const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClose, onOpenQuickLog, onOpenAmend, onOpenClone }) {
   const showClone = m.status !== "Sidelined";
-  const ACTION_W = showClone ? 144 : 96;
+  const ACTION_W = showClone ? 96 : 48;
   const touchStartX = useRef(null);
   const swipeDidFire = useRef(false);
 
@@ -999,8 +895,6 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
   const txDate = currentTransplantDate(m);
   const days = daysSince(txDate);
   const totalClones = (m.cloneLog || []).reduce((a, c) => a + (parseInt(c.count) || 0), 0);
-  const lastFed = lastFeedingDate(m.feedingLog || []);
-  const fedDays = daysSince(lastFed);
   const vegDays = daysInVeg(m);
 
   function handleTouchStart(e) {
@@ -1029,14 +923,6 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
     <div className="relative overflow-hidden rounded-2xl">
       {/* Action buttons revealed on swipe */}
       <div className="absolute right-0 top-0 bottom-0 flex" style={{ width: ACTION_W }}>
-        <button
-          aria-label="Log water"
-          onClick={() => { onSwipeClose(); onQuickWater(m.id); }}
-          className="flex-1 flex flex-col items-center justify-center gap-1 bg-sky-900 active:bg-sky-800 transition-colors"
-        >
-          <span className="text-base leading-none">💧</span>
-          <span className="text-[11px] font-semibold text-sky-300 leading-none">Water</span>
-        </button>
         <button
           aria-label="Log amendment"
           onClick={() => { onSwipeClose(); onOpenAmend(m.id); }}
@@ -1082,7 +968,6 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
         <div className="flex items-center gap-3 mt-2.5 flex-wrap">
           {container && <span className="text-[10px] text-[#6a5a3a]">{txDate ? `${days}d in container` : "Date unknown"}</span>}
           {totalClones > 0 && <span className="text-[10px] text-[#6a5a3a]">{totalClones} clones</span>}
-          {lastFed && <span className={`text-[10px] font-medium ${feedingDaysColor(fedDays)}`}>fed {fedDays}d ago</span>}
           <span className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-[#6a5a3a]"}`}>{vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}</span>
         </div>
       </div>
@@ -1094,7 +979,7 @@ const MotherCard = memo(function MotherCard({ m, isOpen, onSwipeOpen, onSwipeClo
 const StrainGroup = memo(function StrainGroup({
   group, isCollapsed, onToggle,
   swipedId, onSwipeOpen, onSwipeClose,
-  onOpenQuickLog, onQuickWater, onOpenAmend, onOpenClone,
+  onOpenQuickLog, onOpenAmend, onOpenClone,
 }) {
   const cards = (
     <div className="space-y-2 mb-3">
@@ -1106,7 +991,6 @@ const StrainGroup = memo(function StrainGroup({
           onSwipeOpen={() => onSwipeOpen(m.id)}
           onSwipeClose={onSwipeClose}
           onOpenQuickLog={onOpenQuickLog}
-          onQuickWater={onQuickWater}
           onOpenAmend={onOpenAmend}
           onOpenClone={onOpenClone}
         />
@@ -1138,16 +1022,16 @@ const StrainGroup = memo(function StrainGroup({
   );
 });
 
-function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuickAmend, onQuickClone, onQuickReduction, onWaterAll }) {
+function MothersTab({ mothers, onSelectMother, onQuickTransplant, onQuickAmend, onQuickClone, onQuickReduction }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [swipedId, setSwipedId] = useState(null);
-  const [quickSheet, setQuickSheet] = useState(null); // null | { type: 'amend'|'clone'|'reduction', motherId }
+  const [quickSheet, setQuickSheet] = useState(null); // null | { type: 'transplant'|'amend'|'clone'|'reduction', motherId }
+  const [transplantInput, setTransplantInput] = useState({ container: "Black Pot" });
   const [amendInput, setAmendInput] = useState({ amendment: "", notes: "", search: "" });
   const [cloneInput, setCloneInput] = useState({ count: "", notes: "" });
   const [reductionInput, setReductionInput] = useState({ reason: "Space", notes: "" });
   const [collapsed, setCollapsed] = useState(new Set());
-  const [waterAllSheet, setWaterAllSheet] = useState(false);
   const [toast, setToast] = useState(null);
   const [quickLogSheet, setQuickLogSheet] = useState(null); // null | { motherId }
 
@@ -1155,11 +1039,6 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
     .filter(m => {
       if (filter === "All") return true;
       if (filter === "Active" || filter === "Sidelined") return m.status === filter;
-      if (filter === "Needs Water") {
-        if (m.status !== "Active") return false;
-        const days = daysSince(lastFeedingDate(m.feedingLog));
-        return days === null || days >= 3;
-      }
       if (filter === "Veg Overdue") return m.status === "Active" && daysInVeg(m) >= 30;
       return true;
     })
@@ -1191,6 +1070,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
   }, []);
   const handleSwipeOpen = useCallback((id) => setSwipedId(id), []);
   const handleSwipeClose = useCallback(() => setSwipedId(null), []);
+  const handleOpenTransplant = useCallback((mid, currentCont) => { setTransplantInput({ container: currentCont || "Black Pot" }); setQuickSheet({ type: "transplant", motherId: mid }); }, []);
   const handleOpenAmend = useCallback((mid) => setQuickSheet({ type: "amend", motherId: mid }), []);
   const handleOpenClone = useCallback((mid) => setQuickSheet({ type: "clone", motherId: mid }), []);
   const handleOpenReduction = useCallback((mid) => { setReductionInput({ reason: "Space", notes: "" }); setQuickSheet({ type: "reduction", motherId: mid }); }, []);
@@ -1204,9 +1084,16 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
   function closeSheet() {
     setQuickSheet(null);
     setQuickLogSheet(null);
+    setTransplantInput({ container: "Black Pot" });
     setAmendInput({ amendment: "", notes: "", search: "" });
     setCloneInput({ count: "", notes: "" });
     setReductionInput({ reason: "Space", notes: "" });
+  }
+
+  function handleTransplantConfirm() {
+    onQuickTransplant(quickSheet.motherId, transplantInput.container);
+    closeSheet();
+    showToast("Transplanted");
   }
 
   function handleAmendConfirm() {
@@ -1236,7 +1123,7 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
       )}
       <input type="text" placeholder="Search strain, code, location..." value={search} onChange={e => setSearch(e.target.value)} className={inputCls} />
       <div className="flex gap-1.5 flex-wrap">
-        {["All", "Active", "Sidelined", "Needs Water", "Veg Overdue"].map(f => (
+        {["All", "Active", "Sidelined", "Veg Overdue"].map(f => (
           <button key={f} onClick={() => setFilter(f)} className={`${f.length > 10 ? "text-[10px]" : "text-xs"} px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[44px] flex items-center ${filter === f ? "bg-[#2a2418] text-[#f5f5f0]" : "bg-[#111111] border border-[#2a2418] text-[#6a5a3a] active:text-[#f5f5f0]"}`}>
             {f}
           </button>
@@ -1261,15 +1148,6 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
         )
       ) : (
         <div>
-          {filtered.length > 1 && filter !== "Sidelined" && (
-            <button
-              onClick={() => setWaterAllSheet(true)}
-              className="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold active:bg-[#1a1a1a] active:text-[#f5f5f0] transition-colors min-h-[44px]"
-            >
-              <Droplets className="w-4 h-4" strokeWidth={2} />
-              Water All ({filtered.length})
-            </button>
-          )}
           {groups.map(group => (
             <StrainGroup
               key={group.code}
@@ -1280,42 +1158,10 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
               onSwipeOpen={handleSwipeOpen}
               onSwipeClose={handleSwipeClose}
               onOpenQuickLog={handleOpenQuickLog}
-              onQuickWater={onQuickWater}
               onOpenAmend={handleOpenAmend}
               onOpenClone={handleOpenClone}
             />
           ))}
-        </div>
-      )}
-
-      {/* Water All confirm sheet */}
-      {waterAllSheet && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) setWaterAllSheet(false); }}>
-          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
-            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
-            <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-sky-400" strokeWidth={2} />
-                <div className="text-sm font-bold text-[#f5f5f0]">Water All</div>
-              </div>
-              <div className="text-[#c5b08a] text-sm">Log water for all {filtered.filter(m => m.status === "Active").length} active mothers?</div>
-              <div className="flex gap-2 pt-1">
-                <button onClick={() => setWaterAllSheet(false)} className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#f5f5f0] transition-colors">Cancel</button>
-                <button
-                  onClick={() => {
-                    const active = filtered.filter(m => m.status === "Active");
-                    const count = active.length;
-                    onWaterAll(new Set(active.map(m => m.id)));
-                    setWaterAllSheet(false);
-                    showToast(`Watered ${count} mother${count !== 1 ? "s" : ""}`);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl bg-sky-700 active:bg-sky-600 text-[#f5f5f0] text-sm font-semibold transition-colors"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -1337,18 +1183,11 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => { onQuickWater(m.id); setQuickLogSheet(null); showToast("Watered"); }}
+                    onClick={() => { setQuickLogSheet(null); handleOpenTransplant(m.id, currentContainer(m)); }}
                     className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-sky-900/50 border border-sky-800/40 active:bg-sky-800/60 transition-colors min-h-[80px]"
                   >
-                    <span className="text-xl leading-none">💧</span>
-                    <span className="text-xs font-semibold text-sky-300">Water</span>
-                  </button>
-                  <button
-                    onClick={() => { setQuickLogSheet(null); handleOpenAmend(m.id); }}
-                    className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-violet-900/50 border border-violet-800/40 active:bg-violet-800/60 transition-colors min-h-[80px]"
-                  >
-                    <span className="text-xl leading-none">🌿</span>
-                    <span className="text-xs font-semibold text-violet-300">Amendment</span>
+                    <span className="text-xl leading-none">🪴</span>
+                    <span className="text-xs font-semibold text-sky-300">Transplant</span>
                   </button>
                   <button
                     disabled={isSidelined}
@@ -1356,14 +1195,21 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                     className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-amber-900/50 border border-amber-800/40 active:bg-amber-800/60 disabled:opacity-40 transition-colors min-h-[80px]"
                   >
                     <span className="text-xl leading-none">✂️</span>
-                    <span className="text-xs font-semibold text-amber-300">Clone Cut</span>
+                    <span className="text-xs font-semibold text-amber-300">Clone</span>
                   </button>
                   <button
                     onClick={() => { setQuickLogSheet(null); handleOpenReduction(m.id); }}
                     className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-red-900/50 border border-red-800/40 active:bg-red-800/60 transition-colors min-h-[80px]"
                   >
                     <span className="text-xl leading-none">−</span>
-                    <span className="text-xs font-semibold text-red-300">Reduction</span>
+                    <span className="text-xs font-semibold text-red-300">Reduce</span>
+                  </button>
+                  <button
+                    onClick={() => { setQuickLogSheet(null); handleOpenAmend(m.id); }}
+                    className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-violet-900/50 border border-violet-800/40 active:bg-violet-800/60 transition-colors min-h-[80px]"
+                  >
+                    <span className="text-xl leading-none">🌿</span>
+                    <span className="text-xs font-semibold text-violet-300">Amendment</span>
                   </button>
                 </div>
                 <button
@@ -1423,6 +1269,32 @@ function MothersTab({ mothers, onSelectMother, onQuickWater, onQuickFeed, onQuic
                 >
                   Confirm
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {quickSheet?.type === "transplant" && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm" onClick={e => { if (e.target === e.currentTarget) closeSheet(); }}>
+          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+            <div className="flex justify-center pt-3 pb-1"><div className="w-9 h-1 rounded-full bg-[#2a2418]" /></div>
+            <div className="px-5 pb-6 pt-2 space-y-3">
+              <div className="text-sm font-bold text-[#f5f5f0]">Quick Transplant</div>
+              <div className="flex gap-2 flex-wrap">
+                {CONTAINERS.map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setTransplantInput({ container: c })}
+                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${transplantInput.container === c ? "bg-sky-900/50 text-sky-300 border-sky-700/40" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={closeSheet} className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors">Cancel</button>
+                <button onClick={handleTransplantConfirm} className="flex-1 py-2.5 rounded-xl bg-sky-700 text-[#f5f5f0] text-sm font-semibold active:bg-sky-600 transition-colors">Confirm</button>
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useState, useCallback, memo } from "react";
-import { Droplets, FlaskConical } from "lucide-react";
+import { FlaskConical } from "lucide-react";
 import {
   getStrain,
   COMMON_AMENDMENTS,
@@ -95,7 +95,7 @@ const SpotCell = memo(function SpotCell({ bench, spot, spotMothers, isUpcoming, 
 });
 
 // ── SpotSheet ───────────────────────────────────────────────────────────────
-function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onSelectMother, onUpdateMother, onMarkUpcoming, onClearUpcoming, onQuickWater, onAddAmendment }) {
+function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onSelectMother, onUpdateMother, onMarkUpcoming, onClearUpcoming, onAddAmendment }) {
   const key = locationKey(bench, spot);
   const [selectedMotherId, setSelectedMotherId] = useState("");
   const [showAmend, setShowAmend] = useState(false);
@@ -127,17 +127,6 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
             <SectionLabel>Plants in this spot</SectionLabel>
             {/* Quick action buttons */}
             <div className="flex gap-2 mb-3">
-              <button
-                onClick={() => {
-                  showSpotToast(`Watered ${spotMothers.length} plant${spotMothers.length !== 1 ? "s" : ""}`);
-                  onQuickWater(new Set(spotMothers.map(m => m.id)));
-                  setTimeout(onClose, 1200);
-                }}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-sky-900/60 border border-sky-800/50 text-sky-300 text-xs font-semibold active:bg-sky-800 transition-colors min-h-[44px]"
-              >
-                <Droplets className="w-4 h-4" strokeWidth={2} />
-                Water All
-              </button>
               <button
                 onClick={() => setShowAmend(p => !p)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-violet-900/60 border border-violet-800/50 text-violet-300 text-xs font-semibold active:bg-violet-800 transition-colors min-h-[44px]"
@@ -266,7 +255,7 @@ function SpotSheet({ bench, spot, spotMothers, isUpcoming, mothers, onClose, onS
 }
 
 // ── RoomTab ─────────────────────────────────────────────────────────────────
-export default function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMother, onQuickWater, onAddAmendment }) {
+export default function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMother, onUpdateMother, onAddAmendment }) {
   const [activeSpot, setActiveSpot] = useState(null); // { bench, spot }
 
   const handleCellClick = useCallback((bench, spot) => {
@@ -359,7 +348,6 @@ export default function RoomTab({ mothers, roomSpots, setRoomSpots, onSelectMoth
           onUpdateMother={onUpdateMother}
           onMarkUpcoming={markUpcoming}
           onClearUpcoming={clearUpcoming}
-          onQuickWater={onQuickWater}
           onAddAmendment={onAddAmendment}
         />
       )}

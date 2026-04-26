@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { loadFromDB } from "./supabase";
-import { calcTrayRates, calcStrainComparison, calcCareGaps } from "./stats-utils";
+import { calcTrayRates, calcStrainComparison } from "./stats-utils";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -267,46 +267,6 @@ function StrainComparisonSection({ mothers, getStrain }) {
   );
 }
 
-// ─── Section D: Care Gaps ─────────────────────────────────────────────────────
-
-function CareGapsSection({ mothers, getStrain }) {
-  const gaps = useMemo(() => calcCareGaps(mothers, getStrain), [mothers, getStrain]);
-
-  return (
-    <div className="mb-7">
-      <SectionLabel>Care Gaps — days since last water</SectionLabel>
-      {gaps.length === 0 ? (
-        <div className="text-[#6a5a3a] text-sm text-center py-4">No active mothers.</div>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {gaps.map(g => {
-            const badge = daysBadgeColor(g.daysSinceNum);
-            const days = g.daysSinceNum === Infinity ? "—" : `${g.daysSinceNum}d`;
-            return (
-              <div
-                key={g.id}
-                className={`bg-[#111111] border rounded-xl px-4 py-3 flex items-center justify-between ${
-                  g.daysSinceNum > 10 ? "border-red-900/60" : g.daysSinceNum > 6 ? "border-yellow-900/60" : "border-[#2a2418]"
-                }`}
-              >
-                <div>
-                  <div className="text-sm font-semibold text-[#f5f5f0]">{g.name} — {g.location || "No location"}</div>
-                  <div className="text-xs text-[#6a5a3a] mt-0.5">
-                    Last: {g.lastDate ? fmtDate(g.lastDate) : "Never"}
-                  </div>
-                </div>
-                <div className={`text-base font-bold border rounded-lg px-2 py-1 ${badge}`}>
-                  {days}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ─── Main StatsTab export ─────────────────────────────────────────────────────
 
 export default function StatsTab({ mothers, getStrain }) {
@@ -315,7 +275,6 @@ export default function StatsTab({ mothers, getStrain }) {
       <CloneRatesSection />
       <HealthTrendsSection mothers={mothers} getStrain={getStrain} />
       <StrainComparisonSection mothers={mothers} getStrain={getStrain} />
-      <CareGapsSection mothers={mothers} getStrain={getStrain} />
     </div>
   );
 }
