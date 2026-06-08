@@ -7,7 +7,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "husky"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.100.1",
@@ -23,8 +24,11 @@
     "@vitejs/plugin-react": "^4.2.1",
     "@vitest/ui": "^4.1.2",
     "autoprefixer": "^10.4.17",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.1",
+    "lint-staged": "^17.0.7",
     "postcss": "^8.4.35",
+    "prettier": "^3.8.3",
     "tailwindcss": "^3.4.1",
     "vite": "^5.1.4",
     "vitest": "^4.1.2"
