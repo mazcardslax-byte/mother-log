@@ -1,9 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
-import * as mockDB from "./e2e-fixtures";
 
 // E2E / credential-free local dev: route all DB calls to the in-memory seed.
-// VITE_E2E_MOCK is never set in the Vercel production build, so this branch
-// (and the fixtures import) tree-shakes out of prod bundles.
+// VITE_E2E_MOCK is never set in the Vercel production build, so these branches
+// (and the dynamic import of the fixtures) are statically dead code and are
+// dropped from prod bundles — the fixtures never ship to production.
 const E2E_MOCK = import.meta.env.VITE_E2E_MOCK === "1";
 
 const supabase = E2E_MOCK
@@ -14,7 +14,10 @@ const supabase = E2E_MOCK
     );
 
 export async function loadFromDB(key) {
-  if (E2E_MOCK) return mockDB.load(key);
+  if (E2E_MOCK) {
+    const mockDB = await import("./e2e-fixtures");
+    return mockDB.load(key);
+  }
   const { data, error } = await supabase
     .from("app_data")
     .select("value")
@@ -30,7 +33,10 @@ export async function loadFromDB(key) {
 // Caller passes in the timestamp so it can be registered in pendingTimestamps
 // before the async save starts — preventing echo-overwrite races.
 export async function saveToDB(key, value, updatedAt) {
-  if (E2E_MOCK) return mockDB.save(key, value);
+  if (E2E_MOCK) {
+    const mockDB = await import("./e2e-fixtures");
+    return mockDB.save(key, value);
+  }
   const { error } = await supabase
     .from("app_data")
     .upsert({ key, value, updated_at: updatedAt });
