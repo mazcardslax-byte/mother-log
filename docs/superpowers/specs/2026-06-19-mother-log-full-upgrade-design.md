@@ -77,6 +77,17 @@ Its own brainstorm + spec once the base is clean and modern. Candidate ideas def
 - Clone survival rate reads from `clone_trays_v1` (only `Done` trays with known `count`+`survived`), not `mothers[].cloneLog`.
 - Push to `main` auto-deploys via Vercel — confirm deploy status after push rather than running separate deploy commands.
 
+## Security (cross-cutting — applies to every phase)
+
+Security is a standing concern, not a separate phase. Each phase must hold these:
+
+- **No secrets in the client bundle.** Only the Supabase anon/publishable key and project URL belong in the front end (via Vite `VITE_` env vars). Never commit a service-role key or any private secret; verify `.env` is gitignored. Audit the bundle stays clean as deps change.
+- **Supabase RLS.** Confirm Row Level Security is enabled on `app_data` (and the `clone_*` tables) so the anon key cannot read/write beyond intended scope. Treat the anon key as public — it is shipped to the browser.
+- **Safe rendering.** No `dangerouslySetInnerHTML` with user/DB-sourced content during the reskin; keep all grow-room notes/labels rendered as text. New form inputs validate/escape before save.
+- **Dependency hygiene.** Run `npm audit` at Phase 3 (dep bumps) and address high/critical advisories; prefer the React 19 / Vite upgrade path that clears known vulns rather than introducing new transitive risk.
+- **PWA/offline cache (Phase 3).** Cache only non-sensitive read data; do not persist secrets in the service-worker cache or localStorage. Scope cache invalidation so stale auth state can't linger.
+- **Headers/transport.** Keep Vercel HTTPS-only; confirm no mixed content and reasonable security headers (CSP can be tightened as a Phase 3 task once the asset surface is stable).
+
 ## Out of scope
 
 - Backend/Supabase schema redesign (key-value store stays).
