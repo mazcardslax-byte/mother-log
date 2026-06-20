@@ -12,8 +12,8 @@ export async function gotoApp(page: Page) {
 // Click a tab by its visible label (e.g. "Dry Room").
 export async function openTab(page: Page, label: string) {
   const tab = page
-    .getByRole("button", { name: new RegExp(label, "i") })
-    .first();
+    .getByTestId("tab-nav")
+    .getByRole("button", { name: label, exact: true });
   await tab.click();
   // Lazy tabs (Clones/Stats/DryRoom) render via Suspense — allow the chunk to load.
   await page.waitForLoadState("networkidle");
