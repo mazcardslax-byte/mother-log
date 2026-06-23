@@ -12,7 +12,7 @@
 
 - **No behavior changes** — restyle only. Logic, data flow, Supabase calls untouched.
 - **106 Vitest tests stay green**, unchanged, after every task. Command: `npm test`.
-- **17 Playwright e2e tests stay green.** Preserve every `data-testid` (notably `data-testid="tab-nav"` at `src/App.jsx:768`) and every exact user-facing label, including tab names and the quick-log hub labels **Transplant / Clone / Reduce / Amendment**. Command: `npm run test:e2e` (or the project's e2e script).
+- **17 Playwright e2e tests stay green.** Preserve every `data-testid` (notably `data-testid="tab-nav"` at `src/App.jsx:768`) and every exact user-facing label, including tab names and the quick-log hub labels **Transplant / Clone / Reduce / Amendment**. Command: `npx playwright test` (Playwright auto-starts the mock dev server via webServer).
 - **Accent = `#0A84FF`** (Apple dark system blue). Semantic: green `#30D158`, red `#FF453A`, orange `#FF9F0A`, yellow `#FFD60A`.
 - **Surfaces:** `--bg #000000`, `--surface-1 #1C1C1E`, `--surface-2 #2C2C2E`, glass `rgba(28,28,30,0.72)` + `backdrop-blur(20px) saturate(180%)`, separator `rgba(255,255,255,0.08)`.
 - **Text:** primary `rgba(255,255,255,0.92)`, secondary `rgba(235,235,245,0.6)`, tertiary `rgba(235,235,245,0.3)`.
@@ -241,7 +241,7 @@ Expected: PASS — 106 tests.
 
 - [ ] **Step 5: Run the e2e suite (smoke that nothing regressed yet)**
 
-Run: `npm run test:e2e`
+Run: `npx playwright test`
 Expected: PASS — 17 tests (Modal-based interactions in mothers.spec still pass; if a selector targeted Modal markup that changed, update the selector — not the test intent).
 
 - [ ] **Step 6: Commit**
@@ -274,7 +274,7 @@ Screen title rendered as Large Title `text-[34px] font-bold tracking-tight text-
 
 - [ ] **Step 3: Run e2e tabs spec**
 
-Run: `npm run test:e2e -- tabs`
+Run: `npx playwright test tabs`
 Expected: PASS — `openTab` (scoped to `data-testid="tab-nav"`, `exact: true`) still resolves every tab; per-tab render smoke green.
 
 - [ ] **Step 4: Run unit tests + commit**
@@ -310,7 +310,7 @@ Apply grouped-inset rows (`GroupedList`/`GroupedRow`) for Overview detail rows; 
 
 - [ ] **Step 4: Run mothers e2e + unit**
 
-Run: `npm run test:e2e -- mothers` → PASS. Run: `npm test` → PASS 106.
+Run: `npx playwright test mothers` → PASS. Run: `npm test` → PASS 106.
 
 - [ ] **Step 5: Commit**
 
@@ -326,7 +326,7 @@ git commit -m "feat: Graphite Glass — Mothers tab + detail sheet"
 **Files:** Modify `src/ClonesTab.jsx`.
 
 - [ ] **Step 1:** Sweep `amber-*`/`zinc-*`/warm-hex classes → tokens (accent `#0a84ff`, surface `#1c1c1e`, text `white/90`·`white/60`, hairline `white/10`). Badges → semantic tints. Cards `rounded-2xl border border-white/10`. Preserve testids/labels.
-- [ ] **Step 2:** Run `npm run test:e2e -- tabs` (Clones render smoke) → PASS; `npm test` → PASS 106.
+- [ ] **Step 2:** Run `npx playwright test clones-tab tabs` → PASS; `npm test` → PASS 106.
 - [ ] **Step 3:** Commit: `git commit -am "feat: Graphite Glass — Clones tab"`
 
 ---
@@ -336,7 +336,7 @@ git commit -m "feat: Graphite Glass — Mothers tab + detail sheet"
 **Files:** Modify `src/DryRoomTab.jsx`.
 
 - [ ] **Step 1:** Same token sweep + grouped/badge patterns as Task 6. Preserve testids/labels.
-- [ ] **Step 2:** Run `npm run test:e2e -- tabs` → PASS; `npm test` → PASS 106.
+- [ ] **Step 2:** Run `npx playwright test tabs` → PASS; `npm test` → PASS 106.
 - [ ] **Step 3:** Commit: `git commit -am "feat: Graphite Glass — Dry Room tab"`
 
 ---
@@ -346,7 +346,7 @@ git commit -m "feat: Graphite Glass — Mothers tab + detail sheet"
 **Files:** Modify `src/StatsTab.jsx`.
 
 - [ ] **Step 1:** Metric cards → `StatBox`/`bg-[#1c1c1e] rounded-2xl`. Restyle the existing chart (do not swap libraries): thin strokes in `#0a84ff`/`#30d158`, hairline gridlines `rgba(255,255,255,0.08)`, no heavy fills. Sweep residual amber/zinc.
-- [ ] **Step 2:** Run `npm run test:e2e -- tabs` (Stats render smoke; the 68%/value assertions must still find their text) → PASS; `npm test` → PASS 106.
+- [ ] **Step 2:** Run `npx playwright test tabs` (Stats render smoke; the 68%/value assertions must still find their text) → PASS; `npm test` → PASS 106.
 - [ ] **Step 3:** Commit: `git commit -am "feat: Graphite Glass — Stats tab + Health-style charts"`
 
 ---
@@ -356,7 +356,7 @@ git commit -m "feat: Graphite Glass — Mothers tab + detail sheet"
 **Files:** Modify `src/FacilityTab.jsx`.
 
 - [ ] **Step 1:** Convert lists → `GroupedList`/`GroupedRow` inset style; token sweep. Preserve testids/labels.
-- [ ] **Step 2:** Run `npm run test:e2e -- tabs` → PASS; `npm test` → PASS 106.
+- [ ] **Step 2:** Run `npx playwright test tabs` → PASS; `npm test` → PASS 106.
 - [ ] **Step 3:** Commit: `git commit -am "feat: Graphite Glass — Facility tab"`
 
 ---
@@ -366,7 +366,7 @@ git commit -m "feat: Graphite Glass — Mothers tab + detail sheet"
 **Files:** Modify `src/RoomTab.jsx`.
 
 - [ ] **Step 1:** Convert the add form to grouped-inset rows; inputs already inherit new `inputCls`/`selectCls` from Task 2. Submit uses `btnPrimary`. Token sweep on residual classes. Preserve testids/labels.
-- [ ] **Step 2:** Run `npm run test:e2e -- tabs` → PASS; `npm test` → PASS 106.
+- [ ] **Step 2:** Run `npx playwright test tabs` → PASS; `npm test` → PASS 106.
 - [ ] **Step 3:** Commit: `git commit -am "feat: Graphite Glass — Add form"`
 
 ---
@@ -382,7 +382,7 @@ Expected: no matches (all migrated). Fix any stragglers.
 
 - [ ] **Step 2: Full suites + build**
 
-Run: `npm test` → PASS 106. Run: `npm run test:e2e` → PASS 17. Run: `npm run build` → succeeds.
+Run: `npm test` → PASS 106. Run: `npx playwright test` → PASS 17. Run: `npm run build` → succeeds.
 
 - [ ] **Step 3: Prod-bundle leak check (fixtures must not ship)**
 
