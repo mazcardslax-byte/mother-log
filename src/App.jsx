@@ -859,7 +859,7 @@ export default function MotherPlantTracker() {
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-5 h-5 text-amber-600 animate-spin" />
+            <Loader2 className="w-5 h-5 text-[#0a84ff] animate-spin" />
           </div>
         }
       >
@@ -1003,22 +1003,22 @@ const SummaryTab = memo(function SummaryTab({
         <StatBox
           label="Total Mothers"
           value={mothers.length}
-          colorClass="text-[#f5f5f0]"
+          colorClass="text-white/90"
         />
         <StatBox
           label="Active"
           value={active.length}
-          colorClass="text-emerald-400"
+          colorClass="text-[#30d158]"
         />
         <StatBox
           label="Sidelined"
           value={sidelined.length}
-          colorClass="text-[#6a5a3a]"
+          colorClass="text-white/40"
         />
         <StatBox
           label="Strains"
           value={new Set(mothers.map((m) => m.strainCode)).size}
-          colorClass="text-violet-400"
+          colorClass="text-[#bf5af2]"
         />
       </div>
 
@@ -1028,17 +1028,17 @@ const SummaryTab = memo(function SummaryTab({
         rooted > 0) && (
         <div>
           <SectionLabel>Pipeline</SectionLabel>
-          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden divide-y divide-[#2a2418]">
+          <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl overflow-hidden divide-y divide-white/[0.08]">
             {hangingCount > 0 && (
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-[#c5b08a]">Hanging</span>
+                <span className="text-xs text-white/60">Hanging</span>
                 <div className="flex items-center gap-2">
                   {overdueCount > 0 && (
-                    <span className="text-[10px] text-red-400 font-semibold">
+                    <span className="text-[10px] text-[#ff453a] font-semibold">
                       {overdueCount} overdue
                     </span>
                   )}
-                  <span className="text-xs font-semibold text-[#f5f5f0]">
+                  <span className="text-xs font-semibold text-white/90">
                     {hangingCount} batch{hangingCount !== 1 ? "es" : ""}
                   </span>
                 </div>
@@ -1046,24 +1046,24 @@ const SummaryTab = memo(function SummaryTab({
             )}
             {activeBins > 0 && (
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-[#c5b08a]">Curing / Burping</span>
-                <span className="text-xs font-semibold text-[#f5f5f0]">
+                <span className="text-xs text-white/60">Curing / Burping</span>
+                <span className="text-xs font-semibold text-white/90">
                   {activeBins} bin{activeBins !== 1 ? "s" : ""}
                 </span>
               </div>
             )}
             {propagating > 0 && (
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-[#c5b08a]">Propagating</span>
-                <span className="text-xs font-semibold text-[#f5f5f0]">
+                <span className="text-xs text-white/60">Propagating</span>
+                <span className="text-xs font-semibold text-white/90">
                   {propagating} plant{propagating !== 1 ? "s" : ""}
                 </span>
               </div>
             )}
             {rooted > 0 && (
               <div className="flex items-center justify-between px-4 py-2.5">
-                <span className="text-xs text-[#c5b08a]">Rooted / Ready</span>
-                <span className="text-xs font-semibold text-emerald-400">
+                <span className="text-xs text-white/60">Rooted / Ready</span>
+                <span className="text-xs font-semibold text-[#30d158]">
                   {rooted} plant{rooted !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -1075,13 +1075,13 @@ const SummaryTab = memo(function SummaryTab({
       {byHealth.length > 0 && (
         <div>
           <SectionLabel>Health Breakdown</SectionLabel>
-          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden">
+          <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl overflow-hidden">
             {byHealth.map(({ h, cnt }) => (
               <div
                 key={h}
-                className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2418] last:border-0"
+                className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.08] last:border-0"
               >
-                <span className="text-xs text-[#c5b08a]">
+                <span className="text-xs text-white/60">
                   {HEALTH_LABELS[h]}
                 </span>
                 <Badge label={cnt} colorClass={HEALTH_BADGE_CLASSES[h]} />
@@ -1094,16 +1094,16 @@ const SummaryTab = memo(function SummaryTab({
       {Object.keys(strainCounts).length > 0 && (
         <div>
           <SectionLabel>By Strain</SectionLabel>
-          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl overflow-hidden">
+          <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl overflow-hidden">
             {Object.entries(strainCounts)
               .sort((a, b) => b[1] - a[1])
               .map(([name, cnt]) => (
                 <div
                   key={name}
-                  className="flex items-center justify-between px-4 py-2.5 border-b border-[#2a2418] last:border-0"
+                  className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.08] last:border-0"
                 >
-                  <span className="text-xs text-[#c5b08a]">{name}</span>
-                  <span className="text-xs text-[#6a5a3a]">{cnt}</span>
+                  <span className="text-xs text-white/60">{name}</span>
+                  <span className="text-xs text-white/30">{cnt}</span>
                 </div>
               ))}
           </div>
@@ -1120,20 +1120,20 @@ const SummaryTab = memo(function SummaryTab({
                 <button
                   key={m.id}
                   onClick={() => onSelectMother(m)}
-                  className="press-card w-full bg-[#111111] border border-red-900/50 rounded-2xl px-4 py-3.5 text-left"
+                  className="press-card w-full bg-[#1c1c1e] border border-[#ff453a]/30 rounded-2xl px-4 py-3.5 text-left"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm text-red-400 font-medium">
+                      <div className="text-sm text-[#ff453a] font-medium">
                         {s.code} – {s.name}
                       </div>
                       {m.location && (
-                        <div className="text-xs text-[#6a5a3a] mt-0.5">
+                        <div className="text-xs text-white/30 mt-0.5">
                           {m.location}
                         </div>
                       )}
                     </div>
-                    <span className="text-red-400 text-sm font-bold">
+                    <span className="text-[#ff453a] text-sm font-bold">
                       {daysInVeg(m)}d
                     </span>
                   </div>
@@ -1154,13 +1154,13 @@ const SummaryTab = memo(function SummaryTab({
                 <button
                   key={m.id}
                   onClick={() => onSelectMother(m)}
-                  className="press-card w-full bg-[#111111] border border-[#2a2418] rounded-2xl px-4 py-3.5 text-left"
+                  className="press-card w-full bg-[#1c1c1e] border border-white/10 rounded-2xl px-4 py-3.5 text-left"
                 >
-                  <div className="text-sm text-[#c5b08a] font-medium">
+                  <div className="text-sm text-white/60 font-medium">
                     {s.code} – {s.name}
                   </div>
                   {m.location && (
-                    <div className="text-xs text-[#6a5a3a] mt-0.5">
+                    <div className="text-xs text-white/30 mt-0.5">
                       {m.location}
                     </div>
                   )}
@@ -1173,34 +1173,34 @@ const SummaryTab = memo(function SummaryTab({
 
       {mothers.length === 0 && (
         <div className="flex flex-col items-center justify-center py-10 px-2">
-          <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 w-full text-center space-y-4">
+          <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl p-8 w-full text-center space-y-4">
             <div className="text-4xl mb-2">🌿</div>
-            <div className="text-[#f5f5f0] font-semibold text-base">
+            <div className="text-white/90 font-semibold text-base">
               No mother plants yet
             </div>
-            <div className="text-[#6a5a3a] text-sm leading-relaxed">
+            <div className="text-white/40 text-sm leading-relaxed">
               Tap{" "}
-              <span className="text-amber-400 font-medium">+ Add Mother</span>{" "}
+              <span className="text-[#0a84ff] font-medium">+ Add Mother</span>{" "}
               to get started
             </div>
-            <div className="bg-[#1a1a1a] border border-[#2a2418] rounded-xl p-4 text-left space-y-2 mt-2">
-              <div className="text-[10px] text-[#6a5a3a] uppercase tracking-wider mb-2">
+            <div className="bg-white/[0.04] border border-white/10 rounded-xl p-4 text-left space-y-2 mt-2">
+              <div className="text-[10px] text-white/30 uppercase tracking-wider mb-2">
                 What you can track
               </div>
-              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
-                <span className="text-amber-400 mt-0.5">•</span>
+              <div className="flex items-start gap-2 text-xs text-white/60">
+                <span className="text-[#0a84ff] mt-0.5">•</span>
                 <span>Health level, status, and VEG room location</span>
               </div>
-              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
-                <span className="text-amber-400 mt-0.5">•</span>
+              <div className="flex items-start gap-2 text-xs text-white/60">
+                <span className="text-[#0a84ff] mt-0.5">•</span>
                 <span>Container transplant history</span>
               </div>
-              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
-                <span className="text-amber-400 mt-0.5">•</span>
+              <div className="flex items-start gap-2 text-xs text-white/60">
+                <span className="text-[#0a84ff] mt-0.5">•</span>
                 <span>Amendment log with dates</span>
               </div>
-              <div className="flex items-start gap-2 text-xs text-[#c5b08a]">
-                <span className="text-amber-400 mt-0.5">•</span>
+              <div className="flex items-start gap-2 text-xs text-white/60">
+                <span className="text-[#0a84ff] mt-0.5">•</span>
                 <span>Clone cuts — send directly to Clone Log</span>
               </div>
             </div>
@@ -1279,7 +1279,7 @@ const SummaryTab = memo(function SummaryTab({
               >
                 <SectionLabel>Strain Analytics</SectionLabel>
                 <ChevronDown
-                  className={`w-4 h-4 text-[#6a5a3a] transition-transform duration-200 mb-2 ${strainExpanded ? "rotate-180" : ""}`}
+                  className={`w-4 h-4 text-white/30 transition-transform duration-200 mb-2 ${strainExpanded ? "rotate-180" : ""}`}
                   strokeWidth={2}
                 />
               </button>
@@ -1288,25 +1288,25 @@ const SummaryTab = memo(function SummaryTab({
                   {strainStats.map((st) => {
                     const healthCls =
                       st.avgHealthNum > 3
-                        ? "text-emerald-400"
+                        ? "text-[#30d158]"
                         : st.avgHealthNum === 3
-                          ? "text-yellow-400"
-                          : "text-red-400";
+                          ? "text-[#ffd60a]"
+                          : "text-[#ff453a]";
                     return (
                       <div
                         key={st.code}
-                        className="bg-[#111111] border border-[#2a2418] rounded-2xl px-4 py-3 space-y-1.5"
+                        className="bg-[#1c1c1e] border border-white/10 rounded-2xl px-4 py-3 space-y-1.5"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-[#f5f5f0]">
+                          <span className="text-sm font-bold text-white/90">
                             {st.code}
                           </span>
-                          <span className="text-xs text-[#c5b08a] truncate">
+                          <span className="text-xs text-white/60 truncate">
                             {st.name}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 flex-wrap">
-                          <span className="text-[10px] text-[#6a5a3a]">
+                          <span className="text-[10px] text-white/30">
                             {st.totalMothers} mother
                             {st.totalMothers !== 1 ? "s" : ""}
                           </span>
@@ -1315,18 +1315,18 @@ const SummaryTab = memo(function SummaryTab({
                           >
                             health {st.avgHealth}
                           </span>
-                          <span className="text-[10px] text-[#6a5a3a]">
+                          <span className="text-[10px] text-white/30">
                             {st.totalCloneCount} clones
                           </span>
                           {st.rootRate !== null && (
                             <span
-                              className={`text-[10px] font-semibold ${st.rootRate >= 70 ? "text-emerald-400" : st.rootRate >= 40 ? "text-yellow-400" : "text-red-400"}`}
+                              className={`text-[10px] font-semibold ${st.rootRate >= 70 ? "text-[#30d158]" : st.rootRate >= 40 ? "text-[#ffd60a]" : "text-[#ff453a]"}`}
                             >
                               {st.rootRate}% root rate
                             </span>
                           )}
                           {st.lastFed && (
-                            <span className="text-[10px] text-[#6a5a3a]">
+                            <span className="text-[10px] text-white/30">
                               fed {fmtDate(st.lastFed)}
                             </span>
                           )}
@@ -1414,10 +1414,10 @@ const MotherCard = memo(function MotherCard({
             onSwipeClose();
             onOpenAmend(m.id);
           }}
-          className="flex-1 flex flex-col items-center justify-center gap-1 bg-violet-900 active:bg-violet-800 transition-colors"
+          className="flex-1 flex flex-col items-center justify-center gap-1 bg-[#bf5af2]/20 active:bg-[#bf5af2]/30 transition-colors"
         >
           <span className="text-base leading-none">🌿</span>
-          <span className="text-[11px] font-semibold text-violet-300 leading-none">
+          <span className="text-[11px] font-semibold text-[#bf5af2] leading-none">
             Amend
           </span>
         </button>
@@ -1428,10 +1428,10 @@ const MotherCard = memo(function MotherCard({
               onSwipeClose();
               onOpenClone(m.id);
             }}
-            className="flex-1 flex flex-col items-center justify-center gap-1 bg-amber-900 active:bg-amber-800 transition-colors"
+            className="flex-1 flex flex-col items-center justify-center gap-1 bg-white/[0.06] active:bg-white/10 transition-colors"
           >
             <span className="text-base leading-none">✂️</span>
-            <span className="text-[11px] font-semibold text-amber-300 leading-none">
+            <span className="text-[11px] font-semibold text-white/60 leading-none">
               Clone
             </span>
           </button>
@@ -1447,19 +1447,19 @@ const MotherCard = memo(function MotherCard({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
-        className={`press-card w-full bg-[#111111] border border-[#2a2418] border-l-2 ${cardAccentColor(m)} rounded-2xl px-4 py-3.5 text-left cursor-pointer select-none`}
+        className={`press-card w-full bg-[#1c1c1e] border border-white/10 border-l-2 ${cardAccentColor(m)} rounded-2xl px-4 py-3.5 text-left cursor-pointer select-none`}
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold text-[#f5f5f0]">{s.code}</span>
+              <span className="text-sm font-bold text-white/90">{s.code}</span>
               <Badge label={m.status} colorClass={statusBadgeColor(m.status)} />
             </div>
-            <div className="text-xs text-[#c5b08a] mt-0.5 truncate">
+            <div className="text-xs text-white/60 mt-0.5 truncate">
               {s.name}
             </div>
             {m.location && (
-              <div className="text-[10px] text-[#6a5a3a] mt-0.5">
+              <div className="text-[10px] text-white/30 mt-0.5">
                 {m.location}
               </div>
             )}
@@ -1471,17 +1471,17 @@ const MotherCard = memo(function MotherCard({
         </div>
         <div className="flex items-center gap-3 mt-2.5 flex-wrap">
           {container && (
-            <span className="text-[10px] text-[#6a5a3a]">
+            <span className="text-[10px] text-white/30">
               {txDate ? `${days}d in container` : "Date unknown"}
             </span>
           )}
           {totalClones > 0 && (
-            <span className="text-[10px] text-[#6a5a3a]">
+            <span className="text-[10px] text-white/30">
               {totalClones} clones
             </span>
           )}
           <span
-            className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-[#6a5a3a]"}`}
+            className={`text-[10px] font-medium ${m.status === "Active" ? vegDaysColor(vegDays) : "text-white/30"}`}
           >
             {vegDays}d veg{m.status === "Active" && vegDays >= 25 ? " ⚠" : ""}
           </span>
@@ -1527,16 +1527,16 @@ const StrainGroup = memo(function StrainGroup({
         className="w-full flex items-center gap-2 py-2 px-0.5 min-h-[44px]"
       >
         <div className="flex-1 flex items-center gap-2 min-w-0">
-          <div className="w-0.5 h-4 rounded-full bg-[#2a2418] flex-shrink-0" />
-          <span className="text-xs font-bold text-[#c5b08a] truncate">
+          <div className="w-0.5 h-4 rounded-full bg-white/10 flex-shrink-0" />
+          <span className="text-xs font-bold text-white/60 truncate">
             {group.name}
           </span>
-          <span className="text-[10px] font-semibold bg-[#2a1f00] text-amber-500 border border-[#3a2e00] rounded-full px-1.5 py-0.5 flex-shrink-0">
+          <span className="text-[10px] font-semibold bg-white/[0.06] text-white/50 border border-white/10 rounded-full px-1.5 py-0.5 flex-shrink-0">
             {group.mothers.length}
           </span>
         </div>
         <ChevronDown
-          className={`w-3.5 h-3.5 text-[#6a5a3a] flex-shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "rotate-180"}`}
+          className={`w-3.5 h-3.5 text-white/30 flex-shrink-0 transition-transform duration-200 ${isCollapsed ? "" : "rotate-180"}`}
           strokeWidth={2.5}
         />
       </button>
@@ -1693,7 +1693,7 @@ function MothersTab({
   return (
     <div className="space-y-3">
       {toast && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-sky-900 border border-sky-700 text-sky-100 text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#0a84ff]/20 border border-[#0a84ff]/40 text-white text-sm font-semibold px-4 py-2 rounded-2xl shadow-xl pointer-events-none whitespace-nowrap">
           {toast}
         </div>
       )}
@@ -1709,7 +1709,7 @@ function MothersTab({
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`${f.length > 10 ? "text-[10px]" : "text-xs"} px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[44px] flex items-center ${filter === f ? "bg-[#2a2418] text-[#f5f5f0]" : "bg-[#111111] border border-[#2a2418] text-[#6a5a3a] active:text-[#f5f5f0]"}`}
+            className={`${f.length > 10 ? "text-[10px]" : "text-xs"} px-3 py-1.5 rounded-xl font-semibold transition-colors min-h-[44px] flex items-center ${filter === f ? "bg-[#0a84ff]/15 text-[#0a84ff] border border-[#0a84ff]/30" : "bg-[#1c1c1e] border border-white/10 text-white/40 active:text-white/90"}`}
           >
             {f}
           </button>
@@ -1718,17 +1718,16 @@ function MothersTab({
       {filtered.length === 0 ? (
         mothers.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 px-2">
-            <div className="bg-[#111111] border border-[#2a2418] rounded-2xl p-8 w-full text-center space-y-3">
+            <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl p-8 w-full text-center space-y-3">
               <div className="text-4xl mb-2">🌿</div>
-              <div className="text-[#f5f5f0] font-semibold text-base">
+              <div className="text-white/90 font-semibold text-base">
                 No mother plants yet
               </div>
-              <div className="text-[#6a5a3a] text-sm">
-                Tap the green{" "}
-                <span className="text-amber-400 font-medium">Add</span> button
-                in the top right to get started
+              <div className="text-white/40 text-sm">
+                Tap the <span className="text-[#0a84ff] font-medium">Add</span>{" "}
+                button in the top right to get started
               </div>
-              <div className="text-[#6a5a3a] text-xs mt-2">
+              <div className="text-white/30 text-xs mt-2">
                 Track health, containers, amendments, and clone cuts all in one
                 place.
               </div>
@@ -1772,17 +1771,17 @@ function MothersTab({
                 if (e.target === e.currentTarget) setQuickLogSheet(null);
               }}
             >
-              <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+              <div className="glass border border-white/10 rounded-t-[20px] w-full max-w-md shadow-2xl">
                 <div className="flex justify-center pt-3 pb-1">
-                  <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
+                  <div className="w-9 h-1 rounded-full bg-white/25" />
                 </div>
                 <div className="px-5 pb-6 pt-2 space-y-4">
                   <div>
-                    <div className="text-sm font-bold text-[#f5f5f0]">
+                    <div className="text-sm font-bold text-white/90">
                       {s.code} — {s.name}
                     </div>
                     {m.location && (
-                      <div className="text-[10px] text-[#6a5a3a] mt-0.5">
+                      <div className="text-[10px] text-white/30 mt-0.5">
                         {m.location}
                       </div>
                     )}
@@ -1793,10 +1792,10 @@ function MothersTab({
                         setQuickLogSheet(null);
                         handleOpenTransplant(m.id, currentContainer(m));
                       }}
-                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-sky-900/50 border border-sky-800/40 active:bg-sky-800/60 transition-colors min-h-[80px]"
+                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-[#0a84ff]/15 border border-[#0a84ff]/25 active:bg-[#0a84ff]/25 transition-colors min-h-[80px]"
                     >
                       <span className="text-xl leading-none">🪴</span>
-                      <span className="text-xs font-semibold text-sky-300">
+                      <span className="text-xs font-semibold text-[#0a84ff]">
                         Transplant
                       </span>
                     </button>
@@ -1806,10 +1805,10 @@ function MothersTab({
                         setQuickLogSheet(null);
                         handleOpenClone(m.id);
                       }}
-                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-amber-900/50 border border-amber-800/40 active:bg-amber-800/60 disabled:opacity-40 transition-colors min-h-[80px]"
+                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-white/[0.06] border border-white/10 active:bg-white/10 disabled:opacity-40 transition-colors min-h-[80px]"
                     >
                       <span className="text-xl leading-none">✂️</span>
-                      <span className="text-xs font-semibold text-amber-300">
+                      <span className="text-xs font-semibold text-white/60">
                         Clone
                       </span>
                     </button>
@@ -1818,10 +1817,10 @@ function MothersTab({
                         setQuickLogSheet(null);
                         handleOpenReduction(m.id);
                       }}
-                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-red-900/50 border border-red-800/40 active:bg-red-800/60 transition-colors min-h-[80px]"
+                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-[#ff453a]/15 border border-[#ff453a]/25 active:bg-[#ff453a]/25 transition-colors min-h-[80px]"
                     >
                       <span className="text-xl leading-none">−</span>
-                      <span className="text-xs font-semibold text-red-300">
+                      <span className="text-xs font-semibold text-[#ff453a]">
                         Reduce
                       </span>
                     </button>
@@ -1830,10 +1829,10 @@ function MothersTab({
                         setQuickLogSheet(null);
                         handleOpenAmend(m.id);
                       }}
-                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-violet-900/50 border border-violet-800/40 active:bg-violet-800/60 transition-colors min-h-[80px]"
+                      className="flex flex-col items-center justify-center gap-1.5 py-4 rounded-2xl bg-[#bf5af2]/15 border border-[#bf5af2]/25 active:bg-[#bf5af2]/25 transition-colors min-h-[80px]"
                     >
                       <span className="text-xl leading-none">🌿</span>
-                      <span className="text-xs font-semibold text-violet-300">
+                      <span className="text-xs font-semibold text-[#bf5af2]">
                         Amendment
                       </span>
                     </button>
@@ -1843,7 +1842,7 @@ function MothersTab({
                       setQuickLogSheet(null);
                       onSelectMother(m);
                     }}
-                    className="w-full py-3 rounded-2xl border border-[#2a2418] text-[#c5b08a] text-sm font-semibold active:bg-[#1a1a1a] active:text-[#f5f5f0] transition-colors min-h-[44px]"
+                    className="w-full py-3 rounded-2xl border border-white/10 text-white/60 text-sm font-semibold active:bg-white/5 active:text-white/90 transition-colors min-h-[44px]"
                   >
                     View Details →
                   </button>
@@ -1861,14 +1860,12 @@ function MothersTab({
             if (e.target === e.currentTarget) closeSheet();
           }}
         >
-          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+          <div className="glass border border-white/10 rounded-t-[20px] w-full max-w-md shadow-2xl">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
+              <div className="w-9 h-1 rounded-full bg-white/25" />
             </div>
             <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="text-sm font-bold text-[#f5f5f0]">
-                Quick Amend
-              </div>
+              <div className="text-sm font-bold text-white/90">Quick Amend</div>
               <div>
                 <input
                   type="text"
@@ -1896,13 +1893,13 @@ function MothersTab({
                   autoFocus
                 />
                 {amendInput.search && (
-                  <div className="mt-1 bg-[#1a1a1a] border border-[#2a2418] rounded-xl overflow-hidden max-h-36 overflow-y-auto">
+                  <div className="mt-1 bg-[#1c1c1e] border border-white/10 rounded-xl overflow-hidden max-h-36 overflow-y-auto">
                     {COMMON_AMENDMENTS.filter((a) =>
                       a.toLowerCase().includes(amendInput.search.toLowerCase())
                     ).map((a) => (
                       <button
                         key={a}
-                        className="w-full text-left px-3 py-2 text-xs text-[#c5b08a] hover:bg-[#1a1a1a] active:bg-[#1a1a1a] transition-colors"
+                        className="w-full text-left px-3 py-2 text-xs text-white/60 hover:bg-white/5 active:bg-white/5 transition-colors"
                         onClick={() =>
                           setAmendInput((p) => ({
                             ...p,
@@ -1927,16 +1924,13 @@ function MothersTab({
                 }
               />
               <div className="flex gap-2 pt-1">
-                <button
-                  onClick={closeSheet}
-                  className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors"
-                >
+                <button onClick={closeSheet} className={btnSecondary}>
                   Cancel
                 </button>
                 <button
                   onClick={handleAmendConfirm}
                   disabled={!amendInput.amendment.trim()}
-                  className="flex-1 py-2.5 rounded-xl bg-violet-700 text-[#f5f5f0] text-sm font-semibold disabled:opacity-40 active:bg-violet-600 transition-colors"
+                  className={btnPrimary}
                 >
                   Confirm
                 </button>
@@ -1953,12 +1947,12 @@ function MothersTab({
             if (e.target === e.currentTarget) closeSheet();
           }}
         >
-          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+          <div className="glass border border-white/10 rounded-t-[20px] w-full max-w-md shadow-2xl">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
+              <div className="w-9 h-1 rounded-full bg-white/25" />
             </div>
             <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="text-sm font-bold text-[#f5f5f0]">
+              <div className="text-sm font-bold text-white/90">
                 Quick Transplant
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -1966,22 +1960,19 @@ function MothersTab({
                   <button
                     key={c}
                     onClick={() => setTransplantInput({ container: c })}
-                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${transplantInput.container === c ? "bg-sky-900/50 text-sky-300 border-sky-700/40" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}
+                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${transplantInput.container === c ? "bg-[#0a84ff]/15 text-[#0a84ff] border-[#0a84ff]/30" : "bg-white/[0.04] border-white/10 text-white/40"}`}
                   >
                     {c}
                   </button>
                 ))}
               </div>
               <div className="flex gap-2 pt-1">
-                <button
-                  onClick={closeSheet}
-                  className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors"
-                >
+                <button onClick={closeSheet} className={btnSecondary}>
                   Cancel
                 </button>
                 <button
                   onClick={handleTransplantConfirm}
-                  className="flex-1 py-2.5 rounded-xl bg-sky-700 text-[#f5f5f0] text-sm font-semibold active:bg-sky-600 transition-colors"
+                  className={btnPrimary}
                 >
                   Confirm
                 </button>
@@ -1998,14 +1989,12 @@ function MothersTab({
             if (e.target === e.currentTarget) closeSheet();
           }}
         >
-          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+          <div className="glass border border-white/10 rounded-t-[20px] w-full max-w-md shadow-2xl">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
+              <div className="w-9 h-1 rounded-full bg-white/25" />
             </div>
             <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="text-sm font-bold text-[#f5f5f0]">
-                Quick Clone
-              </div>
+              <div className="text-sm font-bold text-white/90">Quick Clone</div>
               <input
                 type="number"
                 min="1"
@@ -2027,16 +2016,13 @@ function MothersTab({
                 }
               />
               <div className="flex gap-2 pt-1">
-                <button
-                  onClick={closeSheet}
-                  className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors"
-                >
+                <button onClick={closeSheet} className={btnSecondary}>
                   Cancel
                 </button>
                 <button
                   onClick={handleCloneConfirm}
                   disabled={!cloneInput.count || parseInt(cloneInput.count) < 1}
-                  className="flex-1 py-2.5 rounded-xl bg-amber-600 text-[#0a0a0a] text-sm font-semibold disabled:opacity-40 active:bg-[#2a2418] transition-colors"
+                  className={btnPrimary}
                 >
                   Confirm
                 </button>
@@ -2053,12 +2039,12 @@ function MothersTab({
             if (e.target === e.currentTarget) closeSheet();
           }}
         >
-          <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl">
+          <div className="glass border border-white/10 rounded-t-[20px] w-full max-w-md shadow-2xl">
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-9 h-1 rounded-full bg-[#2a2418]" />
+              <div className="w-9 h-1 rounded-full bg-white/25" />
             </div>
             <div className="px-5 pb-6 pt-2 space-y-3">
-              <div className="text-sm font-bold text-[#f5f5f0]">
+              <div className="text-sm font-bold text-white/90">
                 Log Reduction
               </div>
               <div className="flex gap-2 flex-wrap">
@@ -2068,7 +2054,7 @@ function MothersTab({
                     onClick={() =>
                       setReductionInput((p) => ({ ...p, reason: r }))
                     }
-                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${reductionInput.reason === r ? "bg-amber-900/50 text-amber-300 border-amber-700/40" : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}
+                    className={`flex-1 text-xs py-2 rounded-xl font-medium border transition-colors ${reductionInput.reason === r ? "bg-[#ff453a]/15 text-[#ff453a] border-[#ff453a]/30" : "bg-white/[0.04] border-white/10 text-white/40"}`}
                   >
                     {r}
                   </button>
@@ -2085,16 +2071,10 @@ function MothersTab({
                 autoFocus
               />
               <div className="flex gap-2 pt-1">
-                <button
-                  onClick={closeSheet}
-                  className="flex-1 py-2.5 rounded-xl border border-[#2a2418] text-[#6a5a3a] text-sm font-semibold min-h-[44px] active:bg-[#1a1a1a] active:text-[#c5b08a] transition-colors"
-                >
+                <button onClick={closeSheet} className={btnSecondary}>
                   Cancel
                 </button>
-                <button
-                  onClick={handleReductionConfirm}
-                  className="flex-1 py-2.5 rounded-xl bg-red-800 text-[#f5f5f0] text-sm font-semibold active:bg-red-700 transition-colors"
-                >
+                <button onClick={handleReductionConfirm} className={btnPrimary}>
                   Confirm
                 </button>
               </div>
