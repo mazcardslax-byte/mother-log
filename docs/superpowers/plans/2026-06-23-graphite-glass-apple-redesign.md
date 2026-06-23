@@ -386,8 +386,8 @@ Run: `npm test` → PASS 106. Run: `npx playwright test` → PASS 17. Run: `npm 
 
 - [ ] **Step 3: Prod-bundle leak check (fixtures must not ship)**
 
-Run: `grep -r "clone_plants_v1\|e2e-fixtures\|seed" dist/ ; echo "exit=$?"`
-Expected: `exit=1` (no matches) — confirms the env-gated mock layer still tree-shakes out.
+Run: `grep -rE "e2e-fixtures|VITE_E2E_MOCK" dist/ ; echo "exit=$?"`
+Expected: `exit=1` (no matches) — confirms the env-gated mock layer still tree-shakes out. (Do NOT grep `clone_plants_v1` — that is the app's real storage key and will match legitimately.)
 
 - [ ] **Step 4: Manual visual pass**
 
