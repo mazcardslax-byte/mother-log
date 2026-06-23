@@ -705,23 +705,23 @@ export default function MotherPlantTracker() {
         : Wifi;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#c5b08a] max-w-md mx-auto flex flex-col pb-4">
+    <div className="min-h-screen bg-black text-white/60 max-w-md mx-auto flex flex-col pb-[calc(64px+env(safe-area-inset-bottom))]">
       {/* ── Header ── */}
-      <div className="px-4 pt-safe pb-3 border-b border-[#2a2418]">
+      <div className="sticky top-0 z-40 glass px-4 pt-safe pb-3 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#2a1f00] border border-[#3a2e00] flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[#0a84ff]/15 border border-[#0a84ff]/30 flex items-center justify-center flex-shrink-0">
               <Leaf
-                className="w-[18px] h-[18px] text-amber-400"
+                className="w-[18px] h-[18px] text-[#0a84ff]"
                 strokeWidth={1.75}
               />
             </div>
             <div>
-              <h1 className="text-[#f5f5f0] font-bold text-base leading-tight tracking-tight">
+              <h1 className="text-white/90 font-bold text-xl leading-tight tracking-tight">
                 Mother Log
               </h1>
               <div className="flex items-center gap-1.5">
-                <p className="text-amber-700 text-[10px] font-semibold tracking-widest uppercase">
+                <p className="text-white/40 text-[10px] font-semibold tracking-widest uppercase">
                   Stacks Family Farms
                 </p>
                 <SyncIcon
@@ -734,10 +734,10 @@ export default function MotherPlantTracker() {
                   }
                   className={`w-2.5 h-2.5 flex-shrink-0 ${
                     syncStatus === "syncing"
-                      ? "text-yellow-400 animate-spin"
+                      ? "text-[#ffd60a] animate-spin"
                       : syncStatus === "error"
-                        ? "text-red-500"
-                        : "text-amber-600"
+                        ? "text-[#ff453a]"
+                        : "text-white/30"
                   }`}
                   strokeWidth={2.5}
                 />
@@ -749,13 +749,13 @@ export default function MotherPlantTracker() {
               onClick={() => exportMotherCSV(mothers)}
               title="Export CSV"
               aria-label="Export CSV"
-              className="w-11 h-11 flex items-center justify-center rounded-xl border border-[#2a2418] text-[#6a5a3a] active:text-[#f5f5f0] active:bg-[#1a1a1a] transition-colors"
+              className="w-11 h-11 flex items-center justify-center rounded-xl border border-white/10 text-white/50 active:text-white/90 active:bg-white/10 transition-colors"
             >
               <Download className="w-4 h-4" strokeWidth={2} />
             </button>
             <button
               onClick={openAddForm}
-              className="h-11 px-4 flex items-center gap-1.5 bg-amber-600 active:bg-amber-700 text-[#0a0a0a] text-sm font-semibold rounded-xl transition-colors shadow-md shadow-amber-950/60"
+              className="h-11 px-4 flex items-center gap-1.5 bg-[#0a84ff] active:bg-[#0a6fd6] text-white text-sm font-semibold rounded-xl transition-colors shadow-md"
             >
               <Plus className="w-4 h-4" strokeWidth={2.5} />
               Add
@@ -765,8 +765,12 @@ export default function MotherPlantTracker() {
       </div>
 
       {/* ── Tab Bar ── */}
-      <div className="px-3 pt-2.5 pb-1" data-testid="tab-nav">
-        <div className="flex gap-0.5 bg-[#111111] border border-[#2a2418] rounded-2xl p-1">
+      <div
+        className="fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto glass border-t border-white/10 pt-1.5"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        data-testid="tab-nav"
+      >
+        <div className="flex">
           {TAB_ITEMS.map(({ key, label, icon: Icon }) => {
             const active = tab === key;
             return (
@@ -779,19 +783,17 @@ export default function MotherPlantTracker() {
                     setTab(key);
                   }
                 }}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all duration-150 min-h-[52px] justify-center ${
+                className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 transition-all duration-150 min-h-[52px] justify-center ${
                   active
-                    ? "bg-[#2a1f00] text-amber-300 border border-[#3a2e00] shadow-sm"
-                    : "text-[#6a5a3a] active:text-[#c5b08a] active:bg-[#1a1a1a]"
+                    ? "text-[#0a84ff]"
+                    : "text-white/40 active:text-white/60"
                 }`}
               >
                 <Icon
-                  className={`w-[18px] h-[18px] ${active ? "text-amber-400" : "text-[#6a5a3a]"}`}
+                  className="w-[22px] h-[22px]"
                   strokeWidth={active ? 2 : 1.75}
                 />
-                <span
-                  className={`text-[10px] font-semibold tracking-wide ${active ? "text-amber-300" : "text-[#6a5a3a]"}`}
-                >
+                <span className="text-[10px] font-semibold tracking-wide">
                   {label}
                 </span>
               </button>
