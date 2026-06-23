@@ -377,7 +377,7 @@ git commit -m "feat: Graphite Glass — Mothers tab + detail sheet"
 
 - [ ] **Step 1: Residual-class audit**
 
-Run: `grep -rnE "amber-[0-9]|zinc-[0-9]|stone-[0-9]|#fbbf24|#c5b08a|#2a2418|ca-(bg|surface|border|body|muted|text)" src/`
+Run: `grep -rnE "amber-[0-9]|emerald-[0-9]|sky-[0-9]|violet-[0-9]|stone-[0-9]|#6a5a3a|zinc-[0-9]|stone-[0-9]|#fbbf24|#c5b08a|#2a2418|ca-(bg|surface|border|body|muted|text)" src/`
 Expected: no matches (all migrated). Fix any stragglers.
 
 - [ ] **Step 2: Full suites + build**
