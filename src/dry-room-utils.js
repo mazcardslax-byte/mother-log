@@ -28,17 +28,19 @@ export function daysRemaining(dateHung) {
  * Returns a Tailwind text color class based on days remaining.
  */
 export function countdownColor(remaining) {
-  if (remaining <= 0) return "text-red-500";
-  if (remaining <= 3) return "text-red-400";
-  if (remaining <= 7) return "text-amber-400";
-  return "text-emerald-400";
+  if (remaining <= 0) return "text-[#ff453a]";
+  if (remaining <= 3) return "text-[#ff453a]";
+  if (remaining <= 7) return "text-[#ffd60a]";
+  return "text-[#30d158]";
 }
 
 /**
  * Sorts batches ascending by daysRemaining (most urgent first).
  */
 export function sortByUrgency(batches) {
-  return [...batches].sort((a, b) => daysRemaining(a.dateHung) - daysRemaining(b.dateHung));
+  return [...batches].sort(
+    (a, b) => daysRemaining(a.dateHung) - daysRemaining(b.dateHung)
+  );
 }
 
 export const BURP_DAYS = 14;
@@ -53,7 +55,9 @@ export function getDaysCured(bin) {
   const now = new Date();
   const end = bin.dateSent
     ? new Date(bin.dateSent + "T00:00:00Z")
-    : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    : new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+      );
   return Math.max(0, Math.floor((end - fill) / 86400000));
 }
 
