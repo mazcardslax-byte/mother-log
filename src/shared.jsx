@@ -252,7 +252,7 @@ export const btnSecondary =
 export function Badge({ label, colorClass }) {
   return (
     <span
-      className={`text-xs px-2 py-0.5 rounded-full border font-medium ${colorClass}`}
+      className={`text-[13px] px-2 py-0.5 rounded-full font-medium ${colorClass}`}
     >
       {label}
     </span>
@@ -262,26 +262,33 @@ export function Badge({ label, colorClass }) {
 export function Modal({ title, onClose, children }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-[#0f0f0f] border border-[#2a2418] rounded-t-3xl w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col">
+      <div className="glass border border-white/10 rounded-t-[20px] w-full max-w-md shadow-2xl max-h-[92vh] flex flex-col animate-[slideUp_.25s_ease-out]">
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-[#2a2418] rounded-full" />
+          <div className="w-9 h-1 bg-white/25 rounded-full" />
         </div>
-        <div className="flex items-center justify-between px-5 py-3 border-b border-[#2a2418] flex-shrink-0">
-          <span className="text-[#f5f5f0] font-semibold text-sm">{title}</span>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 flex-shrink-0">
+          <span className="text-white/90 font-semibold text-[17px]">
+            {title}
+          </span>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="w-11 h-11 flex items-center justify-center rounded-xl text-[#6a5a3a] active:text-[#f5f5f0] active:bg-[#1a1a1a] transition-colors"
+            className="w-11 h-11 flex items-center justify-center rounded-xl text-white/40 active:text-white/90 active:bg-white/10 transition-colors"
           >
             ✕
           </button>
         </div>
-        <div className="p-5 overflow-y-auto flex-1">{children}</div>
+        <div
+          className="p-5 overflow-y-auto flex-1"
+          style={{ paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -289,21 +296,21 @@ export function Modal({ title, onClose, children }) {
 
 export function StatBox({ label, value, colorClass, sub }) {
   return (
-    <div className="bg-[#111111] border border-[#2a2418] rounded-xl p-3.5 text-center">
-      <div className={`text-2xl font-bold tracking-tight ${colorClass}`}>
+    <div className="bg-[#1c1c1e] rounded-2xl p-4 text-center">
+      <div className={`text-[22px] font-bold tracking-tight ${colorClass}`}>
         {value}
       </div>
-      <div className="text-[10px] text-[#6a5a3a] mt-1 leading-tight font-medium uppercase tracking-wide">
+      <div className="text-[13px] text-white/50 mt-1 font-medium uppercase tracking-wide">
         {label}
       </div>
-      {sub && <div className="text-[10px] text-[#6a5a3a] mt-0.5">{sub}</div>}
+      {sub && <div className="text-[13px] text-white/30 mt-0.5">{sub}</div>}
     </div>
   );
 }
 
 export function SectionLabel({ children }) {
   return (
-    <div className="text-[10px] text-[#6a5a3a] uppercase tracking-widest font-bold mb-2 px-0.5">
+    <div className="text-[13px] text-white/50 uppercase tracking-wide font-medium mb-2 px-1">
       {children}
     </div>
   );
@@ -312,7 +319,7 @@ export function SectionLabel({ children }) {
 export function FormField({ label, children }) {
   return (
     <div className="mb-4">
-      <label className="block text-xs text-[#c5b08a] mb-1.5 font-medium">
+      <label className="block text-[15px] text-white/60 mb-1.5 font-medium">
         {label}
       </label>
       {children}
@@ -333,7 +340,7 @@ export function HealthDots({ level }) {
                 : level === 3
                   ? "bg-yellow-400"
                   : "bg-emerald-400"
-              : "bg-[#2a2418]"
+              : "bg-white/10"
           }`}
         />
       ))}
@@ -349,12 +356,54 @@ export function ContainerBadge({ container }) {
       <span className="text-xs text-sky-300 font-medium">
         {container || "—"}
       </span>
-      <div className="flex-1 h-1 bg-[#1a1a1a] rounded-full min-w-[40px]">
+      <div className="flex-1 h-1 bg-white/10 rounded-full min-w-[40px]">
         <div
           className="h-1 bg-sky-600 rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
+    </div>
+  );
+}
+
+export function GroupedList({ children }) {
+  return (
+    <div className="bg-[#1c1c1e] rounded-2xl overflow-hidden divide-y divide-white/[0.08]">
+      {children}
+    </div>
+  );
+}
+
+export function GroupedRow({ left, right, onClick }) {
+  const Tag = onClick ? "button" : "div";
+  return (
+    <Tag
+      onClick={onClick}
+      className={`press-card flex items-center justify-between w-full text-left px-4 py-3 min-h-[44px] ${onClick ? "active:bg-white/5" : ""}`}
+    >
+      <span className="text-[17px] text-white/90">{left}</span>
+      <span className="flex items-center gap-2 text-[15px] text-white/50">
+        {right}
+        {onClick && <span className="text-white/25">›</span>}
+      </span>
+    </Tag>
+  );
+}
+
+export function SegmentedControl({ options, value, onChange }) {
+  return (
+    <div className="flex bg-white/[0.06] rounded-[10px] p-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt)}
+          className={`flex-1 text-[13px] font-medium rounded-[8px] py-1.5 transition-colors min-h-[32px] ${
+            value === opt ? "bg-[#0a84ff] text-white" : "text-white/60"
+          }`}
+        >
+          {opt}
+        </button>
+      ))}
     </div>
   );
 }
