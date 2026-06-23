@@ -408,3 +408,22 @@ Report branch status; ask user before any `main` merge/push (auto-deploys via Ve
 - **Spec coverage:** tokens (T1) ✓, font swap (T1) ✓, style constants (T2) ✓, sheets + grouped lists + segmented (T3) ✓, tab bar + large title (T4) ✓, all 6 tabs + MotherDetail (T4–T10) ✓, charts (T8) ✓, testing strategy / testid + label preservation (every task + T11) ✓, prod-leak guard (T11) ✓, branch/no-main constraint (Global + T11) ✓.
 - **Placeholder scan:** token values, class strings, and commands are concrete; per-tab tasks specify exact files + the migration mapping rather than inventing full unread file bodies (honest, since the change is a class sweep over existing markup driven by impeccable).
 - **Type/name consistency:** `inputCls`, `selectCls`, `btnPrimary`, `btnSecondary`, `Modal`, `Badge`, `StatBox`, `GroupedList`, `GroupedRow`, `SegmentedControl` names used consistently T2→T10. Tailwind namespace `ag` used consistently. `data-testid="tab-nav"` referenced from the verified line `src/App.jsx:768`.
+
+---
+
+## Addendum — touch-ups from /btw scan (2026-06-23)
+
+### Task 4B: Extended palette tokens + shared-constant leftovers (run after Task 4, before tab sweeps)
+
+The domain encodes meaning in color beyond the 5 base semantics. Add Apple system colors so per-type colors map cleanly instead of being flattened/ad-hoc'd by the tab sweeps.
+
+- **`src/index.css` `:root`** — add: `--purple: #bf5af2; --teal: #40c8e0; --indigo: #5e5ce6; --gray: rgba(235,235,245,0.3);`
+- **`tailwind.config.js` `ag`** — mirror: `purple:"#bf5af2", teal:"#40c8e0", indigo:"#5e5ce6", gray:"rgba(235,235,245,0.3)"`.
+- **`TYPE_META` (shared.jsx ~97–118)** — migrate per-log-type colors to the new palette: transplant→`#0a84ff` (blue), amendment→`#bf5af2` (purple), feeding→`#30d158` (green), clone→`white/30` (gray), reduction→`#ff453a` (red). Keep the object shape/keys identical.
+- **`HealthDots` (shared.jsx ~342, ~356)** — `bg-emerald-400`→`bg-[#30d158]`, `text-sky-300`→`text-[#0a84ff]` (or token equivalents). No logic change.
+- Test: `npm test` → 106; commit `feat: extended Apple palette + TYPE_META/HealthDots migration`.
+
+### Fold-ins (not separate tasks)
+
+- **Task 4 (tab bar/header):** also migrate the pre-auth loading splash (`App.jsx` ~682–695) — amber chip/spinner → tokens; drop `shadow-amber-950/*` tinted glow (Apple dark avoids colored glows; use neutral/none).
+- **Task 7 (Dry Room):** extract the verbatim-duplicated "LOWERS" badge (4×: lines ~304/563/639/969) and rackType badge (2×) into small components, then swap colors once. `RoomTab.jsx:132` bulk button `bg-violet-900/60` → `#bf5af2` tint.
