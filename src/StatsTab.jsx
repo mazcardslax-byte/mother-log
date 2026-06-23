@@ -75,7 +75,7 @@ function CloneRatesSection() {
         ].map(({ label, value, style }) => (
           <div
             key={label}
-            className="flex-1 bg-[#1c1c1e] border border-white/10 rounded-xl p-3 text-center"
+            className="flex-1 bg-[#1c1c1e] border border-white/10 rounded-2xl p-3 text-center"
           >
             <div className="text-xl font-bold" style={style}>
               {value}
@@ -90,7 +90,7 @@ function CloneRatesSection() {
           No clone data yet.
         </div>
       ) : (
-        <div className="bg-[#1c1c1e] border border-white/10 rounded-xl p-4 space-y-3">
+        <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl p-4 space-y-3">
           {byStrain.map((entry) => (
             <div key={entry.strainCode} className="flex items-center gap-3">
               <div className="w-[88px] text-[11px] text-white/70 truncate shrink-0">
@@ -253,7 +253,7 @@ function HealthTrendsSection({ mothers, getStrain }) {
         ))}
       </select>
 
-      <div className="bg-[#1c1c1e] border border-white/10 rounded-xl p-4">
+      <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl p-4">
         {chartData.length < 2 ? (
           <div className="text-white/30 text-xs text-center py-6">
             Health trend starts recording from today — check back after a few
@@ -310,7 +310,7 @@ function StrainComparisonSection({ mothers, getStrain }) {
           No data yet.
         </div>
       ) : (
-        <div className="bg-[#1c1c1e] border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-[#1c1c1e] border border-white/10 rounded-2xl overflow-hidden">
           {/* Header row */}
           <div className="grid grid-cols-[1fr_52px_52px_52px] px-4 py-2 border-b border-white/10">
             <div className="text-[10px] font-semibold text-white/40 uppercase tracking-wider">
