@@ -680,19 +680,19 @@ export default function MotherPlantTracker() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center gap-4">
-        <div className="w-16 h-16 rounded-2xl bg-[#2a1f00] border border-[#3a2e00] flex items-center justify-center shadow-lg shadow-amber-950/50">
-          <Leaf className="w-8 h-8 text-amber-400" strokeWidth={1.5} />
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-[#0a84ff]/15 border border-[#0a84ff]/30 flex items-center justify-center">
+          <Leaf className="w-8 h-8 text-[#0a84ff]" strokeWidth={1.5} />
         </div>
         <div>
           <div className="text-[#f5f5f0] font-bold text-xl tracking-tight text-center">
             Mother Log
           </div>
-          <div className="text-amber-700 text-[11px] font-semibold tracking-widest uppercase text-center mt-0.5">
+          <div className="text-white/40 text-[11px] font-semibold tracking-widest uppercase text-center mt-0.5">
             Stacks Family Farms
           </div>
         </div>
-        <Loader2 className="w-4 h-4 text-amber-700 animate-spin mt-2" />
+        <Loader2 className="w-4 h-4 text-[#0a84ff] animate-spin mt-2" />
       </div>
     );
   }
@@ -766,7 +766,7 @@ export default function MotherPlantTracker() {
 
       {/* ── Tab Bar ── */}
       <div
-        className="fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto glass border-t border-white/10 pt-1.5"
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-40 glass border-t border-white/10 pt-1.5"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         data-testid="tab-nav"
       >

@@ -97,24 +97,24 @@ export const DETAIL_TABS = ["Overview", "History", "Photos"];
 export const TYPE_META = {
   transplant: {
     label: "Transplant",
-    text: "text-sky-400",
-    border: "border-sky-700",
+    text: "text-[#0a84ff]",
+    border: "border-[#0a84ff]",
   },
   amendment: {
     label: "Amendment",
-    text: "text-violet-400",
-    border: "border-violet-700",
+    text: "text-[#bf5af2]",
+    border: "border-[#bf5af2]",
   },
   feeding: {
     label: "Feeding",
-    text: "text-emerald-400",
-    border: "border-emerald-700",
+    text: "text-[#30d158]",
+    border: "border-[#30d158]",
   },
-  clone: { label: "Clone", text: "text-stone-300", border: "border-stone-600" },
+  clone: { label: "Clone", text: "text-white/30", border: "border-white/30" },
   reduction: {
     label: "Reduction",
-    text: "text-red-400",
-    border: "border-red-700",
+    text: "text-[#ff453a]",
+    border: "border-[#ff453a]",
   },
 };
 
@@ -339,7 +339,7 @@ export function HealthDots({ level }) {
                 ? "bg-red-400"
                 : level === 3
                   ? "bg-yellow-400"
-                  : "bg-emerald-400"
+                  : "bg-[#30d158]"
               : "bg-white/10"
           }`}
         />
@@ -353,12 +353,12 @@ export function ContainerBadge({ container }) {
   const pct = idx < 0 ? 0 : Math.round(((idx + 1) / CONTAINERS.length) * 100);
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-sky-300 font-medium">
+      <span className="text-xs text-[#0a84ff] font-medium">
         {container || "—"}
       </span>
       <div className="flex-1 h-1 bg-white/10 rounded-full min-w-[40px]">
         <div
-          className="h-1 bg-sky-600 rounded-full transition-all"
+          className="h-1 bg-[#0a84ff] rounded-full transition-all"
           style={{ width: `${pct}%` }}
         />
       </div>
