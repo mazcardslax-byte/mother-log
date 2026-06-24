@@ -336,9 +336,9 @@ export function HealthDots({ level }) {
           className={`w-2 h-2 rounded-full ${
             i <= level
               ? level <= 2
-                ? "bg-red-400"
+                ? "bg-[#ff453a]"
                 : level === 3
-                  ? "bg-yellow-400"
+                  ? "bg-[#ffd60a]"
                   : "bg-[#30d158]"
               : "bg-white/10"
           }`}
