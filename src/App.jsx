@@ -1734,7 +1734,7 @@ function MothersTab({
             </div>
           </div>
         ) : (
-          <div className="text-center py-10 text-[#6a5a3a] text-sm">
+          <div className="text-center py-10 text-white/30 text-sm">
             No results.
           </div>
         )
@@ -2094,10 +2094,10 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
   return (
     <div className="space-y-1">
       <div className="mb-4">
-        <h2 className="text-[#f5f5f0] font-semibold text-sm">
+        <h2 className="text-white/90 font-semibold text-sm">
           Add Mother Plant
         </h2>
-        <p className="text-[#6a5a3a] text-xs mt-0.5">
+        <p className="text-white/40 text-xs mt-0.5">
           Fill in the details below
         </p>
       </div>
@@ -2123,9 +2123,9 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
               className={`flex-1 text-xs py-2 rounded-xl font-bold border transition-colors min-h-[44px] flex items-center justify-center ${
                 form.status === s
                   ? s === "Active"
-                    ? "bg-emerald-800/60 text-emerald-200 border-emerald-600"
-                    : "bg-[#2a2418] text-[#f5f5f0] border-[#6a5a3a]"
-                  : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"
+                    ? "bg-[#30d158]/15 text-[#30d158] border-[#30d158]/40"
+                    : "bg-[#2c2c2e] text-white/90 border-white/20"
+                  : "bg-[#1c1c1e] border-white/10 text-white/40"
               }`}
             >
               {s}
@@ -2139,7 +2139,7 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
             <button
               key={i}
               onClick={() => f("healthLevel", i)}
-              className={`flex-1 h-11 rounded-xl border font-bold text-sm transition-colors ${form.healthLevel === i ? (i <= 2 ? "bg-red-900/60 border-red-700 text-red-300" : i === 3 ? "bg-yellow-900/60 border-yellow-700 text-yellow-300" : "bg-emerald-900/60 border-emerald-700 text-emerald-300") : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"}`}
+              className={`flex-1 h-11 rounded-xl border font-bold text-sm transition-colors ${form.healthLevel === i ? (i <= 2 ? "bg-[#ff453a]/15 border-[#ff453a]/40 text-[#ff453a]" : i === 3 ? "bg-[#ffd60a]/15 border-[#ffd60a]/40 text-[#ffd60a]" : "bg-[#30d158]/15 border-[#30d158]/40 text-[#30d158]") : "bg-[#1c1c1e] border-white/10 text-white/40"}`}
             >
               {i}
             </button>
@@ -2175,15 +2175,15 @@ function AddMotherTab({ form, setForm, onSubmit, onCancel }) {
             onClick={() => f("initialDateUnknown", !form.initialDateUnknown)}
             className={`flex items-center gap-2 text-xs px-3 py-2 rounded-xl border transition-colors w-full ${
               form.initialDateUnknown
-                ? "bg-[#2a2418] border-[#6a5a3a] text-[#f5f5f0]"
-                : "bg-[#1a1a1a] border-[#2a2418] text-[#6a5a3a]"
+                ? "bg-[#2c2c2e] border-white/20 text-white/90"
+                : "bg-[#1c1c1e] border-white/10 text-white/40"
             }`}
           >
             <span
-              className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${form.initialDateUnknown ? "bg-amber-600 border-amber-500" : "border-[#2a2418]"}`}
+              className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${form.initialDateUnknown ? "bg-[#0a84ff] border-[#0a84ff]" : "border-white/20"}`}
             >
               {form.initialDateUnknown && (
-                <span className="text-[#f5f5f0] text-[10px]">✓</span>
+                <span className="text-white text-[10px]">✓</span>
               )}
             </span>
             Date unknown — existing plant with no record
