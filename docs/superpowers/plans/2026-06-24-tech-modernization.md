@@ -4,13 +4,13 @@
 
 **Goal:** Modernize the mother-log dependency stack (React 18→19, safe bumps), clear all security advisories, and remove dead weight — with zero behavior change and the test suite green after every step.
 
-**Architecture:** Dependency/config work, not feature code. There is no TDD red→green cycle — the existing **106 Vitest + 17 Playwright** suite is the regression guard. Each task is a bump-or-removal followed by `npm test` + `npx playwright test` + `npm run build`, then an isolated commit so any regression (especially React 19) can be reverted alone.
+**Architecture:** Dependency/config work, not feature code. There is no TDD red→green cycle — the existing **106 Vitest + 16 Playwright** suite is the regression guard. Each task is a bump-or-removal followed by `npm test` + `npx playwright test` + `npm run build`, then an isolated commit so any regression (especially React 19) can be reverted alone.
 
 **Tech Stack:** React 18.3→19, Vite 5 (held), Tailwind 3 (held), Vitest, Playwright, npm.
 
 ## Global Constraints
 
-- **106 Vitest + 17 Playwright stay green after every task.** Commands: `npm test` and `npx playwright test` (Playwright auto-starts the mock dev server via `webServer`; do not start a server manually).
+- **106 Vitest + 16 Playwright stay green after every task.** Commands: `npm test` and `npx playwright test` (Playwright auto-starts the mock dev server via `webServer`; do not start a server manually).
 - **No behavior, data-model, UI, or test-assertion changes.** This phase is invisible to users. Do not edit `src/**` component logic except where a React-19 breaking change strictly requires it.
 - **`npm run build` must succeed** after every task; prod bundle must not ship e2e fixtures (`grep -rE "e2e-fixtures|VITE_E2E_MOCK" dist/` → no matches).
 - **Hold these majors (out of scope):** `tailwindcss` (stay 3.x), `vite` (stay 5.x unless React 19 strictly forces a minimum bump — then take the _minimum_ compatible version, not latest).
@@ -51,7 +51,7 @@ Expected: 0 high and 0 moderate advisories. (If a low remains that only `--force
 Run: `npm test`
 Expected: 106 passed.
 Run: `npx playwright test`
-Expected: 17 passed.
+Expected: 16 passed.
 Run: `npm run build`
 Expected: build succeeds.
 
@@ -91,7 +91,7 @@ Expected: build succeeds (StatsTab's hand-rolled SVG chart is unaffected).
 Run: `npm test`
 Expected: 106 passed.
 Run: `npx playwright test`
-Expected: 17 passed.
+Expected: 16 passed.
 
 - [ ] **Step 4: Commit**
 
@@ -147,7 +147,7 @@ Expected: build succeeds with no React-version or plugin errors. (If a Fast-Refr
 Run: `npm test`
 Expected: 106 passed.
 Run: `npx playwright test`
-Expected: 17 passed.
+Expected: 16 passed.
 
 - [ ] **Step 6: Confirm no fixture leak in prod bundle**
 
@@ -181,7 +181,7 @@ git commit -m "feat: upgrade React 18 → 19"
 Run: `npm install @supabase/supabase-js@^2.108.2 lucide-react@^1.21.0`
 These touch real runtime (DB client + icons), so verify immediately:
 Run: `npm test` → Expected: 106 passed.
-Run: `npx playwright test` → Expected: 17 passed.
+Run: `npx playwright test` → Expected: 16 passed.
 Run: `npm run build` → Expected: succeeds.
 
 - [ ] **Step 2: Bump the dev/test tooling (group B)**
@@ -194,7 +194,7 @@ Run: `npm install -D vitest@^4.1.9 @vitest/ui@^4.1.9 @playwright/test@^1.61.1 pr
 Run: `npm test`
 Expected: 106 passed (Vitest 4.1.9).
 Run: `npx playwright test`
-Expected: 17 passed.
+Expected: 16 passed.
 Run: `npm run build`
 Expected: succeeds.
 Run: `npm audit`
@@ -260,7 +260,7 @@ If no split (measurement only), there is nothing to commit for this task — rec
 - [ ] **Step 1: Full suite + build**
 
 Run: `npm test` → Expected: 106 passed.
-Run: `npx playwright test` → Expected: 17 passed.
+Run: `npx playwright test` → Expected: 16 passed.
 Run: `npm run build` → Expected: succeeds.
 
 - [ ] **Step 2: Security + version confirmation**
