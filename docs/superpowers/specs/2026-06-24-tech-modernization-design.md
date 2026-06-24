@@ -12,7 +12,7 @@ migrations (Tailwind v4, Vite major) are explicitly out of scope.**
 ## Context (baseline, verified 2026-06-24)
 
 - React **18.3.1**, Vite **5.4.21**, Tailwind **3.4.19**, Vitest **4.1.2**.
-- Test safety net (built in Phase 0): **106 Vitest + 17 Playwright**, all green.
+- Test safety net (built in Phase 0): **106 Vitest + 16 Playwright**, all green.
   This is the regression guard for the React 19 upgrade.
 - PWA: installable, minimal `public/sw.js` (caches only `/` + `/index.html`).
   Untouched this phase (offline is out of scope).
@@ -84,7 +84,7 @@ tree-shaken).
 - Bump `@vitejs/plugin-react` **only if** required for React 19 + Fast Refresh.
   Prefer staying on Vite 5 to avoid a disruptive major; if the plugin bump
   forces a Vite bump, take the **minimum** compatible version, not latest.
-- Full suite (106 Vitest + 17 Playwright) must stay green. Manual smoke of the
+- Full suite (106 Vitest + 16 Playwright) must stay green. Manual smoke of the
   app shell. Commit.
 
 ### Step 4 — Safe dependency bumps
@@ -114,7 +114,7 @@ ClonesTab's logic — split only if it's a low-risk mechanical extraction.
 
 ## Constraints & conventions (must honor)
 
-- 106 Vitest + 17 Playwright stay green after every step.
+- 106 Vitest + 16 Playwright stay green after every step.
 - Each step is its own commit; the React 19 step is isolated so it can be
   reverted independently if needed.
 - Prod build stays clean; no e2e fixtures ship (`e2e-fixtures` /
