@@ -157,7 +157,7 @@ Expected: `exit=1` (no matches).
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A
+git add package.json package-lock.json
 git commit -m "feat: upgrade React 18 → 19"
 ```
 
@@ -245,7 +245,7 @@ Run: `npm run build` → Expected: succeeds; `tab-clones` chunk is smaller than 
 If a split was made:
 
 ```bash
-git add -A
+git add package.json package-lock.json
 git commit -m "perf: lazy-load ClonesTab modals to shrink tab-clones chunk"
 ```
 
