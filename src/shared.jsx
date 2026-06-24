@@ -110,7 +110,7 @@ export const TYPE_META = {
     text: "text-[#30d158]",
     border: "border-[#30d158]",
   },
-  clone: { label: "Clone", text: "text-white/30", border: "border-white/30" },
+  clone: { label: "Clone", text: "text-white/50", border: "border-white/20" },
   reduction: {
     label: "Reduction",
     text: "text-[#ff453a]",
