@@ -1,12 +1,5 @@
 import { useState, memo } from "react";
-import {
-  inputCls,
-  btnPrimary,
-  btnSecondary,
-  SectionLabel,
-  GroupedList,
-  GroupedRow,
-} from "./shared";
+import { inputCls, SectionLabel, GroupedList } from "./shared";
 
 // ── Facility constants ──────────────────────────────────────────────────────
 export const DEFAULT_FACILITY = {

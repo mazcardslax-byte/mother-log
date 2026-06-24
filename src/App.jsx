@@ -685,7 +685,7 @@ export default function MotherPlantTracker() {
           <Leaf className="w-8 h-8 text-[#0a84ff]" strokeWidth={1.5} />
         </div>
         <div>
-          <div className="text-[#f5f5f0] font-bold text-xl tracking-tight text-center">
+          <div className="text-white/90 font-bold text-xl tracking-tight text-center">
             Mother Log
           </div>
           <div className="text-white/40 text-[11px] font-semibold tracking-widest uppercase text-center mt-0.5">
