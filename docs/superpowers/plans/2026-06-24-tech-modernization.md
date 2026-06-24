@@ -242,10 +242,10 @@ Run: `npm run build` → Expected: succeeds; `tab-clones` chunk is smaller than 
 
 - [ ] **Step 4: Commit**
 
-If a split was made:
+If a split was made (stage the specific source files you changed — do NOT use `git add -A`, which would sweep untracked agent-config dirs):
 
 ```bash
-git add package.json package-lock.json
+git add src/ClonesTab.jsx src/clones-modals.jsx   # adjust to the exact files you created/edited
 git commit -m "perf: lazy-load ClonesTab modals to shrink tab-clones chunk"
 ```
 
