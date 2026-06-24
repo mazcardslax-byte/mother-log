@@ -11,31 +11,66 @@ export const TRAY_ALERT_DAYS = 14;
 export const TESTER_CODES = ["2020", "2021", "2022", "2023", "2024"];
 
 export const STATUS_COLORS = {
-  "Cloned":       "bg-emerald-900/50 text-emerald-300 border-emerald-700/40",
-  "Transplanted": "bg-sky-900/50 text-sky-300 border-sky-700/40",
+  Cloned: "bg-[#30d158]/15 text-[#30d158] border-[#30d158]/30",
+  Transplanted: "bg-[#0a84ff]/15 text-[#0a84ff] border-[#0a84ff]/30",
 };
 
 export const ROUND_COLORS = {
-  "Upcoming": "bg-teal-900/50 text-teal-300 border-teal-700/40",
-  "Next":     "bg-orange-900/50 text-orange-300 border-orange-700/40",
-  "Archived": "bg-[#1a1a1a] text-[#6a5a3a] border-[#2a2418]",
+  Upcoming: "bg-[#40c8e0]/15 text-[#40c8e0] border-[#40c8e0]/30",
+  Next: "bg-[#ff9f0a]/15 text-[#ff9f0a] border-[#ff9f0a]/30",
+  Archived: "bg-white/5 text-white/40 border-white/10",
 };
 
 export const STATUSES = ["Cloned", "Transplanted"];
 
 export const STRAIN_PALETTE = [
-  "#34d399", "#60a5fa", "#f472b6", "#fb923c", "#a78bfa",
-  "#facc15", "#2dd4bf", "#f87171", "#818cf8", "#4ade80",
-  "#e879f9", "#38bdf8",
+  "#30d158",
+  "#0a84ff",
+  "#ff375f",
+  "#ff9f0a",
+  "#bf5af2",
+  "#ffd60a",
+  "#40c8e0",
+  "#ff453a",
+  "#5e5ce6",
+  "#63e6e2",
+  "#ff6482",
+  "#64d2ff",
 ];
 
-export const CLONE_SUB_TABS = ["Summary", "Log", "Add Entry", "Trays", "Strains"];
+export const CLONE_SUB_TABS = [
+  "Summary",
+  "Log",
+  "Add Entry",
+  "Trays",
+  "Strains",
+];
 
 // ── Month map for smart parser ────────────────────────────────────────────────
 export const MONTH_MAP = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
-  january: 0, february: 1, march: 2, april: 3, june: 5, july: 6, august: 7,
-  september: 8, october: 9, november: 10, december: 11,
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+  january: 0,
+  february: 1,
+  march: 2,
+  april: 3,
+  june: 5,
+  july: 6,
+  august: 7,
+  september: 8,
+  october: 9,
+  november: 10,
+  december: 11,
 };
 
 // ── Strain code resolver ──────────────────────────────────────────────────────
@@ -45,11 +80,11 @@ export const MONTH_MAP = {
  */
 export function resolveCode(input, strains) {
   const clean = input.toLowerCase().trim();
-  const exact = strains.find(s => s.code.toLowerCase() === clean);
+  const exact = strains.find((s) => s.code.toLowerCase() === clean);
   if (exact) return { strain: exact, suffix: "" };
   const match = clean.match(/^(\d+)([a-z]+)$/);
   if (match && TESTER_CODES.includes(match[1])) {
-    const base = strains.find(s => s.code === match[1]);
+    const base = strains.find((s) => s.code === match[1]);
     if (base) return { strain: base, suffix: match[2].toUpperCase() };
   }
   return null;
@@ -60,36 +95,65 @@ export function resolveCode(input, strains) {
  * Parse a free-text entry like "19 2023b march 24" into { qty, resolved, dateStr }.
  */
 export function parseSmartEntry(raw, strains) {
-  const tokens = raw.toLowerCase().trim().split(/[\s,]+/);
-  let qty = null, codeRaw = null, month = null, day = null, year = new Date().getFullYear();
+  const tokens = raw
+    .toLowerCase()
+    .trim()
+    .split(/[\s,]+/);
+  let qty = null,
+    codeRaw = null,
+    month = null,
+    day = null,
+    year = new Date().getFullYear();
   for (const t of tokens) {
-    if (!codeRaw && resolveCode(t, strains)) { codeRaw = t; continue; }
+    if (!codeRaw && resolveCode(t, strains)) {
+      codeRaw = t;
+      continue;
+    }
     if (!qty && /^\d+$/.test(t) && parseInt(t) > 0 && parseInt(t) <= 1900) {
       // If month is already set and this could be a day (1–31), treat it as day, not qty
-      if (month !== null && day === null && parseInt(t) <= 31) { day = parseInt(t); continue; }
-      qty = parseInt(t); continue;
+      if (month !== null && day === null && parseInt(t) <= 31) {
+        day = parseInt(t);
+        continue;
+      }
+      qty = parseInt(t);
+      continue;
     }
-    if (/^\d{4}$/.test(t) && parseInt(t) > 1900) { year = parseInt(t); continue; }
-    if (MONTH_MAP[t] !== undefined && month === null) { month = MONTH_MAP[t]; continue; }
-    if (month !== null && day === null && /^\d{1,2}(st|nd|rd|th)?$/.test(t)) { day = parseInt(t); continue; }
+    if (/^\d{4}$/.test(t) && parseInt(t) > 1900) {
+      year = parseInt(t);
+      continue;
+    }
+    if (MONTH_MAP[t] !== undefined && month === null) {
+      month = MONTH_MAP[t];
+      continue;
+    }
+    if (month !== null && day === null && /^\d{1,2}(st|nd|rd|th)?$/.test(t)) {
+      day = parseInt(t);
+      continue;
+    }
   }
   if (month === null) {
     for (const t of tokens) {
       const slash = t.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/);
       if (slash) {
-        const m = parseInt(slash[1]) - 1, d = parseInt(slash[2]);
+        const m = parseInt(slash[1]) - 1,
+          d = parseInt(slash[2]);
         if (m >= 0 && m <= 11 && d >= 1 && d <= 31) {
-          month = m; day = d;
-          if (slash[3]) { const y = parseInt(slash[3]); year = y < 100 ? 2000 + y : y; }
+          month = m;
+          day = d;
+          if (slash[3]) {
+            const y = parseInt(slash[3]);
+            year = y < 100 ? 2000 + y : y;
+          }
           break;
         }
       }
     }
   }
   const resolved = codeRaw ? resolveCode(codeRaw, strains) : null;
-  const dateStr = (month !== null && day !== null)
-    ? new Date(year, month, day).toISOString().split("T")[0]
-    : null;
+  const dateStr =
+    month !== null && day !== null
+      ? new Date(year, month, day).toISOString().split("T")[0]
+      : null;
   return { qty, resolved, dateStr };
 }
 
@@ -99,7 +163,7 @@ export function parseSmartEntry(raw, strains) {
  */
 export function autoTrayCode(trays, strainCode) {
   if (!strainCode) return "";
-  const n = trays.filter(t => t.strainCode === strainCode).length + 1;
+  const n = trays.filter((t) => t.strainCode === strainCode).length + 1;
   return `${strainCode}-T${n}`;
 }
 
@@ -107,7 +171,9 @@ export function autoTrayCode(trays, strainCode) {
  * Returns trays whose age >= TRAY_ALERT_DAYS and are still Active.
  */
 export function getAlertTrays(trays) {
-  return trays.filter(t => t.status === "Active" && daysSince(t.dateStarted) >= TRAY_ALERT_DAYS);
+  return trays.filter(
+    (t) => t.status === "Active" && daysSince(t.dateStarted) >= TRAY_ALERT_DAYS
+  );
 }
 
 // ── Survival rate helpers ─────────────────────────────────────────────────────
@@ -133,24 +199,27 @@ export function calcSurvivalByStrain(plants) {
  */
 export function buildTransplantPipeline(trays, activePlants) {
   const trayTotals = trays
-    .filter(t => t.status === "Active")
+    .filter((t) => t.status === "Active")
     .reduce((a, t) => {
       if (!t.strainName) return a;
       if (!a[t.strainName]) a[t.strainName] = { trayCount: 0 };
-      a[t.strainName].trayCount += (t.count || 0);
+      a[t.strainName].trayCount += t.count || 0;
       return a;
     }, {});
 
   const loggedTotals = activePlants
-    .filter(p => p.status === "Cloned")
+    .filter((p) => p.status === "Cloned")
     .reduce((a, p) => {
       if (!a[p.strainName]) a[p.strainName] = { loggedCount: 0 };
       a[p.strainName].loggedCount++;
       return a;
     }, {});
 
-  const allStrains = new Set([...Object.keys(trayTotals), ...Object.keys(loggedTotals)]);
-  return [...allStrains].sort().map(name => ({
+  const allStrains = new Set([
+    ...Object.keys(trayTotals),
+    ...Object.keys(loggedTotals),
+  ]);
+  return [...allStrains].sort().map((name) => ({
     name,
     trayCount: trayTotals[name]?.trayCount || 0,
     loggedCount: loggedTotals[name]?.loggedCount || 0,
@@ -163,8 +232,12 @@ export function buildTransplantPipeline(trays, activePlants) {
  * then group by strainName.
  * Returns { displayPlants, grouped }.
  */
-export function filterAndGroupPlants(plants, { showArchived, filterStrain, filterRound, filterStatus }) {
-  const displayPlants = [], grouped = {};
+export function filterAndGroupPlants(
+  plants,
+  { showArchived, filterStrain, filterRound, filterStatus }
+) {
+  const displayPlants = [],
+    grouped = {};
   for (const p of plants) {
     if (showArchived ? !p.archived : p.archived) continue;
     if (filterStrain !== "All" && p.strainName !== filterStrain) continue;
@@ -182,7 +255,9 @@ export function filterAndGroupPlants(plants, { showArchived, filterStrain, filte
  * Map each strain name to a color from the palette (wrapping by index).
  */
 export function buildStrainColorMap(names, palette = STRAIN_PALETTE) {
-  return Object.fromEntries(names.map((n, i) => [n, palette[i % palette.length]]));
+  return Object.fromEntries(
+    names.map((n, i) => [n, palette[i % palette.length]])
+  );
 }
 
 // ── Transplant tray logic ─────────────────────────────────────────────────────
@@ -198,55 +273,72 @@ export function buildStrainColorMap(names, palette = STRAIN_PALETTE) {
  * @param {string}   round
  * @returns {{ nextPlants, nextTrays }}
  */
-export function applyTrayTransplant(plants, trays, trayCode, date, survived, round) {
-  const tray = trays.find(t => t.code === trayCode);
-  const loggedInTray = plants.filter(p => p.tray === trayCode && p.status === "Cloned" && !p.archived);
+export function applyTrayTransplant(
+  plants,
+  trays,
+  trayCode,
+  date,
+  survived,
+  round
+) {
+  const tray = trays.find((t) => t.code === trayCode);
+  const loggedInTray = plants.filter(
+    (p) => p.tray === trayCode && p.status === "Cloned" && !p.archived
+  );
   const survivedCount = survived != null ? survived : loggedInTray.length;
   const toTransplantCount = Math.min(survivedCount, loggedInTray.length);
-  const transplantIds = new Set(loggedInTray.slice(0, toTransplantCount).map(p => p.id));
-  const archiveIds = new Set(loggedInTray.slice(toTransplantCount).map(p => p.id));
+  const transplantIds = new Set(
+    loggedInTray.slice(0, toTransplantCount).map((p) => p.id)
+  );
+  const archiveIds = new Set(
+    loggedInTray.slice(toTransplantCount).map((p) => p.id)
+  );
 
-  const newSurvivorPlants = survivedCount > loggedInTray.length
-    ? Array.from({ length: survivedCount - loggedInTray.length }, () => ({
-        id: uid(),
-        strainCode: tray?.strainCode || "",
-        strainName: tray?.strainName || "",
-        dateCloned: tray?.dateStarted || null,
-        dateTransplanted: date,
-        pot: "Black Pot",
-        round: round || "Next",
-        status: "Transplanted",
-        notes: "",
-        batchNote: `Transplanted from tray ${trayCode}`,
-        tray: trayCode,
-        archived: false,
-      }))
-    : [];
+  const newSurvivorPlants =
+    survivedCount > loggedInTray.length
+      ? Array.from({ length: survivedCount - loggedInTray.length }, () => ({
+          id: uid(),
+          strainCode: tray?.strainCode || "",
+          strainName: tray?.strainName || "",
+          dateCloned: tray?.dateStarted || null,
+          dateTransplanted: date,
+          pot: "Black Pot",
+          round: round || "Next",
+          status: "Transplanted",
+          notes: "",
+          batchNote: `Transplanted from tray ${trayCode}`,
+          tray: trayCode,
+          archived: false,
+        }))
+      : [];
 
   const trayTotal = tray?.count ?? null;
-  const extraNonSurvived = trayTotal != null
-    ? Math.max(0, (trayTotal - survivedCount) - archiveIds.size)
-    : 0;
-  const newNonSurvivorPlants = extraNonSurvived > 0
-    ? Array.from({ length: extraNonSurvived }, () => ({
-        id: uid(),
-        strainCode: tray?.strainCode || "",
-        strainName: tray?.strainName || "",
-        dateCloned: tray?.dateStarted || null,
-        dateTransplanted: null,
-        pot: "Black Pot",
-        round: round || "Next",
-        status: "Cloned",
-        notes: "",
-        batchNote: `Did not survive — tray ${trayCode}`,
-        tray: trayCode,
-        archived: true,
-      }))
-    : [];
+  const extraNonSurvived =
+    trayTotal != null
+      ? Math.max(0, trayTotal - survivedCount - archiveIds.size)
+      : 0;
+  const newNonSurvivorPlants =
+    extraNonSurvived > 0
+      ? Array.from({ length: extraNonSurvived }, () => ({
+          id: uid(),
+          strainCode: tray?.strainCode || "",
+          strainName: tray?.strainName || "",
+          dateCloned: tray?.dateStarted || null,
+          dateTransplanted: null,
+          pot: "Black Pot",
+          round: round || "Next",
+          status: "Cloned",
+          notes: "",
+          batchNote: `Did not survive — tray ${trayCode}`,
+          tray: trayCode,
+          archived: true,
+        }))
+      : [];
 
   const nextPlants = [
-    ...plants.map(p => {
-      if (transplantIds.has(p.id)) return { ...p, status: "Transplanted", dateTransplanted: date };
+    ...plants.map((p) => {
+      if (transplantIds.has(p.id))
+        return { ...p, status: "Transplanted", dateTransplanted: date };
       if (archiveIds.has(p.id)) return { ...p, archived: true };
       return p;
     }),
@@ -254,7 +346,7 @@ export function applyTrayTransplant(plants, trays, trayCode, date, survived, rou
     ...newNonSurvivorPlants,
   ];
 
-  const nextTrays = trays.map(t =>
+  const nextTrays = trays.map((t) =>
     t.code === trayCode ? { ...t, status: "Done", survived: survivedCount } : t
   );
 
@@ -269,14 +361,15 @@ export function applyTrayTransplant(plants, trays, trayCode, date, survived, rou
 export function searchPlants(plants, query) {
   if (!query.trim()) return [];
   const q = query.toLowerCase();
-  return plants.filter(p =>
-    p.strainName?.toLowerCase().includes(q) ||
-    p.strainCode?.toLowerCase().includes(q) ||
-    p.status?.toLowerCase().includes(q) ||
-    p.tray?.toLowerCase().includes(q) ||
-    p.notes?.toLowerCase().includes(q) ||
-    p.batchNote?.toLowerCase().includes(q) ||
-    p.round?.toLowerCase().includes(q)
+  return plants.filter(
+    (p) =>
+      p.strainName?.toLowerCase().includes(q) ||
+      p.strainCode?.toLowerCase().includes(q) ||
+      p.status?.toLowerCase().includes(q) ||
+      p.tray?.toLowerCase().includes(q) ||
+      p.notes?.toLowerCase().includes(q) ||
+      p.batchNote?.toLowerCase().includes(q) ||
+      p.round?.toLowerCase().includes(q)
   );
 }
 

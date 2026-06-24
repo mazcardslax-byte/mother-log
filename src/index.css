@@ -1,22 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ── Carbon Amber Design Tokens ───────────────────────────────────────────── */
+/* ── Graphite Glass Design Tokens (Apple dark) ───────────────────────────── */
 :root {
-  --color-bg:           #0a0a0a;
-  --color-surface:      #111111;
-  --color-border:       #2a2418;
-  --color-amber:        #fbbf24;
-  --color-amber-2:      #fcd34d;
-  --color-amber-3:      #fde68a;
-  --color-amber-bg:     #2a1f00;
-  --color-amber-border: #3a2e00;
-  --color-text-primary: #f5f5f0;
-  --color-text-body:    #c5b08a;
-  --color-text-muted:   #6a5a3a;
+  --bg: #000000;
+  --surface-1: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --glass: rgba(28, 28, 30, 0.72);
+  --separator: rgba(255, 255, 255, 0.08);
+  --accent: #0a84ff;
+  --green: #30d158;
+  --red: #ff453a;
+  --orange: #ff9f0a;
+  --yellow: #ffd60a;
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(235, 235, 245, 0.6);
+  --text-tertiary: rgba(235, 235, 245, 0.3);
+  --purple: #bf5af2;
+  --teal: #40c8e0;
+  --indigo: #5e5ce6;
+  --gray: rgba(235, 235, 245, 0.3);
 }
 
 * {
@@ -26,10 +30,14 @@
   touch-action: manipulation;
 }
 
-html, body {
+html,
+body {
   overscroll-behavior: none;
-  background-color: #080c09;
-  font-family: 'DM Sans', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    system-ui, sans-serif;
 }
 
 .overflow-y-auto {
@@ -51,9 +59,26 @@ html, body {
 
 /* Smooth press feedback for card-style buttons */
 .press-card {
-  transition: transform 150ms ease-out, opacity 150ms ease-out;
+  transition:
+    transform 150ms ease-out,
+    opacity 150ms ease-out;
 }
 .press-card:active {
   transform: scale(0.985);
   opacity: 0.85;
+}
+
+.glass {
+  background-color: var(--glass);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
