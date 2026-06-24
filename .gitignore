@@ -7,3 +7,8 @@ dist
 !.env.example
 .worktrees/
 .superpowers/
+
+# Generated artifacts (never commit)
+graphify-out/
+playwright-report/
+test-results/
