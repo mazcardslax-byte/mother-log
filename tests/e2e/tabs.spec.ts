@@ -5,7 +5,7 @@ const TABS = [
   "Summary",
   "Mothers",
   "Room",
-  "Facility",
+  // "Facility", — tab sidelined in App.jsx; restore here when re-enabled
   "Stats",
   "Dry Room",
   "Clones",

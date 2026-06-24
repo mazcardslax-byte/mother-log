@@ -92,7 +92,8 @@ const TAB_ITEMS = [
   { key: "Summary", label: "Summary", icon: LayoutDashboard },
   { key: "Mothers", label: "Mothers", icon: Leaf },
   { key: "Room", label: "Room", icon: Grid3X3 },
-  { key: "Facility", label: "Facility", icon: ClipboardList },
+  // Facility tab sidelined for now — re-enable by uncommenting this line.
+  // { key: "Facility", label: "Facility", icon: ClipboardList },
   { key: "Stats", label: "Stats", icon: BarChart2 },
   { key: "DryRoom", label: "Dry Room", icon: Wind },
   { key: "Clones", label: "Clones", icon: Scissors },
