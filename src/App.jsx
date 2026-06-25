@@ -54,6 +54,7 @@ import { DEFAULT_FACILITY } from "./FacilityTab";
 const ClonesTab = lazy(() => import("./ClonesTab"));
 const StatsTab = lazy(() => import("./StatsTab"));
 const DryRoomTab = lazy(() => import("./DryRoomTab"));
+const GrowRoomsTab = lazy(() => import("./GrowRoomsTab"));
 const MotherDetailModal = lazy(() => import("./MotherDetail"));
 import {
   LayoutDashboard,
@@ -70,6 +71,7 @@ import {
   BarChart2,
   Wind,
   Minus,
+  Sprout,
 } from "lucide-react";
 
 // ── Storage ────────────────────────────────────────────────────────────────
@@ -92,6 +94,7 @@ const TAB_ITEMS = [
   { key: "Summary", label: "Summary", icon: LayoutDashboard },
   { key: "Mothers", label: "Mothers", icon: Leaf },
   { key: "Room", label: "Room", icon: Grid3X3 },
+  { key: "GrowRooms", label: "Grow Rooms", icon: Sprout },
   // Facility tab sidelined for now — re-enable by uncommenting this line.
   // { key: "Facility", label: "Facility", icon: ClipboardList },
   { key: "Stats", label: "Stats", icon: BarChart2 },
@@ -869,6 +872,7 @@ export default function MotherPlantTracker() {
         )}
         {tab === "DryRoom" && <DryRoomTab />}
         {tab === "Clones" && <ClonesTab />}
+        {tab === "GrowRooms" && <GrowRoomsTab />}
       </Suspense>
 
       {detailMotherId &&
